@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "../../../../../generated/prisma";
+import { PrismaClient } from "../../../generated/prisma";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 
