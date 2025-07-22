@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  employeeId String  @unique // 직원 아이디
+  password  String
+  name      String
+  email     String?
+  phone     String?
+  department String  // 홀/부엌
+  position  String   // 준비조/진행조/마감조
+  isActive  Boolean  @default(true)
+  isSuperAdmin Boolean @default(false) // 최고 관리자 여부
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  submissions ChecklistSubmission[]
+}
+
+model Checklist {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  department  String   // 홀/부엌
+  position    String   // 준비조/진행조/마감조
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       ChecklistItem[]
+  submissions ChecklistSubmission[]
+}
+
+model ChecklistItem {
+  id          String   @id @default(cuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  order       Int
+  isRequired  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  responses   ChecklistItemResponse[]
+}
+
+model ChecklistSubmission {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id])
+  submittedAt DateTime @default(now())
+  notes       String?
+  responses   ChecklistItemResponse[]
+}
+
+model ChecklistItemResponse {
+  id                    String   @id @default(cuid())
+  submissionId          String
+  submission            ChecklistSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  itemId                String
+  item                  ChecklistItem @relation(fields: [itemId], references: [id])
+  isCompleted           Boolean
+  notes                 String?
+  completedAt           DateTime?
+}
