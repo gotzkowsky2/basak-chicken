@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "../../../generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ message: "임시 비밀번호가 이메일로 발송되었습니다." });
   } catch (error) {
+    console.error("이메일 전송 오류:", error);
     return NextResponse.json({ error: "비밀번호 재설정 중 오류가 발생했습니다." }, { status: 500 });
   }
 } 

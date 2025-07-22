@@ -19,6 +19,7 @@ export interface CreateEmployeeData {
   phone?: string;
   department: string;
   position: string;
+  isSuperAdmin?: boolean;
 }
 
 export interface UpdateEmployeeData {
@@ -28,6 +29,7 @@ export interface UpdateEmployeeData {
   department?: string;
   position?: string;
   isActive?: boolean;
+  isSuperAdmin?: boolean;
 }
 
 export const DEPARTMENT_OPTIONS = [

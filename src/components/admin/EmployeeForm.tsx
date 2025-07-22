@@ -11,7 +11,17 @@ interface EmployeeFormProps {
   isEdit?: boolean;
 }
 
-type FormData = CreateEmployeeData & { isActive?: boolean };
+type FormData = {
+  employeeId: string;
+  password: string;
+  name: string;
+  email: string;
+  phone: string;
+  department: string;
+  position: string;
+  isActive: boolean;
+  isSuperAdmin?: boolean;
+};
 
 export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: EmployeeFormProps) {
   const [form, setForm] = useState<FormData>({
