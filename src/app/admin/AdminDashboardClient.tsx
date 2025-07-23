@@ -16,7 +16,7 @@ export default function AdminDashboardClient() {
       if (!res.ok) {
         setError("로그아웃 실패");
       } else {
-        router.push("/admin/login");
+        router.push("/employee/login");
       }
     } catch (e) {
       setError("서버 오류가 발생했습니다.");

@@ -54,7 +54,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }),
     ];
     res.setHeader("Set-Cookie", cookies);
-    return res.status(200).json({ employee: employeeWithoutPassword, isTempPassword });
+    let redirectTo = "/employee";
+    if (isTempPassword) {
+      redirectTo = "/employee/change-password";
+    } else if (employee.isSuperAdmin) {
+      redirectTo = "/admin-choose";
+    }
+    return res.status(200).json({ employee: employeeWithoutPassword, isTempPassword, isSuperAdmin: employee.isSuperAdmin, redirectTo });
   } catch (error) {
     console.error("로그인 에러:", error);
     return res.status(500).json({ error: "로그인 중 오류가 발생했습니다." });
