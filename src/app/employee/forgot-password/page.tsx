@@ -23,10 +23,8 @@ export default function EmployeeForgotPasswordPage() {
       if (!res.ok) {
         setError(data.error || "이메일 전송 실패");
       } else {
-        setMessage("입력하신 이메일로 비밀번호 재설정 안내가 발송되었습니다.");
-        window.setTimeout(() => {
-          window.location.href = "/employee/login";
-        }, 1000);
+        setMessage("입력하신 이메일로 비밀번호 재설정 안내가 발송되었습니다. 임시 비밀번호로 로그인해 주세요.");
+        // 자동 이동 제거
       }
     } catch (err) {
       setError("서버 오류가 발생했습니다.");
@@ -58,13 +56,20 @@ export default function EmployeeForgotPasswordPage() {
           />
           <button
             type="submit"
-            className="w-full py-3 px-4 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+            className="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
             disabled={loading}
           >
             {loading ? "이메일 전송 중..." : "이메일로 비밀번호 재설정"}
           </button>
         </form>
-        {message && <div className="text-green-600 text-sm text-center mt-2">{message}</div>}
+        {message && (
+          <>
+            <div className="text-green-600 text-sm text-center mt-2">{message}</div>
+            <div className="text-center mt-4">
+              <a href="/employee/login" className="text-blue-600 hover:underline text-sm font-medium">임시비밀번호로 다시 로그인하기</a>
+            </div>
+          </>
+        )}
         {error && <div className="text-red-500 text-sm text-center mt-2">{error}</div>}
       </div>
     </main>

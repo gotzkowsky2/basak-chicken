@@ -29,6 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { employeeId },
       data: { password: hashed, isTempPassword: true },
     });
+    const updated = await prisma.employee.findUnique({ where: { employeeId } });
     // 이메일 발송
     const transporter = nodemailer.createTransport({
       host: process.env.BASAK_SMTP_HOST,
@@ -45,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       subject: "[Basak Chicken] 임시 비밀번호 안내",
       text: `임시 비밀번호: ${tempPassword}\n로그인 후 반드시 비밀번호를 변경해 주세요.`,
     });
-    return res.status(200).json({ message: "임시 비밀번호가 이메일로 발송되었습니다." });
+    return res.status(200).json({ message: "임시 비밀번호가 이메일로 발송되었습니다.", isTempPassword: updated?.isTempPassword });
   } catch (error) {
     console.error("이메일 전송 오류:", error);
     return res.status(500).json({ error: "비밀번호 재설정 중 오류가 발생했습니다." });

@@ -18,12 +18,18 @@ export default function EmployeeLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId, password }),
+        credentials: "include"
       });
       const data = await res.json();
+      console.log('로그인 응답:', data);
       if (!res.ok) {
         setError(data.error || "로그인 실패");
       } else {
-        router.push("/employee");
+        if (data.isTempPassword) {
+          router.push("/employee/change-password");
+        } else {
+          router.push("/employee");
+        }
       }
     } catch (err) {
       setError("서버 오류가 발생했습니다.");

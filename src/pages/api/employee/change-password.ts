@@ -16,6 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "비밀번호는 6자 이상이어야 합니다." });
     }
     // 인증 쿠키에서 직원 ID 추출
+    console.log('[비밀번호 변경] req.headers.cookie:', req.headers.cookie);
     const cookies = req.headers.cookie ? cookie.parse(req.headers.cookie) : {};
     const employeeId = cookies["employee_auth"];
     if (!employeeId) {

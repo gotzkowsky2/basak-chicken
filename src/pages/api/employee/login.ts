@@ -43,14 +43,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         path: "/",
         maxAge: 60 * 60,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: false,
       }),
       cookie.serialize("temp_pw_auth", isTempPassword ? "1" : "", {
         httpOnly: true,
         path: "/",
         maxAge: isTempPassword ? 60 * 60 : 0,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: false,
       }),
     ];
     res.setHeader("Set-Cookie", cookies);

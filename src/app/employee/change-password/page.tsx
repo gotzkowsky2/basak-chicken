@@ -28,13 +28,14 @@ export default function EmployeeChangePasswordPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
+        credentials: "include"
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "비밀번호 변경 실패");
       } else {
         setSuccess("비밀번호가 성공적으로 변경되었습니다. 다시 로그인해 주세요.");
-        router.push("/employee/login");
+        // 자동 이동 제거
       }
     } catch (err) {
       setError("서버 오류가 발생했습니다.");
@@ -66,13 +67,20 @@ export default function EmployeeChangePasswordPage() {
           />
           <button
             type="submit"
-            className="w-full py-3 px-4 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+            className="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
             disabled={loading}
           >
             {loading ? "변경 중..." : "비밀번호 변경"}
           </button>
         </form>
-        {success && <div className="text-green-600 text-sm text-center mt-2">{success}</div>}
+        {success && (
+          <>
+            <div className="text-green-600 text-sm text-center mt-2">{success}</div>
+            <div className="text-center mt-4">
+              <a href="/employee/login" className="text-blue-600 hover:underline text-sm font-medium">다시 로그인하기</a>
+            </div>
+          </>
+        )}
         {error && <div className="text-red-500 text-sm text-center mt-2">{error}</div>}
       </div>
     </main>
