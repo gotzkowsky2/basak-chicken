@@ -24,6 +24,9 @@ export default function EmployeeForgotPasswordPage() {
         setError(data.error || "이메일 전송 실패");
       } else {
         setMessage("입력하신 이메일로 비밀번호 재설정 안내가 발송되었습니다.");
+        window.setTimeout(() => {
+          window.location.href = "/employee/login";
+        }, 1000);
       }
     } catch (err) {
       setError("서버 오류가 발생했습니다.");

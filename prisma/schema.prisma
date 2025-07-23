@@ -34,6 +34,7 @@ model Employee {
   position  String   // 준비조/진행조/마감조
   isActive  Boolean  @default(true)
   isSuperAdmin Boolean @default(false) // 최고 관리자 여부
+  isTempPassword Boolean @default(false) // 임시 비밀번호 여부
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   submissions ChecklistSubmission[]

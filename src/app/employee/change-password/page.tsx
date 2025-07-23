@@ -34,9 +34,7 @@ export default function EmployeeChangePasswordPage() {
         setError(data.error || "비밀번호 변경 실패");
       } else {
         setSuccess("비밀번호가 성공적으로 변경되었습니다. 다시 로그인해 주세요.");
-        setTimeout(() => {
-          router.push("/employee/login");
-        }, 2000);
+        router.push("/employee/login");
       }
     } catch (err) {
       setError("서버 오류가 발생했습니다.");

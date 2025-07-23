@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import cookie from "cookie";
+import * as cookie from "cookie";
 
 const prisma = new PrismaClient();
 
@@ -19,20 +19,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { employeeId },
     });
     if (!employee || !employee.isActive) {
+      console.log("[로그인] 직원 없음 또는 비활성화:", employeeId);
       return res.status(403).json({ error: "존재하지 않거나 비활성화된 직원입니다." });
     }
-    const isMatch = await bcrypt.compare(password, employee.password);
+    console.log("[로그인] 입력 비밀번호:", password);
+    console.log("[로그인] DB 해시:", employee.password);
+    let isMatch = false;
+    try {
+      isMatch = await bcrypt.compare(password, employee.password);
+      console.log("[로그인] bcrypt.compare 결과:", isMatch);
+    } catch (err) {
+      console.error("[로그인] bcrypt.compare 에러:", err);
+    }
     if (!isMatch) {
       return res.status(401).json({ error: "비밀번호가 일치하지 않습니다." });
     }
-    let isTempPassword = false;
-    if (employee.updatedAt && employee.password.length === 60) {
-      const now = new Date();
-      const updated = new Date(employee.updatedAt);
-      if (now.getTime() - updated.getTime() < 60 * 60 * 1000) {
-        isTempPassword = true;
-      }
-    }
+    const isTempPassword = !!employee.isTempPassword;
     const { password: _, ...employeeWithoutPassword } = employee;
     // Set cookies
     const cookies = [
