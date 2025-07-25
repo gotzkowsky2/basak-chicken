@@ -80,7 +80,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error("체크리스트 등록 오류:", error);
-    console.error("입력 데이터:", { content, workplace, category, timeSlot });
     return NextResponse.json({ 
       error: `체크리스트 등록 중 오류가 발생했습니다: ${error instanceof Error ? error.message : 'Unknown error'}` 
     }, { status: 500 });
