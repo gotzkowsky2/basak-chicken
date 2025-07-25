@@ -16,6 +16,7 @@ type FormData = {
   password: string;
   name: string;
   email: string;
+  address?: string;
   phone: string;
   department: string;
   position: string;
@@ -29,6 +30,7 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
     password: initialData?.password || "",
     name: initialData?.name || "",
     email: initialData?.email || "",
+    address: initialData?.address || "",
     phone: initialData?.phone || "",
     department: initialData?.department || "홀",
     position: initialData?.position || "준비조",
@@ -37,6 +39,7 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [sendEmail, setSendEmail] = useState(true);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -63,6 +66,7 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
     if (!form.name.trim()) newErrors.name = "이름을 입력하세요";
     if (!form.department) newErrors.department = "부서를 선택하세요";
     if (!form.position) newErrors.position = "직책을 선택하세요";
+    // 주소는 필수 아님
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -76,7 +80,7 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
     setLoading(true);
     try {
       // 수정 모드에서 비밀번호가 비어있으면 제외
-      const submitData: CreateEmployeeData & { isActive?: boolean; password?: string } = { ...form };
+      const submitData: CreateEmployeeData & { isActive?: boolean; password?: string; sendEmail?: boolean } = { ...form, sendEmail };
       if (isEdit && !submitData.password?.trim()) {
         delete (submitData as any).password;
       }
@@ -89,11 +93,13 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
           password: "",
           name: "",
           email: "",
+          address: "",
           phone: "",
           department: "홀",
           position: "준비조",
           isActive: true,
         });
+        setSendEmail(true);
       }
     } catch (error) {
       console.error("Form submission error:", error);
@@ -140,6 +146,14 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
           error={errors.email}
         />
         <Input
+          name="address"
+          value={form.address || ""}
+          onChange={handleChange}
+          placeholder="주소(선택)"
+          type="text"
+          error={errors.address}
+        />
+        <Input
           name="phone"
           value={form.phone || ""}
           onChange={handleChange}
@@ -163,13 +177,6 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
           required
           error={errors.position}
         />
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full"
-        >
-          {loading ? "처리 중..." : (isEdit ? "수정" : "직원 추가")}
-        </Button>
       </div>
 
       {/* 활성/비활성 토글 */}
@@ -214,6 +221,27 @@ export default function EmployeeForm({ onSubmit, initialData, isEdit = false }: 
           />
         </button>
       </div>
+      {/* 이메일 발송 체크박스 */}
+      <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+        <input
+          type="checkbox"
+          id="sendEmail"
+          checked={sendEmail}
+          onChange={() => setSendEmail((v) => !v)}
+          className="mr-2"
+        />
+        <label htmlFor="sendEmail" className="text-sm font-medium text-blue-700">
+          이메일 발송
+        </label>
+      </div>
+      {/* 직원 추가/수정 버튼을 폼의 가장 하단으로 이동 */}
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full"
+      >
+        {loading ? "처리 중..." : (isEdit ? "수정" : "직원 추가")}
+      </Button>
     </form>
   );
 } 

@@ -20,6 +20,7 @@ export interface CreateEmployeeData {
   department: string;
   position: string;
   isSuperAdmin?: boolean;
+  address?: string;
 }
 
 export interface UpdateEmployeeData {

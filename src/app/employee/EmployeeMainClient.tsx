@@ -16,7 +16,8 @@ export default function EmployeeMainClient() {
       if (!res.ok) {
         setError("로그아웃 실패");
       } else {
-        router.push("/employee/login");
+        // router.push("/employee/login");
+        window.location.href = "/employee/login";
       }
     } catch (e) {
       setError("서버 오류가 발생했습니다.");

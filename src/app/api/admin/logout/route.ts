@@ -6,9 +6,11 @@ export async function POST(req: NextRequest) {
   response.cookies.set("superadmin_auth", "", {
     httpOnly: true,
     path: "/",
-    maxAge: 0,
+    maxAge: -1,
+    expires: new Date(0),
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    domain: "crew.basak-chicken.com",
   });
   return response;
 } 

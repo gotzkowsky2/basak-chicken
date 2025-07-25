@@ -174,11 +174,11 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
             <div className="flex flex-wrap gap-2">
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getDepartmentBadgeColor(employee.department)}`}>
                 <span className="mr-1">{getDepartmentIcon(employee.department)}</span>
-                {employee.department}
+                부:{employee.department}
               </span>
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPositionBadgeColor(employee.position)}`}>
                 <span className="mr-1">{getPositionIcon(employee.position)}</span>
-                {employee.position}
+                직:{employee.position}
               </span>
             </div>
           </div>
@@ -233,11 +233,11 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
                     <div className="flex flex-col gap-1">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getDepartmentBadgeColor(employee.department)}`}>
                         <span className="mr-1">{getDepartmentIcon(employee.department)}</span>
-                        {employee.department}
+                        부:{employee.department}
                       </span>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPositionBadgeColor(employee.position)}`}>
                         <span className="mr-1">{getPositionIcon(employee.position)}</span>
-                        {employee.position}
+                        직:{employee.position}
                       </span>
                     </div>
                   </td>
