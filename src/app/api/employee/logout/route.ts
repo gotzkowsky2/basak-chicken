@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   // 모든 인증 쿠키를 여러 경로(path: '/', path: '/employee')로 즉시 만료시킴
-  const response = NextResponse.json({ message: "로그아웃 되었습니다." });
+  const response = new NextResponse("로그아웃 되었습니다.", { status: 200 });
   const isProd = process.env.NODE_ENV === "production";
   const baseOptions = {
     httpOnly: true,
