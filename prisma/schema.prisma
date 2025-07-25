@@ -17,6 +17,29 @@ model Admin {
   updatedAt DateTime @updatedAt
 }
 
+enum Workplace {
+  HALL
+  KITCHEN
+  COMMON
+}
+
+enum Category {
+  CHECKLIST
+  PRECAUTIONS
+  HYGIENE
+  SUPPLIES
+  INGREDIENTS
+  COMMON
+  MANUAL
+}
+
+enum TimeSlot {
+  PREPARATION
+  IN_PROGRESS
+  CLOSING
+  COMMON
+}
+
 model Employee {
   id             String                @id @default(cuid())
   employeeId     String                @unique
@@ -35,50 +58,45 @@ model Employee {
   submissions    ChecklistSubmission[]
 }
 
-model Checklist {
+model ChecklistTemplate {
   id          String                @id @default(cuid())
-  title       String
-  description String?
-  department  String
-  position    String
+  content     String                // 체크리스트 내용
+  inputter    String                // 입력자 (관리자명)
+  inputDate   DateTime              @default(now()) // 입력일
+  workplace   Workplace             // 근무지 (홀/주방/공통)
+  category    Category              // 구분 (체크리스트/주의사항/위생규정/부대용품/재료/공통/매뉴얼)
+  timeSlot    TimeSlot              // 시간 (준비/진행/마감/공통)
   isActive    Boolean               @default(true)
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt
-  items       ChecklistItem[]
   submissions ChecklistSubmission[]
-}
-
-model ChecklistItem {
-  id          String                  @id @default(cuid())
-  checklistId String
-  title       String
-  description String?
-  order       Int
-  isRequired  Boolean                 @default(true)
-  createdAt   DateTime                @default(now())
-  updatedAt   DateTime                @updatedAt
-  checklist   Checklist               @relation(fields: [checklistId], references: [id], onDelete: Cascade)
-  responses   ChecklistItemResponse[]
+  itemResponses ChecklistItemResponse[]
 }
 
 model ChecklistSubmission {
-  id          String                  @id @default(cuid())
-  employeeId  String
-  checklistId String
-  submittedAt DateTime                @default(now())
-  notes       String?
-  responses   ChecklistItemResponse[]
-  checklist   Checklist               @relation(fields: [checklistId], references: [id])
-  employee    Employee                @relation(fields: [employeeId], references: [id])
+  id                String                @id @default(cuid())
+  employeeId        String
+  templateId        String
+  submissionDate    DateTime              @default(now()) // 제출 날짜
+  workplace         Workplace             // 근무지
+  timeSlot          TimeSlot              // 시간대
+  isCompleted       Boolean               @default(false)
+  submittedAt       DateTime              @default(now())
+  notes             String?
+  template          ChecklistTemplate     @relation(fields: [templateId], references: [id])
+  employee          Employee              @relation(fields: [employeeId], references: [id])
+  itemResponses     ChecklistItemResponse[]
 }
 
 model ChecklistItemResponse {
   id           String              @id @default(cuid())
   submissionId String
-  itemId       String
-  isCompleted  Boolean
+  templateId   String
+  isCompleted  Boolean             @default(false)
   notes        String?
   completedAt  DateTime?
-  item         ChecklistItem       @relation(fields: [itemId], references: [id])
   submission   ChecklistSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  template     ChecklistTemplate   @relation(fields: [templateId], references: [id])
 }
+
+
