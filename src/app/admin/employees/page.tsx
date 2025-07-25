@@ -132,8 +132,7 @@ export default function EmployeesPage() {
               onClick={() => setShowAddModal(true)}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              직원 추가
+              <PlusIcon className="h-5 w-5" />
             </button>
           </div>
         </div>

@@ -25,28 +25,40 @@ export async function POST(request: NextRequest) {
     if ((employee as any).isTempPassword) {
       // 임시비밀번호인 경우 비밀번호 변경 페이지로 리다이렉트
       const response = NextResponse.json({ redirectTo: "/employee/change-password" });
+      const isProd = process.env.NODE_ENV === "production";
+      const prodDomain = "crew.basak-chicken.com";
+      const domainOption = isProd ? { domain: prodDomain } : {};
       response.cookies.set("employee_auth", employee.id, {
         httpOnly: true,
         path: "/",
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === "production" ? true : false,
+        secure: isProd ? true : false,
+        ...domainOption
       });
       response.cookies.set("temp_pw_auth", "1", {
         httpOnly: true,
         path: "/",
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === "production" ? true : false,
+        secure: isProd ? true : false,
+        ...domainOption
       });
       return response;
     }
 
     // 로그인 성공: employee_auth 쿠키 발급
-    const response = NextResponse.json({ success: true });
+    const response = NextResponse.json({
+      success: true,
+      redirectTo: (employee as any).isSuperAdmin ? "/admin-choose" : "/employee"
+    });
+    const isProd = process.env.NODE_ENV === "production";
+    const prodDomain = "crew.basak-chicken.com";
+    const domainOption = isProd ? { domain: prodDomain } : {};
     response.cookies.set("employee_auth", employee.id, {
       httpOnly: true,
       path: "/",
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === "production" ? true : false,
+      secure: isProd ? true : false,
+      ...domainOption
     });
     // 임시비밀번호 쿠키 삭제
     response.cookies.set("temp_pw_auth", "", {
@@ -55,7 +67,8 @@ export async function POST(request: NextRequest) {
       maxAge: -1,
       expires: new Date(0),
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === "production" ? true : false,
+      secure: isProd ? true : false,
+      ...domainOption
     });
     return response;
   } catch (error) {

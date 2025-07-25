@@ -54,8 +54,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 비밀번호 해시화
-    const hashedPassword = await bcrypt.hash(body.password, 10);
+    // 임시 비밀번호 생성 및 해시화
+    const tempPassword = Math.random().toString(36).slice(-10);
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     // 직원 생성
     const newEmployee = await prisma.employee.create({
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
         department: body.department,
         position: body.position,
         isActive: body.isActive !== undefined ? body.isActive : true,
+        isTempPassword: true,
       },
     });
 
@@ -86,8 +88,29 @@ export async function POST(request: NextRequest) {
         await transporter.sendMail({
           from: process.env.BASAK_SMTP_FROM,
           to: newEmployee.email,
-          subject: "[Basak Chicken] 직원 계정 생성 안내",
-          text: `안녕하세요, ${newEmployee.name}님!\n\nBasak Chicken 직원 계정이 생성되었습니다.\n\n아이디: ${newEmployee.employeeId}\n로그인 후 비밀번호를 꼭 변경해 주세요.\n\n감사합니다.`,
+          subject: "[Basak Chicken] 새로운 직원 계정 환영 안내 🐔",
+          html: `
+            <div style="font-family: 'Pretendard', 'Apple SD Gothic Neo', Arial, sans-serif; background: #fffbe9; padding: 32px; border-radius: 16px; border: 1px solid #ffe6a7; max-width: 480px; margin: 0 auto;">
+              <h2 style="color: #d97706; margin-bottom: 16px;">🍗 바삭치킨에 오신 것을 환영합니다, ${newEmployee.name}님!</h2>
+              <p style="font-size: 16px; color: #222; margin-bottom: 16px;">
+                <b>바삭치킨 직원 계정이 성공적으로 생성되었습니다.</b><br/>
+                이제 <b>운영 페이지</b>에 접속하여<br/>
+                <span style="color: #d97706; font-weight: bold;">메뉴얼, 체크리스트, 규정</span>을 확인하고<br/>
+                <b>재미있고 원활한 바삭치킨 업무</b>를 시작해보세요!<br/>
+              </p>
+              <div style="background: #fff3cd; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #ffe6a7;">
+                <div style="font-size: 15px; color: #333; margin-bottom: 4px;">👤 <b>아이디:</b> ${newEmployee.employeeId}</div>
+                <div style="font-size: 15px; color: #333;">🔑 <b>임시 비밀번호:</b> <span style='color:#d97706; font-weight:bold;'>${tempPassword}</span></div>
+              </div>
+              <a href="https://crew.basak-chicken.com/employee/login" style="display: inline-block; background: #d97706; color: #fff; font-weight: bold; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-bottom: 16px;">운영 페이지 바로가기</a>
+              <ul style="font-size: 15px; color: #555; margin: 16px 0 0 0; padding: 0 0 0 18px;">
+                <li>로그인 후 <b>비밀번호를 꼭 변경</b>해 주세요.</li>
+                <li>메뉴얼/체크리스트는 <b>운영 페이지</b>에서 확인할 수 있습니다.</li>
+                <li>궁금한 점은 언제든 관리자에게 문의해 주세요!</li>
+              </ul>
+              <p style="font-size: 15px; color: #888; margin-top: 24px;">바삭치킨과 함께 즐겁고 멋진 하루 보내세요!<br/>감사합니다. 🧡</p>
+            </div>
+          `,
         });
       } catch (mailErr) {
         console.error("직원 계정 생성 메일 전송 오류:", mailErr);

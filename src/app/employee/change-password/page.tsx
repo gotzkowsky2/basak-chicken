@@ -34,8 +34,8 @@ export default function EmployeeChangePasswordPage() {
       if (!res.ok) {
         setError(data.error || "비밀번호 변경 실패");
       } else {
-        setSuccess("비밀번호가 성공적으로 변경되었습니다. 다시 로그인해 주세요.");
-        // 자동 이동 제거
+        alert("비밀번호가 성공적으로 변경되었습니다!");
+        window.location.href = "/employee";
       }
     } catch (err) {
       setError("서버 오류가 발생했습니다.");

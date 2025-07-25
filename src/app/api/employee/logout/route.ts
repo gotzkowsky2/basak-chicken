@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "nodejs"; // nodejs 런타임 강제
+
 export async function POST(req: NextRequest) {
-  // 모든 인증 쿠키를 여러 경로(path: '/', path: '/employee')로 즉시 만료시킴
-  const response = new NextResponse("로그아웃 되었습니다.", { status: 200 });
+  const response = NextResponse.json({ message: "로그아웃 되었습니다." });
   const isProd = process.env.NODE_ENV === "production";
   const baseOptions = {
     httpOnly: true,
@@ -12,15 +13,12 @@ export async function POST(req: NextRequest) {
     ...(isProd ? { secure: true } : {}),
   };
   const domain = "crew.basak-chicken.com";
-  // path: '/'
-  response.cookies.set("employee_auth", "", { ...baseOptions, path: "/", domain });
-  response.cookies.set("superadmin_auth", "", { ...baseOptions, path: "/", domain });
-  response.cookies.set("admin_auth", "", { ...baseOptions, path: "/", domain });
-  response.cookies.set("temp_pw_auth", "", { ...baseOptions, path: "/", domain });
-  // path: '/employee'
-  response.cookies.set("employee_auth", "", { ...baseOptions, path: "/employee", domain });
-  response.cookies.set("superadmin_auth", "", { ...baseOptions, path: "/employee", domain });
-  response.cookies.set("admin_auth", "", { ...baseOptions, path: "/employee", domain });
-  response.cookies.set("temp_pw_auth", "", { ...baseOptions, path: "/employee", domain });
+  const domainOption = isProd ? { domain } : {};
+
+  response.cookies.set("employee_auth", "", { ...baseOptions, path: "/", ...domainOption });
+  response.cookies.set("superadmin_auth", "", { ...baseOptions, path: "/", ...domainOption });
+  response.cookies.set("admin_auth", "", { ...baseOptions, path: "/", ...domainOption });
+  response.cookies.set("temp_pw_auth", "", { ...baseOptions, path: "/", ...domainOption });
+
   return response;
 } 

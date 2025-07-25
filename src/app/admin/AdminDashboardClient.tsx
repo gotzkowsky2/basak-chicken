@@ -22,16 +22,16 @@ export default function AdminDashboardClient() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/logout", { method: "POST" });
-      if (!res.ok) {
-        setError("로그아웃 실패");
-      } else {
-        router.push("/employee/login");
-      }
+      console.log("관리자 로그아웃 fetch 실행 전");
+      const res = await fetch("/api/admin/logout", { method: "POST", credentials: "include", keepalive: true });
+      console.log("관리자 로그아웃 fetch 실행 후", res);
+      window.location.href = "/employee/login";
     } catch (e) {
       setError("서버 오류가 발생했습니다.");
+      console.log("관리자 로그아웃 fetch 에러", e);
     } finally {
       setLoading(false);
+      console.log("관리자 handleLogout finally");
     }
   };
 
@@ -39,14 +39,6 @@ export default function AdminDashboardClient() {
     <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-8 flex flex-col gap-8">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">관리자 대시보드</h1>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
-            disabled={loading}
-          >
-            {loading ? "로그아웃 중..." : "로그아웃"}
-          </button>
         </div>
         {error && <div className="text-red-500 text-sm text-center mb-2">{error}</div>}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
