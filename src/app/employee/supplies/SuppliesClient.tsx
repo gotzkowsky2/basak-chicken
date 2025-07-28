@@ -6,83 +6,137 @@ interface Supply {
   name: string;
   category: string;
   currentStock: number;
+  minStock: number;
   unit: string;
+  supplier: string | null;
   lastUpdated: string;
-  status: 'sufficient' | 'low' | 'out';
-  location: string;
+  status: 'sufficient' | 'low';
+  isLowStock: boolean;
 }
 
 export default function SuppliesClient() {
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-
-  // 임시 데이터 (나중에 API로 교체)
-  useEffect(() => {
-    const mockSupplies: Supply[] = [
-      {
-        id: "1",
-        name: "장갑",
-        category: "보호용품",
-        currentStock: 200,
-        unit: "개",
-        lastUpdated: "2024-01-15",
-        status: "sufficient",
-        location: "창고 A"
-      },
-      {
-        id: "2",
-        name: "휴지",
-        category: "소모품",
-        currentStock: 15,
-        unit: "롤",
-        lastUpdated: "2024-01-15",
-        status: "low",
-        location: "창고 B"
-      },
-      {
-        id: "3",
-        name: "비닐봉투",
-        category: "포장용품",
-        currentStock: 0,
-        unit: "박스",
-        lastUpdated: "2024-01-14",
-        status: "out",
-        location: "창고 A"
-      },
-      {
-        id: "4",
-        name: "세제",
-        category: "청소용품",
-        currentStock: 8,
-        unit: "L",
-        lastUpdated: "2024-01-15",
-        status: "sufficient",
-        location: "창고 B"
-      },
-      {
-        id: "5",
-        name: "마스크",
-        category: "보호용품",
-        currentStock: 50,
-        unit: "개",
-        lastUpdated: "2024-01-15",
-        status: "sufficient",
-        location: "창고 A"
-      }
-    ];
-    
-    setTimeout(() => {
-      setSupplies(mockSupplies);
-      setLoading(false);
-    }, 500);
-  }, []);
-
-  const categories = ["all", "보호용품", "소모품", "포장용품", "청소용품"];
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   
-  const filteredSupplies = selectedCategory === "all" 
-    ? supplies 
-    : supplies.filter(item => item.category === selectedCategory);
+  // 구매 요청 모달 상태
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Supply | null>(null);
+  const [purchaseForm, setPurchaseForm] = useState({
+    quantity: '',
+    priority: 'MEDIUM',
+    notes: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  // 실제 API에서 데이터 가져오기
+  const fetchSupplies = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'ALL') params.append('category', selectedCategory);
+      if (showLowStockOnly) params.append('lowStock', 'true');
+
+      const response = await fetch(`/api/employee/inventory?${params}`);
+      if (!response.ok) throw new Error('재고 조회에 실패했습니다.');
+      
+      const data = await response.json();
+      // SUPPLIES, COMMON 카테고리만 필터링 (용품, 기타)
+      const suppliesData = data.filter((item: Supply) => 
+        ['SUPPLIES', 'COMMON'].includes(item.category)
+      );
+      setSupplies(suppliesData);
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSupplies();
+  }, [selectedCategory, showLowStockOnly]);
+
+  // 구매 요청 모달 열기
+  const handlePurchaseRequest = (item: Supply) => {
+    setSelectedItem(item);
+    setPurchaseForm({
+      quantity: '',
+      priority: 'MEDIUM',
+      notes: ''
+    });
+    setShowPurchaseModal(true);
+  };
+
+  // 구매 요청 제출
+  const handlePurchaseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedItem || !purchaseForm.quantity) return;
+
+    try {
+      setSubmitting(true);
+      setError('');
+
+      const response = await fetch('/api/employee/purchase-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [{
+            itemId: selectedItem.id,
+            quantity: parseFloat(purchaseForm.quantity),
+            notes: purchaseForm.notes || null
+          }],
+          priority: purchaseForm.priority,
+          notes: purchaseForm.notes
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '구매 요청 생성에 실패했습니다.');
+      }
+
+      setSuccess('구매 요청이 성공적으로 생성되었습니다.');
+      setShowPurchaseModal(false);
+      setSelectedItem(null);
+      setPurchaseForm({
+        quantity: '',
+        priority: 'MEDIUM',
+        notes: ''
+      });
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 구매 요청 모달 닫기
+  const handlePurchaseCancel = () => {
+    setShowPurchaseModal(false);
+    setSelectedItem(null);
+    setPurchaseForm({
+      quantity: '',
+      priority: 'MEDIUM',
+      notes: ''
+    });
+  };
+
+  const categories = [
+    { value: "ALL", label: "전체" },
+    { value: "SUPPLIES", label: "용품" },
+    { value: "COMMON", label: "기타" }
+  ];
+  
+  const getCategoryLabel = (category: string) => {
+    const found = categories.find(cat => cat.value === category);
+    return found ? found.label : category;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -123,33 +177,60 @@ export default function SuppliesClient() {
           <p className="text-gray-600">현재 용품 재고 현황을 확인하고 관리하세요</p>
         </div>
 
-        {/* 카테고리 필터 */}
+        {/* 알림 메시지 */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800">{success}</p>
+          </div>
+        )}
+
+        {/* 필터 */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  selectedCategory === category
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category === "all" ? "전체" : category}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category.value}
+                  onClick={() => setSelectedCategory(category.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    selectedCategory === category.value
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
+            
+            <div className="flex items-center">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={showLowStockOnly}
+                  onChange={(e) => setShowLowStockOnly(e.target.checked)}
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">부족 재고만</span>
+              </label>
+            </div>
           </div>
         </div>
 
         {/* 재고 현황 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSupplies.map((supply) => (
-            <div key={supply.id} className="bg-white rounded-lg shadow-md p-6">
+          {supplies.map((supply) => (
+            <div key={supply.id} className={`bg-white rounded-lg shadow-md p-6 ${supply.isLowStock ? 'border-2 border-red-200' : ''}`}>
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">{supply.name}</h3>
-                  <p className="text-sm text-gray-500">{supply.category}</p>
+                  <p className="text-sm text-gray-500">{getCategoryLabel(supply.category)}</p>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(supply.status)}`}>
                   {getStatusText(supply.status)}
@@ -159,35 +240,123 @@ export default function SuppliesClient() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">현재 재고:</span>
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className={`text-sm font-medium ${supply.isLowStock ? 'text-red-600' : 'text-gray-800'}`}>
                     {supply.currentStock} {supply.unit}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">보관 위치:</span>
-                  <span className="text-sm text-gray-500">{supply.location}</span>
+                  <span className="text-sm text-gray-600">최소 재고:</span>
+                  <span className="text-sm text-gray-500">{supply.minStock} {supply.unit}</span>
                 </div>
+                {supply.supplier && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">공급업체:</span>
+                    <span className="text-sm text-gray-500">{supply.supplier}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">최종 업데이트:</span>
-                  <span className="text-sm text-gray-500">{supply.lastUpdated}</span>
+                  <span className="text-sm text-gray-500">
+                    {supply.lastUpdated ? new Date(supply.lastUpdated).toLocaleDateString() : '없음'}
+                  </span>
                 </div>
               </div>
               
               <div className="mt-4 pt-4 border-t border-gray-100">
-                <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm">
-                  재고 업데이트
+                <button 
+                  onClick={() => handlePurchaseRequest(supply)}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
+                >
+                  구매 요청
                 </button>
               </div>
             </div>
           ))}
         </div>
 
-        {filteredSupplies.length === 0 && (
+        {supplies.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">해당 카테고리의 부대용품이 없습니다.</p>
           </div>
         )}
       </div>
+
+      {/* 구매 요청 모달 */}
+      {showPurchaseModal && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">구매 요청</h3>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">아이템: <span className="font-medium">{selectedItem.name}</span></p>
+              <p className="text-sm text-gray-600">현재 재고: <span className="font-medium">{selectedItem.currentStock} {selectedItem.unit}</span></p>
+            </div>
+
+            <form onSubmit={handlePurchaseSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  구매 수량 *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={purchaseForm.quantity}
+                  onChange={(e) => setPurchaseForm(prev => ({ ...prev, quantity: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 placeholder-gray-500"
+                  placeholder={`${selectedItem.unit} 단위로 입력`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  우선순위
+                </label>
+                <select
+                  value={purchaseForm.priority}
+                  onChange={(e) => setPurchaseForm(prev => ({ ...prev, priority: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                >
+                  <option value="LOW">낮음</option>
+                  <option value="MEDIUM">보통</option>
+                  <option value="HIGH">높음</option>
+                  <option value="URGENT">긴급</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  메모 (선택사항)
+                </label>
+                <textarea
+                  value={purchaseForm.notes}
+                  onChange={(e) => setPurchaseForm(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 placeholder-gray-500"
+                  placeholder="구매 요청 사유나 특별한 요구사항을 입력하세요"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                >
+                  {submitting ? '요청 중...' : '구매 요청'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePurchaseCancel}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  취소
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

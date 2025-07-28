@@ -113,6 +113,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   체크리스트 관리
                 </Link>
                 <Link 
+                  href="/admin/precautions" 
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-700 active:bg-orange-100 focus:outline-none focus:bg-orange-50 transition-all duration-150 cursor-pointer min-h-[44px]"
+                  onClick={() => setShowMenu(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                  주의사항 관리
+                </Link>
+                <Link 
+                  href="/admin/manuals" 
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 active:bg-indigo-100 focus:outline-none focus:bg-indigo-50 transition-all duration-150 cursor-pointer min-h-[44px]"
+                  onClick={() => setShowMenu(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                  </svg>
+                  메뉴얼 관리
+                </Link>
+                <Link 
+                  href="/admin/inventory" 
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-teal-50 hover:text-teal-700 active:bg-teal-100 focus:outline-none focus:bg-teal-50 transition-all duration-150 cursor-pointer min-h-[44px]"
+                  onClick={() => setShowMenu(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                  </svg>
+                  재고/구매 관리
+                </Link>
+                <Link 
                   href="/admin/tags" 
                   className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-700 active:bg-purple-100 focus:outline-none focus:bg-purple-50 transition-all duration-150 cursor-pointer min-h-[44px]"
                   onClick={() => setShowMenu(false)}

@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function NoticesPage() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const employeeAuth = cookieStore.get("employee_auth");
 
   if (!employeeAuth) {

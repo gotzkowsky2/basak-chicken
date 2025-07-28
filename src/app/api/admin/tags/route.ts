@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 // 태그 목록 조회
 export async function GET() {
   try {
-    const tags = await prisma.checklistTag.findMany({
+    const tags = await prisma.tag.findMany({
       orderBy: { name: 'asc' }
     });
     
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    const existingTag = await prisma.checklistTag.findUnique({
+    const existingTag = await prisma.tag.findUnique({
       where: { name: name.trim() }
     });
     
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    const tag = await prisma.checklistTag.create({
+    const tag = await prisma.tag.create({
       data: {
         name: name.trim(),
         color: color || "#3B82F6" // 기본 파란색

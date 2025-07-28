@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     // 태그 연결 (선택된 태그가 있는 경우)
     if (selectedTags && selectedTags.length > 0) {
-      await prisma.templateTagRelation.createMany({
+      await prisma.checklistTemplateTagRelation.createMany({
         data: selectedTags.map((tagId: string) => ({
           templateId: checklistTemplate.id,
           tagId: tagId,
@@ -126,10 +126,10 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // 각 체크리스트에 대한 태그 정보 조회
-    const checklistsWithTags = await Promise.all(
+    // 각 체크리스트에 대한 태그 정보와 항목들 조회
+    const checklistsWithTagsAndItems = await Promise.all(
       checklists.map(async (checklist) => {
-        const tagRelations = await prisma.templateTagRelation.findMany({
+        const tagRelations = await prisma.checklistTemplateTagRelation.findMany({
           where: { templateId: checklist.id },
           include: {
             tag: {
@@ -142,14 +142,29 @@ export async function GET(req: NextRequest) {
           }
         });
 
+        // 체크리스트 항목들 조회
+        const items = await prisma.checklistItem.findMany({
+          where: { 
+            templateId: checklist.id,
+            isActive: true 
+          },
+          include: {
+            inventoryItem: true,
+            precautions: true,
+            manuals: true,
+          },
+          orderBy: { order: 'asc' }
+        });
+
         return {
           ...checklist,
-          tags: tagRelations.map(relation => relation.tag)
+          tags: tagRelations.map(relation => relation.tag),
+          items: items
         };
       })
     );
 
-    return NextResponse.json({ checklists: checklistsWithTags });
+    return NextResponse.json({ checklists: checklistsWithTagsAndItems });
 
   } catch (error) {
     console.error("체크리스트 목록 조회 오류:", error);
