@@ -40,13 +40,12 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        {/* 홈 아이콘과 직원 아이콘 */}
+        {/* 홈 아이콘 */}
         <div className="flex items-center gap-3">
           <Link href="/employee" className="flex items-center gap-2 text-green-700 hover:text-green-900 font-bold text-lg">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125h3.375a1.125 1.125 0 001.125-1.125V16.5a1.125 1.125 0 011.125-1.125h2.25A1.125 1.125 0 0115.75 16.5v3.375c0 .621.504 1.125 1.125 1.125h3.375a1.125 1.125 0 001.125-1.125V9.75" />
             </svg>
-            <span className="text-2xl">🧑‍🍳</span>
           </Link>
           
           {/* 대시보드 메뉴 드롭다운 */}
@@ -139,9 +138,14 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
         
         <div className="flex items-center gap-4">
           {!loading && employee && (
-            <div className="text-sm text-gray-600 hidden sm:block">
-              <div className="font-medium">{employee.name}님</div>
-              <div className="text-xs text-gray-500">{employee.department} • {employee.position}</div>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-600 hidden sm:block">
+                <div className="font-medium">{employee.name}님</div>
+                <div className="text-xs text-gray-500">{employee.department} • {employee.position}</div>
+              </div>
+              
+              {/* 직원 아이콘 */}
+              <span className="text-2xl">🧑‍🍳</span>
             </div>
           )}
           
