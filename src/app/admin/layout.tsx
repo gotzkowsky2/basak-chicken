@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 
 interface Employee {
   name: string;
@@ -14,6 +14,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -32,6 +35,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     fetchEmployee();
   }, []);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        menuButtonRef.current &&
+        !menuButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMenu]);
 
   const handleLogout = useCallback(async () => {
     await fetch("/api/admin/logout", { method: "POST", credentials: "include", keepalive: true });
@@ -52,6 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* 대시보드 메뉴 드롭다운 */}
           <div className="relative">
             <button
+              ref={menuButtonRef}
               onClick={() => setShowMenu(!showMenu)}
               className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
               title="대시보드 메뉴"
@@ -71,7 +91,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
             
             {showMenu && (
-              <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[9999]">
+              <div ref={menuRef} className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[9999]">
                 <Link 
                   href="/admin/employees" 
                   className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition cursor-pointer"
@@ -156,12 +176,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
       
       {/* 드롭다운 메뉴 외부 클릭 시 닫기 */}
-      {showMenu && (
-        <div 
-          className="fixed inset-0 z-[9998]" 
-          onClick={() => setShowMenu(false)}
-        />
-      )}
+      {/* 외부 클릭 감지는 useEffect에서 처리하므로 이 부분은 삭제 */}
       
       <main>{children}</main>
     </div>
