@@ -333,7 +333,7 @@ export default function ChecklistPage() {
                         id={checklist.id}
                         checked={checklistItems[checklist.id]?.isCompleted || false}
                         onChange={() => handleCheckboxChange(checklist.id)}
-                        className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        className="mt-1 h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded transition-all duration-150 active:scale-95"
                       />
                       <div className="flex-1">
                         <label htmlFor={checklist.id} className="block text-gray-800 font-medium cursor-pointer">
@@ -349,10 +349,10 @@ export default function ChecklistPage() {
                           <button
                             type="button"
                             onClick={() => toggleMemoInput(checklist.id)}
-                            className={`text-xs font-medium transition ${
+                            className={`text-xs font-medium px-3 py-2 rounded-lg transition-all duration-150 active:scale-95 min-h-[32px] ${
                               checklistItems[checklist.id]?.notes 
-                                ? 'text-green-600 hover:text-green-800' 
-                                : 'text-blue-600 hover:text-blue-800'
+                                ? 'text-green-600 hover:text-green-800 hover:bg-green-50 active:bg-green-100' 
+                                : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50 active:bg-blue-100'
                             }`}
                           >
                             메모 {checklistItems[checklist.id]?.notes && '(있음)'}
@@ -396,7 +396,7 @@ export default function ChecklistPage() {
               <button
                 type="submit"
                 disabled={submitting || !allItemsChecked}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-green-600 text-white py-4 px-4 rounded-lg hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] active:scale-95"
               >
                 {submitting ? "제출 중..." : !allItemsChecked ? "모든 항목을 체크해야 제출할 수 있습니다" : "체크리스트 제출"}
               </button>

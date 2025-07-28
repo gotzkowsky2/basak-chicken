@@ -8,6 +8,19 @@
 # package.json의 dev 스크립트: "dev": "next dev -H 0.0.0.0 -p 3001"
 # PM2 실행 시 ecosystem.config.js 사용 권장
 
+## 🛡️ 서버 안정성 설정
+# - PM2 ecosystem.config.js에 안정성 설정 적용됨
+# - 메모리 제한: 512MB
+# - 최대 재시작 횟수: 10회
+# - 파일 변경 감지 비활성화로 안정성 향상
+# - 모니터링 스크립트: monitor.sh (30초마다 상태 체크)
+
+## 🔧 서버 관리 명령어
+# PM2 시작: pm2 start ecosystem.config.js
+# PM2 재시작: pm2 restart basak-chicken-app
+# PM2 상태 확인: pm2 status
+# PM2 로그 확인: pm2 logs basak-chicken-app
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

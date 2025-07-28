@@ -61,7 +61,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
       <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         {/* 홈 아이콘 */}
         <div className="flex items-center gap-3">
-          <Link href="/employee" className="flex items-center gap-2 text-green-700 hover:text-green-900 font-bold text-lg">
+          <Link href="/employee" className="flex items-center gap-2 text-green-700 hover:text-green-900 active:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg p-2 -m-2 font-bold text-lg transition-all duration-150">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125h3.375a1.125 1.125 0 001.125-1.125V16.5a1.125 1.125 0 011.125-1.125h2.25A1.125 1.125 0 0115.75 16.5v3.375c0 .621.504 1.125 1.125 1.125h3.375a1.125 1.125 0 001.125-1.125V9.75" />
             </svg>
@@ -72,7 +72,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
             <button
               ref={menuButtonRef}
               onClick={() => setShowMenu(!showMenu)}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 min-h-[44px] min-w-[44px]"
               title="대시보드 메뉴"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -93,7 +93,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
               <div ref={menuRef} className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[9999]">
                 <Link 
                   href="/employee/checklist" 
-                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 active:bg-green-100 focus:outline-none focus:bg-green-50 transition-all duration-150 cursor-pointer min-h-[44px]"
                   onClick={() => setShowMenu(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -103,7 +103,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </Link>
                 <Link 
                   href="/employee/submissions" 
-                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 active:bg-blue-100 focus:outline-none focus:bg-blue-50 transition-all duration-150 cursor-pointer min-h-[44px]"
                   onClick={() => setShowMenu(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -113,7 +113,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </Link>
                 <Link 
                   href="/employee/notices" 
-                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 transition cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 active:bg-yellow-100 focus:outline-none focus:bg-yellow-50 transition-all duration-150 cursor-pointer min-h-[44px]"
                   onClick={() => setShowMenu(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -123,7 +123,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </Link>
                 <Link 
                   href="/employee/ingredients" 
-                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-700 active:bg-orange-100 focus:outline-none focus:bg-orange-50 transition-all duration-150 cursor-pointer min-h-[44px]"
                   onClick={() => setShowMenu(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -133,7 +133,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </Link>
                 <Link 
                   href="/employee/supplies" 
-                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-700 active:bg-purple-100 focus:outline-none focus:bg-purple-50 transition-all duration-150 cursor-pointer min-h-[44px]"
                   onClick={() => setShowMenu(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -143,7 +143,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </Link>
                 <Link 
                   href="/employee/manual" 
-                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 active:bg-indigo-100 focus:outline-none focus:bg-indigo-50 transition-all duration-150 cursor-pointer min-h-[44px]"
                   onClick={() => setShowMenu(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -173,7 +173,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
           {!loading && employee && employee.isSuperAdmin && (
             <Link 
               href="/admin" 
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 active:text-blue-700 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg transition-all duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="관리자 페이지로 이동"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -184,7 +184,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
           
           <button
             onClick={handleLogout}
-            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-3 text-gray-600 hover:text-red-600 hover:bg-red-50 active:text-red-700 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg transition-all duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="로그아웃"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">

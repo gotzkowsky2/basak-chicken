@@ -42,19 +42,19 @@ export default function AdminDashboardClient() {
         </div>
         {error && <div className="text-red-500 text-sm text-center mb-2">{error}</div>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link href="/admin/employees" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-blue-50 transition">
+          <Link href="/admin/employees" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-blue-50 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
             <span className="text-lg font-semibold text-blue-700">직원 관리</span>
             <span className="text-sm text-gray-500 mt-2">직원 추가/수정/삭제</span>
           </Link>
-          <Link href="/admin/checklists" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-green-50 transition">
+          <Link href="/admin/checklists" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-green-50 active:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
             <span className="text-lg font-semibold text-green-700">체크리스트 관리</span>
             <span className="text-sm text-gray-500 mt-2">체크리스트 생성/수정/삭제</span>
           </Link>
-          <Link href="/admin/tags" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-purple-50 transition">
+          <Link href="/admin/tags" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-purple-50 active:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
             <span className="text-lg font-semibold text-purple-700">태그 관리</span>
             <span className="text-sm text-gray-500 mt-2">태그 생성/수정/삭제</span>
           </Link>
-          <Link href="/admin/submissions" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-yellow-50 transition">
+          <Link href="/admin/submissions" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-yellow-50 active:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
             <span className="text-lg font-semibold text-yellow-700">제출 현황</span>
             <span className="text-sm text-gray-500 mt-2">직원별 체크리스트 제출 내역</span>
           </Link>
