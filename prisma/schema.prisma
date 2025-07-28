@@ -33,6 +33,28 @@ enum Category {
   MANUAL
 }
 
+// 태그 시스템을 위한 별도 모델
+model ChecklistTag {
+  id        String   @id @default(cuid())
+  name      String   @unique // 태그 이름 (예: "닭고기", "소스", "청소용품", "조리법")
+  color     String?  // 태그 색상 (선택사항)
+  createdAt DateTime @default(now())
+  templates ChecklistTemplate[] @relation("TemplateTags")
+  relations TemplateTagRelation[]
+}
+
+// 태그와 템플릿의 다대다 관계
+model TemplateTagRelation {
+  id        String   @id @default(cuid())
+  templateId String
+  tagId     String
+  template  ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  tag       ChecklistTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([templateId, tagId])
+}
+
 enum TimeSlot {
   PREPARATION
   IN_PROGRESS
@@ -71,6 +93,8 @@ model ChecklistTemplate {
   updatedAt   DateTime              @updatedAt
   submissions ChecklistSubmission[]
   itemResponses ChecklistItemResponse[]
+  tagRelations TemplateTagRelation[]
+  tags        ChecklistTag[]        @relation("TemplateTags")
 }
 
 model ChecklistSubmission {

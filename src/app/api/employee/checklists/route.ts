@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const workplace = searchParams.get('workplace');
     const timeSlot = searchParams.get('timeSlot');
+    const category = searchParams.get('category');
 
     // 직원 인증 확인
     const employeeAuth = req.cookies.get("employee_auth")?.value;
@@ -36,18 +37,21 @@ export async function GET(req: NextRequest) {
       AND: []
     };
 
+    // 카테고리 필터 추가
+    if (category) {
+      whereClause.category = category;
+    } else {
+      // 카테고리가 지정되지 않은 경우 기본값으로 체크리스트만 표시
+      whereClause.category = 'CHECKLIST';
+    }
+
     // 근무지 필터 추가
     if (workplace === 'COMMON') {
       // 공통을 선택한 경우 COMMON 근무지만 표시
       whereClause.AND.push({ workplace: 'COMMON' });
     } else if (workplace && workplace !== 'COMMON') {
-      // 특정 근무지를 선택한 경우 해당 근무지와 공통 근무지 표시
-      whereClause.AND.push({
-        OR: [
-          { workplace: 'COMMON' }, // 공통 근무지는 항상 포함
-          { workplace } // 선택된 근무지
-        ]
-      });
+      // 특정 근무지를 선택한 경우 해당 근무지만 표시 (공통 제외)
+      whereClause.AND.push({ workplace });
     } else {
       // 근무지가 선택되지 않은 경우 모든 근무지 포함
       whereClause.AND.push({
@@ -64,13 +68,8 @@ export async function GET(req: NextRequest) {
       // 공통을 선택한 경우 COMMON 시간대만 표시
       whereClause.AND.push({ timeSlot: 'COMMON' });
     } else if (timeSlot && timeSlot !== 'COMMON') {
-      // 특정 시간대를 선택한 경우 해당 시간대와 공통 시간대 표시
-      whereClause.AND.push({
-        OR: [
-          { timeSlot: 'COMMON' }, // 공통 시간대는 항상 포함
-          { timeSlot } // 선택된 시간대
-        ]
-      });
+      // 특정 시간대를 선택한 경우 해당 시간대만 표시 (공통 제외)
+      whereClause.AND.push({ timeSlot });
     } else {
       // 시간대가 선택되지 않은 경우 모든 시간대 포함
       whereClause.AND.push({
@@ -83,7 +82,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    console.log("필터 조건:", { workplace, timeSlot });
+    console.log("필터 조건:", { workplace, timeSlot, category });
     console.log("WHERE 절:", JSON.stringify(whereClause, null, 2));
 
     // 체크리스트 템플릿 조회

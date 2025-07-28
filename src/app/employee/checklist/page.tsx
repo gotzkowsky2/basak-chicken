@@ -56,11 +56,13 @@ export default function ChecklistPage() {
   const [filters, setFilters] = useState({
     workplace: "HALL",
     timeSlot: "PREPARATION",
+    category: "CHECKLIST", // 기본값은 체크리스트
   });
 
   // 체크리스트 항목 상태 (체크 + 메모)
   const [checklistItems, setChecklistItems] = useState<{[key: string]: ChecklistItem}>({});
   const [notes, setNotes] = useState("");
+  const [showMemoInputs, setShowMemoInputs] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     fetchChecklists();
@@ -71,6 +73,7 @@ export default function ChecklistPage() {
       const params = new URLSearchParams({
         workplace: filters.workplace,
         timeSlot: filters.timeSlot,
+        category: filters.category,
       });
 
       const response = await fetch(`/api/employee/checklists?${params}`, { 
@@ -124,6 +127,13 @@ export default function ChecklistPage() {
     }));
   };
 
+  const toggleMemoInput = (id: string) => {
+    setShowMemoInputs(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -146,6 +156,7 @@ export default function ChecklistPage() {
         body: JSON.stringify({
           workplace: filters.workplace,
           timeSlot: filters.timeSlot,
+          category: filters.category,
           completedItems,
           notes,
         }),
@@ -238,10 +249,10 @@ export default function ChecklistPage() {
         {/* 필터 */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">필터 설정</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                근무지
+                위치
               </label>
               <select
                 value={filters.workplace}
@@ -272,6 +283,25 @@ export default function ChecklistPage() {
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                구분
+              </label>
+              <select
+                value={filters.category}
+                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-800"
+              >
+                <option value="CHECKLIST" className="text-gray-800">체크리스트</option>
+                <option value="PRECAUTIONS" className="text-gray-800">주의사항</option>
+                <option value="HYGIENE" className="text-gray-800">위생규정</option>
+                <option value="SUPPLIES" className="text-gray-800">부대용품</option>
+                <option value="INGREDIENTS" className="text-gray-800">재료</option>
+                <option value="COMMON" className="text-gray-800">공통</option>
+                <option value="MANUAL" className="text-gray-800">매뉴얼</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -279,7 +309,7 @@ export default function ChecklistPage() {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">
-              {getWorkplaceLabel(filters.workplace)} - {getTimeSlotLabel(filters.timeSlot)} 체크리스트
+              {getWorkplaceLabel(filters.workplace)} - {getTimeSlotLabel(filters.timeSlot)} {getCategoryLabel(filters.category)}
             </h2>
             {employee && (
               <div className="text-sm text-gray-600">
@@ -316,23 +346,36 @@ export default function ChecklistPage() {
                           <span className="text-xs text-gray-500">
                             {getWorkplaceLabel(checklist.workplace)} • {getTimeSlotLabel(checklist.timeSlot)}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleMemoInput(checklist.id)}
+                            className={`text-xs font-medium transition ${
+                              checklistItems[checklist.id]?.notes 
+                                ? 'text-green-600 hover:text-green-800' 
+                                : 'text-blue-600 hover:text-blue-800'
+                            }`}
+                          >
+                            메모 {checklistItems[checklist.id]?.notes && '(있음)'}
+                          </button>
                         </div>
                       </div>
                     </div>
                     
-                    {/* 개별 메모 입력 필드 */}
-                    <div className="ml-7">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        메모 (선택사항)
-                      </label>
-                      <textarea
-                        value={checklistItems[checklist.id]?.notes || ""}
-                        onChange={(e) => handleNotesChange(checklist.id, e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-800 placeholder-gray-500 text-sm"
-                        rows={2}
-                        placeholder="이 항목에 대한 메모를 입력하세요..."
-                      />
-                    </div>
+                    {/* 개별 메모 입력 필드 (접을 수 있음) */}
+                    {showMemoInputs[checklist.id] && (
+                      <div className="ml-7 mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          메모 (선택사항)
+                        </label>
+                        <textarea
+                          value={checklistItems[checklist.id]?.notes || ""}
+                          onChange={(e) => handleNotesChange(checklist.id, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-800 placeholder-gray-500 text-sm"
+                          rows={2}
+                          placeholder="이 항목에 대한 메모를 입력하세요..."
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

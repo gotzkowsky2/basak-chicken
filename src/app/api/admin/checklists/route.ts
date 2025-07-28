@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { content, workplace, category, timeSlot } = await req.json();
+    const { content, workplace, category, timeSlot, selectedTags } = await req.json();
     
     // 필수 필드 검증
     if (!content || !workplace || !category || !timeSlot) {
@@ -73,6 +73,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 태그 연결 (선택된 태그가 있는 경우)
+    if (selectedTags && selectedTags.length > 0) {
+      await prisma.templateTagRelation.createMany({
+        data: selectedTags.map((tagId: string) => ({
+          templateId: checklistTemplate.id,
+          tagId: tagId,
+        })),
+      });
+    }
+
     return NextResponse.json({ 
       success: true, 
       checklistTemplate 
@@ -116,7 +126,30 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ checklists });
+    // 각 체크리스트에 대한 태그 정보 조회
+    const checklistsWithTags = await Promise.all(
+      checklists.map(async (checklist) => {
+        const tagRelations = await prisma.templateTagRelation.findMany({
+          where: { templateId: checklist.id },
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              }
+            }
+          }
+        });
+
+        return {
+          ...checklist,
+          tags: tagRelations.map(relation => relation.tag)
+        };
+      })
+    );
+
+    return NextResponse.json({ checklists: checklistsWithTags });
 
   } catch (error) {
     console.error("체크리스트 목록 조회 오류:", error);

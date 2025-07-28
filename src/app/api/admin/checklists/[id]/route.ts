@@ -11,7 +11,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { content, workplace, category, timeSlot, isActive } = await req.json();
+    const { content, workplace, category, timeSlot, isActive, selectedTags } = await req.json();
     const { id: checklistId } = await params;
 
     // 관리자 인증 확인
@@ -56,6 +56,11 @@ export async function PUT(
       return NextResponse.json({ error: "체크리스트를 찾을 수 없습니다." }, { status: 404 });
     }
 
+    // 기존 태그 관계 삭제
+    await prisma.templateTagRelation.deleteMany({
+      where: { templateId: checklistId }
+    });
+
     // 체크리스트 수정
     const updatedChecklist = await prisma.checklistTemplate.update({
       where: { id: checklistId },
@@ -69,6 +74,16 @@ export async function PUT(
         inputDate: new Date(),
       },
     });
+
+    // 새로운 태그 관계 생성 (선택된 태그가 있는 경우)
+    if (selectedTags && selectedTags.length > 0) {
+      await prisma.templateTagRelation.createMany({
+        data: selectedTags.map((tagId: string) => ({
+          templateId: checklistId,
+          tagId: tagId,
+        })),
+      });
+    }
 
     return NextResponse.json({ success: true, checklist: updatedChecklist });
   } catch (error) {

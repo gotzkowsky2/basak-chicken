@@ -1,0 +1,14 @@
+# 빌드된 파일들
+.next/
+out/
+dist/
+
+# 자동 생성된 파일들
+src/generated/
+*.generated.*
+
+# 외부 라이브러리
+node_modules/
+
+# 환경 설정 파일들
+.env* 

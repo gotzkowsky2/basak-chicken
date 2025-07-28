@@ -41,7 +41,7 @@ export default function AdminDashboardClient() {
         <div className="flex justify-between items-center mb-4">
         </div>
         {error && <div className="text-red-500 text-sm text-center mb-2">{error}</div>}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link href="/admin/employees" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-blue-50 transition">
             <span className="text-lg font-semibold text-blue-700">직원 관리</span>
             <span className="text-sm text-gray-500 mt-2">직원 추가/수정/삭제</span>
@@ -49,6 +49,10 @@ export default function AdminDashboardClient() {
           <Link href="/admin/checklists" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-green-50 transition">
             <span className="text-lg font-semibold text-green-700">체크리스트 관리</span>
             <span className="text-sm text-gray-500 mt-2">체크리스트 생성/수정/삭제</span>
+          </Link>
+          <Link href="/admin/tags" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-purple-50 transition">
+            <span className="text-lg font-semibold text-purple-700">태그 관리</span>
+            <span className="text-sm text-gray-500 mt-2">태그 생성/수정/삭제</span>
           </Link>
           <Link href="/admin/submissions" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-yellow-50 transition">
             <span className="text-lg font-semibold text-yellow-700">제출 현황</span>
