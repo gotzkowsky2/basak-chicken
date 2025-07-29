@@ -85,9 +85,24 @@ export async function GET(req: NextRequest) {
     console.log("필터 조건:", { workplace, timeSlot, category });
     console.log("WHERE 절:", JSON.stringify(whereClause, null, 2));
 
-    // 체크리스트 템플릿 조회
+    // 체크리스트 템플릿 조회 (연결된 항목들 포함)
     const checklists = await prisma.checklistTemplate.findMany({
       where: whereClause,
+      include: {
+        items: {
+          orderBy: { order: 'asc' },
+          include: {
+            inventoryItem: true,
+            precautions: true,
+            manuals: true
+          }
+        },
+        tagRelations: {
+          include: {
+            tag: true
+          }
+        }
+      },
       orderBy: [
         { category: 'asc' },
         { createdAt: 'desc' }

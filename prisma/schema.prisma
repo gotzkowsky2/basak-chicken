@@ -15,6 +15,9 @@ model Admin {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // 재오픈한 체크리스트들
+  reopenedChecklists ChecklistInstance[]
 }
 
 enum Workplace {
@@ -123,54 +126,80 @@ model Employee {
   isSuperAdmin   Boolean               @default(false)
   isTempPassword Boolean               @default(false)
   address        String?
-  submissions    ChecklistSubmission[]
   inventoryChecks InventoryCheck[]
   purchaseRequests PurchaseRequest[]
   purchasedItems PurchaseRequestItem[]
+  checklistInstances ChecklistInstance[]
+  lockedTimeSlots TimeSlotChecklistStatus[]
 }
 
 model ChecklistTemplate {
-  id          String                @id @default(cuid())
-  content     String                // 체크리스트 내용
-  inputter    String                // 입력자 (관리자명)
-  inputDate   DateTime              @default(now()) // 입력일
-  workplace   Workplace             // 근무지 (홀/주방/공통)
-  category    Category              // 구분 (체크리스트/공통)
-  timeSlot    TimeSlot              // 시간 (준비/진행/마감/공통)
-  isActive    Boolean               @default(true)
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  submissions ChecklistSubmission[]
-  itemResponses ChecklistItemResponse[]
+  id        String   @id @default(cuid())
+  name      String   @default("") // 기본값 설정
+  content   String
+  workplace Workplace
+  category  Category
+  timeSlot  TimeSlot
+  isActive  Boolean  @default(true)
+  inputter  String
+  inputDate DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // 관계
+  items     ChecklistItem[]
+  instances ChecklistInstance[]
   tagRelations ChecklistTemplateTagRelation[]
-  tags        Tag[]                 @relation("ChecklistTemplateTags")
-  items       ChecklistItem[]
+  tags      Tag[] @relation("ChecklistTemplateTags")
 }
 
-model ChecklistSubmission {
-  id                String                @id @default(cuid())
-  employeeId        String
-  templateId        String
-  submissionDate    DateTime              @default(now()) // 제출 날짜
-  workplace         Workplace             // 근무지
-  timeSlot          TimeSlot              // 시간대
-  isCompleted       Boolean               @default(false)
-  submittedAt       DateTime              @default(now())
-  notes             String?
-  template          ChecklistTemplate     @relation(fields: [templateId], references: [id])
-  employee          Employee              @relation(fields: [employeeId], references: [id])
-  itemResponses     ChecklistItemResponse[]
+// 체크리스트 인스턴스 (통합 모델) - 모든 체크리스트 관련 기능 통합
+model ChecklistInstance {
+  id            String   @id @default(cuid())
+  employeeId    String?  // 선택적으로 변경
+  templateId    String
+  date          DateTime // 날짜 (시간은 제외)
+  workplace     Workplace
+  timeSlot      TimeSlot
+  
+  // 상태 관리
+  isCompleted   Boolean  @default(false)
+  isSubmitted   Boolean  @default(false)
+  submittedAt   DateTime?
+  isReopened    Boolean  @default(false)
+  reopenedAt    DateTime?
+  reopenedBy    String?
+  reopenReason  String?
+  
+  // 메타데이터
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // 관계
+  employee      Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  template      ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  reopenedByAdmin Admin? @relation(fields: [reopenedBy], references: [id])
+  
+  // 연결된 항목들의 진행 상태
+  connectedItemsProgress ConnectedItemProgress[]
+
+  @@unique([workplace, timeSlot, date]) // 하루에 하나의 위치/시간대 조합만 존재
 }
 
-model ChecklistItemResponse {
-  id           String              @id @default(cuid())
-  submissionId String
-  templateId   String
-  isCompleted  Boolean             @default(false)
-  notes        String?
-  completedAt  DateTime?
-  submission   ChecklistSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  template     ChecklistTemplate   @relation(fields: [templateId], references: [id])
+// 연결된 항목들의 진행 상태 저장 모델
+model ConnectedItemProgress {
+  id        String   @id @default(cuid())
+  instanceId String
+  itemId    String
+  currentStock Int?
+  updatedStock Int?
+  isCompleted Boolean @default(false)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  instance  ChecklistInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 }
 
 // 새로운 모델들
@@ -274,6 +303,7 @@ model PurchaseRequest {
   status         PurchaseStatus  @default(PENDING)
   priority       PurchasePriority @default(MEDIUM)
   estimatedCost  Float?
+  notes          String?
   approvedBy     String?
   approvedAt     DateTime?
   createdAt      DateTime        @default(now())
@@ -286,7 +316,7 @@ model PurchaseRequest {
 
 model PurchaseRequestItem {
   id           String   @id @default(cuid())
-  requestId    String
+  purchaseRequestId String
   itemId       String
   quantity     Float
   unitPrice    Float?
@@ -296,7 +326,7 @@ model PurchaseRequestItem {
   receivedAt   DateTime?
   
   // 관계
-  request      PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request      PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
   item         InventoryItem @relation(fields: [itemId], references: [id])
   employee     Employee? @relation(fields: [purchasedBy], references: [id])
 }
@@ -320,6 +350,25 @@ model ChecklistItem {
   inventoryItemId String?
   precautions     Precaution[] @relation("PrecautionItems")
   manuals         Manual[] @relation("ManualItems")
+}
+
+// 6. 시간대별 체크리스트 상태 관리
+model TimeSlotChecklistStatus {
+  id        String   @id @default(cuid())
+  date      DateTime // 날짜 (시간은 제외)
+  workplace Workplace
+  timeSlot  TimeSlot
+  isLocked  Boolean  @default(false)
+  lockedAt  DateTime?
+  lockedBy  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  employee  Employee? @relation(fields: [lockedBy], references: [id])
+
+  @@unique([date, workplace, timeSlot]) // 하루에 하나의 위치/시간대 조합만 존재
 }
 
 

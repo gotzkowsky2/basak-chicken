@@ -32,8 +32,38 @@ export async function POST(request: NextRequest) {
     const employee = await verifyEmployeeAuth();
 
     const body = await request.json();
-    const { items, priority, estimatedCost, notes } = body;
+    const { items, itemId, quantity, priority, estimatedCost, notes } = body;
 
+    // 단일 아이템 구매 요청인 경우
+    if (itemId && quantity) {
+      const purchaseRequest = await prisma.purchaseRequest.create({
+        data: {
+          requestedBy: employee.id,
+          status: 'PENDING',
+          priority: priority || 'MEDIUM',
+          estimatedCost: estimatedCost || null,
+          notes: notes || null,
+          requestedAt: new Date()
+        }
+      });
+
+      const purchaseRequestItem = await prisma.purchaseRequestItem.create({
+        data: {
+          purchaseRequestId: purchaseRequest.id,
+          itemId: itemId,
+          quantity: quantity,
+          unitPrice: null,
+          notes: notes || null
+        }
+      });
+
+      return NextResponse.json({
+        ...purchaseRequest,
+        items: [purchaseRequestItem]
+      }, { status: 201 });
+    }
+
+    // 다중 아이템 구매 요청인 경우
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
         { error: '구매할 아이템이 필요합니다.' },

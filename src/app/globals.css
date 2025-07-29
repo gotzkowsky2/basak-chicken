@@ -27,10 +27,19 @@ body {
 
 /* 모바일 터치 피드백 개선 */
 @media (hover: none) and (pointer: coarse) {
-  /* 모바일에서 터치 영역 확대 */
-  button, a, input[type="checkbox"], input[type="radio"] {
+  /* 모바일에서 터치 영역 확대 (홈 아이콘 제외) */
+  button:not([class*="home-icon"]), 
+  a:not([class*="home-icon"]), 
+  input[type="checkbox"], 
+  input[type="radio"] {
     min-height: 44px;
     min-width: 44px;
+  }
+  
+  /* 홈 아이콘은 적절한 크기 유지 */
+  .home-icon {
+    min-height: auto;
+    min-width: auto;
   }
   
   /* 터치 시 시각적 피드백 */

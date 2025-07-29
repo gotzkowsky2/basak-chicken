@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { content, workplace, category, timeSlot, selectedTags } = await req.json();
+    const { name, content, workplace, category, timeSlot, selectedTags } = await req.json();
     
     // 필수 필드 검증
     if (!content || !workplace || !category || !timeSlot) {
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
     // 체크리스트 템플릿 생성
     const checklistTemplate = await prisma.checklistTemplate.create({
       data: {
+        name: name || `${workplace} - ${category} - ${timeSlot}`, // 기본 이름 생성
         content,
         inputter: employee.name,
         workplace,

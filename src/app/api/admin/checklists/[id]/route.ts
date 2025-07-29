@@ -57,7 +57,7 @@ export async function PUT(
     }
 
     // 기존 태그 관계 삭제
-    await prisma.templateTagRelation.deleteMany({
+    await prisma.checklistTemplateTagRelation.deleteMany({
       where: { templateId: checklistId }
     });
 
@@ -77,7 +77,7 @@ export async function PUT(
 
     // 새로운 태그 관계 생성 (선택된 태그가 있는 경우)
     if (selectedTags && selectedTags.length > 0) {
-      await prisma.templateTagRelation.createMany({
+      await prisma.checklistTemplateTagRelation.createMany({
         data: selectedTags.map((tagId: string) => ({
           templateId: checklistId,
           tagId: tagId,

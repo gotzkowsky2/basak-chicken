@@ -10,8 +10,8 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    // 태그가 사용 중인지 확인
-    const tagUsage = await prisma.templateTagRelation.findFirst({
+    // 태그 사용 여부 확인
+    const tagUsage = await prisma.checklistTemplateTagRelation.findFirst({
       where: { tagId: id }
     });
     
@@ -23,7 +23,7 @@ export async function DELETE(
     }
     
     // 태그 삭제
-    await prisma.checklistTag.delete({
+    await prisma.tag.delete({
       where: { id }
     });
     

@@ -91,4 +91,61 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// PUT: 직원용 재고 수량 업데이트
+export async function PUT(request: NextRequest) {
+  try {
+    const employee = await verifyEmployeeAuth();
+    const body = await request.json();
+    
+    const { itemId, currentStock } = body;
+
+    if (!itemId || currentStock === undefined) {
+      return NextResponse.json(
+        { error: '재고 아이템 ID와 수량이 필요합니다.' },
+        { status: 400 }
+      );
+    }
+
+    // 재고 아이템 존재 확인
+    const inventoryItem = await prisma.inventoryItem.findUnique({
+      where: { id: itemId }
+    });
+
+    if (!inventoryItem) {
+      return NextResponse.json(
+        { error: '재고 아이템을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 재고 수량 업데이트
+    const updatedItem = await prisma.inventoryItem.update({
+      where: { id: itemId },
+      data: {
+        currentStock: currentStock,
+        lastUpdated: new Date(),
+        lastCheckedBy: employee.id
+      }
+    });
+
+    return NextResponse.json({
+      message: '재고 수량이 업데이트되었습니다.',
+      item: {
+        id: updatedItem.id,
+        name: updatedItem.name,
+        currentStock: updatedItem.currentStock,
+        minStock: updatedItem.minStock,
+        unit: updatedItem.unit
+      }
+    });
+
+  } catch (error: any) {
+    console.error('직원용 재고 업데이트 오류:', error);
+    return NextResponse.json(
+      { error: error.message || '재고 업데이트 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
 } 
