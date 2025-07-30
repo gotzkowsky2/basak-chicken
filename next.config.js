@@ -41,8 +41,10 @@ const nextConfig = {
   // 정적 파일 캐싱
   experimental: {
     optimizeCss: true,
-    serverComponentsExternalPackages: ['bcryptjs']
   },
+  
+  // 서버 컴포넌트 외부 패키지
+  serverExternalPackages: ['bcryptjs']
 };
 
 module.exports = nextConfig; 

@@ -18,12 +18,14 @@ interface ChecklistTemplate {
 interface ChecklistItem {
   id: string;
   templateId: string;
+  parentId?: string;
   type: string;
   content: string;
   instructions?: string;
   order: number;
   isRequired: boolean;
   isActive: boolean;
+  children?: ChecklistItem[];
   inventoryItem?: InventoryItem;
   precautions?: Precaution[];
   manuals?: Manual[];
@@ -345,15 +347,28 @@ export default function ChecklistPage() {
           // 첫 번째 인스턴스를 기준으로 템플릿 정보 생성
           const firstInstance = groupInstances[0];
           
+          console.log('=== 그룹 처리 중 ===');
+          console.log('템플릿 이름:', templateName);
+          console.log('그룹 인스턴스 수:', groupInstances.length);
+          console.log('첫 번째 인스턴스:', firstInstance);
+          console.log('첫 번째 인스턴스 template:', firstInstance.template);
+          console.log('첫 번째 인스턴스 template.items:', firstInstance.template?.items);
+          
           // 모든 인스턴스의 항목들을 하나로 합침 (중복 제거)
-          const allItems = groupInstances.flatMap((instance: any) => 
-            instance.template.items || []
-          );
+          const allItems = groupInstances.flatMap((instance: any) => {
+            console.log('인스턴스 처리 중:', instance.id);
+            console.log('인스턴스 template.items:', instance.template?.items);
+            return instance.template?.items || [];
+          });
+          
+          console.log('모든 항목들 (중복 제거 전):', allItems);
           
           // 중복 제거 (같은 ID를 가진 항목은 하나만 유지)
           const uniqueItems = allItems.filter((item: any, index: number, self: any[]) => 
             index === self.findIndex((t: any) => t.id === item.id)
           );
+          
+          console.log('중복 제거된 항목들:', uniqueItems);
           
           return {
             id: templateName, // 템플릿 그룹 ID로 사용
@@ -997,15 +1012,16 @@ export default function ChecklistPage() {
               {selectedChecklist.items && selectedChecklist.items.length > 0 ? (
                 selectedChecklist.items.map((item) => (
                   <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
+                    {/* 카테고리 헤더 */}
+                    <div className="flex items-start gap-3 mb-3">
                       <input
                         type="checkbox"
-                        checked={checklistItems[selectedChecklist.id]?.isCompleted || false}
-                        onChange={() => handleCheckboxChange(selectedChecklist.id)}
+                        checked={checklistItems[item.id]?.isCompleted || false}
+                        onChange={() => handleCheckboxChange(item.id)}
                         className="mt-1"
                       />
                       <div className="flex-1">
-                        <div className="font-medium text-gray-800 mb-1">
+                        <div className="font-semibold text-lg text-gray-800 mb-1">
                           {item.content}
                         </div>
                         {item.instructions && (
@@ -1013,20 +1029,57 @@ export default function ChecklistPage() {
                             {item.instructions}
                           </div>
                         )}
-                        
-                        {/* 연결된 항목들 */}
-                        {item.inventoryItem && (
-                          <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-2">
-                            <div className="text-sm font-medium text-blue-800 mb-1">
-                              재고 확인: {item.inventoryItem.name}
-                            </div>
-                            <div className="text-xs text-blue-600">
-                              현재: {item.inventoryItem.currentStock} {item.inventoryItem.unit}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
+
+                    {/* 하위 항목들 */}
+                    {item.children && item.children.length > 0 && (
+                      <div className="ml-8 space-y-2">
+                        {item.children.map((child) => (
+                          <div key={child.id} className="border-l-2 border-gray-200 pl-4 py-2">
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={checklistItems[child.id]?.isCompleted || false}
+                                onChange={() => handleCheckboxChange(child.id)}
+                                className="mt-1"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-800 mb-1">
+                                  {child.content}
+                                </div>
+                                {child.instructions && (
+                                  <div className="text-sm text-gray-600 mb-2">
+                                    {child.instructions}
+                                  </div>
+                                )}
+                                
+                                {/* 연결된 항목들 */}
+                                {child.inventoryItem && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-2">
+                                    <div className="text-sm font-medium text-blue-800 mb-1">
+                                      재고 확인: {child.inventoryItem.name}
+                                    </div>
+                                    <div className="text-xs text-blue-600">
+                                      현재: {child.inventoryItem.currentStock} {child.inventoryItem.unit}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 카테고리 자체가 항목인 경우 (하위 항목이 없는 경우) */}
+                    {(!item.children || item.children.length === 0) && (
+                      <div className="ml-8">
+                        <div className="text-sm text-gray-500 italic">
+                          이 카테고리는 체크만 하면 됩니다.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (

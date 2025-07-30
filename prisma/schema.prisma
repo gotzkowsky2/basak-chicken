@@ -216,8 +216,7 @@ model Precaution {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // 체크리스트와의 연동
-  checklistItems ChecklistItem[] @relation("PrecautionItems")
+  // 태그 관계
   tagRelations PrecautionTagRelation[]
   tags         Tag[] @relation("PrecautionTags")
 }
@@ -236,8 +235,7 @@ model Manual {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
-  // 체크리스트와의 연동
-  checklistItems ChecklistItem[] @relation("ManualItems")
+  // 태그 관계
   tagRelations ManualTagRelation[]
   tags         Tag[] @relation("ManualTags")
 }
@@ -260,7 +258,6 @@ model InventoryItem {
   // 관계
   checks       InventoryCheck[]
   purchaseItems PurchaseRequestItem[]
-  checklistItems ChecklistItem[] @relation("InventoryItems")
   tagRelations InventoryItemTagRelation[]
   tags         Tag[] @relation("InventoryItemTags")
 }
@@ -335,8 +332,9 @@ model PurchaseRequestItem {
 model ChecklistItem {
   id              String   @id @default(cuid())
   templateId      String
-  type            String   // "check", "inventory", "manual", "precaution"
-  content         String
+  parentId        String?  // 상위 항목 ID (하위 항목 구조 지원)
+  type            String   // "check", "category" - 체크리스트 항목 자체
+  content         String   // 체크리스트 항목 내용 (예: "재료체크", "청소체크")
   instructions    String?
   order           Int      @default(0)
   isRequired      Boolean  @default(true)
@@ -346,29 +344,56 @@ model ChecklistItem {
   
   // 관계
   template        ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  inventoryItem   InventoryItem? @relation("InventoryItems", fields: [inventoryItemId], references: [id])
-  inventoryItemId String?
-  precautions     Precaution[] @relation("PrecautionItems")
-  manuals         Manual[] @relation("ManualItems")
+  parent          ChecklistItem? @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children        ChecklistItem[] @relation("ParentChild")
+  
+  // 연결된 항목들 (새로운 관계 테이블 사용)
+  connectedItems  ChecklistItemConnection[]
+}
+
+// 체크리스트 항목과 연결된 항목들의 관계 테이블
+model ChecklistItemConnection {
+  id              String   @id @default(cuid())
+  checklistItemId String
+  itemType        String   // "inventory", "precaution", "manual"
+  itemId          String   // 연결된 항목의 ID
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  
+  // 관계
+  checklistItem   ChecklistItem @relation(fields: [checklistItemId], references: [id], onDelete: Cascade)
+  
+  @@unique([checklistItemId, itemType, itemId])
 }
 
 // 6. 시간대별 체크리스트 상태 관리
 model TimeSlotChecklistStatus {
   id        String   @id @default(cuid())
-  date      DateTime // 날짜 (시간은 제외)
-  workplace Workplace
+  date      DateTime @db.Date
   timeSlot  TimeSlot
-  isLocked  Boolean  @default(false)
-  lockedAt  DateTime?
-  lockedBy  String?
-  notes     String?
+  workplace Workplace
+  status    String   // "locked", "unlocked", "completed"
+  lockedBy  String?  // Employee ID
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // 관계
   employee  Employee? @relation(fields: [lockedBy], references: [id])
 
-  @@unique([date, workplace, timeSlot]) // 하루에 하나의 위치/시간대 조합만 존재
+  @@unique([date, timeSlot, workplace])
+}
+
+// POS 보고서 모델
+model PosReport {
+  id               String   @id @default(cuid())
+  filename         String   // 저장된 파일명
+  originalFilename String   // 원본 파일명
+  recordCount      Int      // 레코드 수
+  uploadDate       DateTime @default(now())
+  uploadedBy       String   // 업로드한 사용자
+  data             Json     // CSV 데이터 (JSON 형태로 저장)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 

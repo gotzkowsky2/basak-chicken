@@ -55,9 +55,22 @@ export async function GET(request: NextRequest) {
           include: {
             items: {
               include: {
+                children: {
+                  include: {
+                    inventoryItem: true,
+                    precautions: true,
+                    manuals: true
+                  }
+                },
                 inventoryItem: true,
                 precautions: true,
                 manuals: true
+              },
+              where: {
+                parentId: null // 최상위 항목들만 (카테고리)
+              },
+              orderBy: {
+                order: 'asc'
               }
             }
           }
@@ -69,7 +82,51 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(instances);
+    console.log('=== API 응답 데이터 ===');
+    console.log('조회된 인스턴스 수:', instances.length);
+    instances.forEach((instance, index) => {
+      console.log(`인스턴스 ${index + 1}:`, {
+        id: instance.id,
+        templateId: instance.templateId,
+        template: {
+          id: instance.template.id,
+          content: instance.template.content,
+          itemsCount: instance.template.items?.length || 0
+        }
+      });
+    });
+
+    // 템플릿에 items가 없는 경우, 직접 조회
+    const instancesWithItems = await Promise.all(instances.map(async (instance) => {
+      if (!instance.template.items || instance.template.items.length === 0) {
+        console.log(`템플릿 ${instance.templateId}에 items가 없음, 직접 조회 시도`);
+        
+        // 해당 템플릿의 items를 직접 조회
+        const templateWithItems = await prisma.checklistTemplate.findUnique({
+          where: { id: instance.templateId },
+          include: {
+            items: {
+              include: {
+                inventoryItem: true,
+                precautions: true,
+                manuals: true
+              }
+            }
+          }
+        });
+        
+        if (templateWithItems) {
+          console.log(`템플릿 ${instance.templateId}에서 ${templateWithItems.items.length}개 items 조회됨`);
+          return {
+            ...instance,
+            template: templateWithItems
+          };
+        }
+      }
+      return instance;
+    }));
+
+    return NextResponse.json(instancesWithItems);
   } catch (error: any) {
     console.error('체크리스트 진행 상태 조회 오류:', error);
     return NextResponse.json(

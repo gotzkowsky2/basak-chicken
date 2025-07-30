@@ -5,14 +5,54 @@ const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
 
+// 기본 템플릿 이름 생성 함수
+function generateDefaultName(workplace: string, category: string, timeSlot: string): string {
+  const workplaceLabels: Record<string, string> = {
+    "HALL": "홀",
+    "KITCHEN": "주방", 
+    "COMMON": "공통"
+  };
+  
+  const timeSlotLabels: Record<string, string> = {
+    "PREPARATION": "준비",
+    "IN_PROGRESS": "진행",
+    "CLOSING": "마감",
+    "COMMON": "공통"
+  };
+  
+  const workplaceLabel = workplaceLabels[workplace] || workplace;
+  const timeSlotLabel = timeSlotLabels[timeSlot] || timeSlot;
+  
+  return `${workplaceLabel}, ${timeSlotLabel}`;
+}
+
+// POST: 새 템플릿 생성
 export async function POST(req: NextRequest) {
   try {
-    const { name, content, workplace, category, timeSlot, selectedTags } = await req.json();
+    // 인증 확인
+    const adminAuth = req.cookies.get("admin_auth")?.value;
+    const employeeAuth = req.cookies.get("employee_auth")?.value;
+    
+    if (!adminAuth && !employeeAuth) {
+      return NextResponse.json({ error: "관리자 인증이 필요합니다." }, { status: 401 });
+    }
+
+    const authId = adminAuth || employeeAuth;
+    const employee = await prisma.employee.findUnique({ 
+      where: { id: authId },
+      select: { name: true, isSuperAdmin: true }
+    });
+
+    if (!employee || !employee.isSuperAdmin) {
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+    }
+
+    const { name, workplace, category, timeSlot } = await req.json();
     
     // 필수 필드 검증
-    if (!content || !workplace || !category || !timeSlot) {
+    if (!workplace || !category || !timeSlot) {
       return NextResponse.json({ 
-        error: "모든 필드를 입력해주세요." 
+        error: "위치, 구분, 시간을 모두 입력해주세요." 
       }, { status: 400 });
     }
 
@@ -39,33 +79,14 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // 관리자 인증 확인
-    const adminAuth = req.cookies.get("admin_auth")?.value;
-    const employeeAuth = req.cookies.get("employee_auth")?.value;
-    
-    if (!adminAuth && !employeeAuth) {
-      return NextResponse.json({ 
-        error: "관리자 인증이 필요합니다." 
-      }, { status: 401 });
-    }
-
-    const authId = adminAuth || employeeAuth;
-    const employee = await prisma.employee.findUnique({ 
-      where: { id: authId },
-      select: { name: true, isSuperAdmin: true }
-    });
-
-    if (!employee || !employee.isSuperAdmin) {
-      return NextResponse.json({ 
-        error: "관리자 권한이 필요합니다." 
-      }, { status: 403 });
-    }
+    // 템플릿 이름 생성
+    const templateName = name || generateDefaultName(workplace, category, timeSlot);
 
     // 체크리스트 템플릿 생성
     const checklistTemplate = await prisma.checklistTemplate.create({
       data: {
-        name: name || `${workplace} - ${category} - ${timeSlot}`, // 기본 이름 생성
-        content,
+        name: templateName,
+        content: "", // 빈 내용으로 시작
         inputter: employee.name,
         workplace,
         category,
@@ -74,39 +95,25 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 태그 연결 (선택된 태그가 있는 경우)
-    if (selectedTags && selectedTags.length > 0) {
-      await prisma.checklistTemplateTagRelation.createMany({
-        data: selectedTags.map((tagId: string) => ({
-          templateId: checklistTemplate.id,
-          tagId: tagId,
-        })),
-      });
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      checklistTemplate 
-    });
-
+    return NextResponse.json(checklistTemplate, { status: 201 });
   } catch (error) {
-    console.error("체크리스트 등록 오류:", error);
-    return NextResponse.json({ 
-      error: `체크리스트 등록 중 오류가 발생했습니다: ${error instanceof Error ? error.message : 'Unknown error'}` 
-    }, { status: 500 });
+    console.error("템플릿 생성 오류:", error);
+    return NextResponse.json(
+      { error: "템플릿 생성에 실패했습니다." },
+      { status: 500 }
+    );
   }
 }
 
+// GET: 템플릿 목록 조회
 export async function GET(req: NextRequest) {
   try {
-    // 관리자 인증 확인
+    // 인증 확인
     const adminAuth = req.cookies.get("admin_auth")?.value;
     const employeeAuth = req.cookies.get("employee_auth")?.value;
     
     if (!adminAuth && !employeeAuth) {
-      return NextResponse.json({ 
-        error: "관리자 인증이 필요합니다." 
-      }, { status: 401 });
+      return NextResponse.json({ error: "관리자 인증이 필요합니다." }, { status: 401 });
     }
 
     const authId = adminAuth || employeeAuth;
@@ -116,62 +123,64 @@ export async function GET(req: NextRequest) {
     });
 
     if (!employee || !employee.isSuperAdmin) {
-      return NextResponse.json({ 
-        error: "관리자 권한이 필요합니다." 
-      }, { status: 403 });
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     }
 
-    // 체크리스트 템플릿 목록 조회
-    const checklists = await prisma.checklistTemplate.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: 'desc' },
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get('search') || '';
+    const workplace = searchParams.get('workplace') || '';
+    const category = searchParams.get('category') || '';
+    const timeSlot = searchParams.get('timeSlot') || '';
+
+    // 필터 조건 구성
+    const where: any = { isActive: true };
+
+    if (search) {
+      where.name = { contains: search, mode: 'insensitive' };
+    }
+
+    if (workplace) {
+      where.workplace = workplace;
+    }
+
+    if (category) {
+      where.category = category;
+    }
+
+    if (timeSlot) {
+      where.timeSlot = timeSlot;
+    }
+
+    // 템플릿 목록 조회 (항목 수 포함)
+    const templates = await prisma.checklistTemplate.findMany({
+      where,
+      orderBy: { inputDate: 'desc' },
+      include: {
+        _count: {
+          select: { items: true }
+        }
+      }
     });
 
-    // 각 체크리스트에 대한 태그 정보와 항목들 조회
-    const checklistsWithTagsAndItems = await Promise.all(
-      checklists.map(async (checklist) => {
-        const tagRelations = await prisma.checklistTemplateTagRelation.findMany({
-          where: { templateId: checklist.id },
-          include: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                color: true,
-              }
-            }
-          }
-        });
+    // 응답 데이터 변환
+    const transformedTemplates = templates.map((template: any) => ({
+      id: template.id,
+      name: template.name,
+      workplace: template.workplace,
+      category: template.category,
+      timeSlot: template.timeSlot,
+      inputter: template.inputter,
+      inputDate: template.inputDate,
+      isActive: template.isActive,
+      itemCount: template._count.items
+    }));
 
-        // 체크리스트 항목들 조회
-        const items = await prisma.checklistItem.findMany({
-          where: { 
-            templateId: checklist.id,
-            isActive: true 
-          },
-          include: {
-            inventoryItem: true,
-            precautions: true,
-            manuals: true,
-          },
-          orderBy: { order: 'asc' }
-        });
-
-        return {
-          ...checklist,
-          tags: tagRelations.map(relation => relation.tag),
-          items: items
-        };
-      })
-    );
-
-    return NextResponse.json({ checklists: checklistsWithTagsAndItems });
-
+    return NextResponse.json(transformedTemplates);
   } catch (error) {
-    console.error("체크리스트 목록 조회 오류:", error);
-    console.error("오류 상세:", error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ 
-      error: `체크리스트 목록 조회 중 오류가 발생했습니다: ${error instanceof Error ? error.message : 'Unknown error'}` 
-    }, { status: 500 });
+    console.error("템플릿 목록 조회 오류:", error);
+    return NextResponse.json(
+      { error: "템플릿 목록을 불러오는데 실패했습니다." },
+      { status: 500 }
+    );
   }
 } 

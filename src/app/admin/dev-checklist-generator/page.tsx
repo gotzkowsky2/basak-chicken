@@ -8,6 +8,7 @@ interface ChecklistTemplate {
   workplace: string;
   category: string;
   timeSlot: string;
+  isActive: boolean; // 활성 상태 추가
 }
 
 interface ChecklistInstance {
@@ -73,18 +74,20 @@ export default function DevChecklistGeneratorPage() {
         const data = await response.json();
         console.log('API 응답 데이터:', data);
         
-        // 모든 템플릿을 가져와서 name을 올바른 형태로 변환
-        const templates = (data.checklists || []).map((template: any) => {
-          console.log('처리 중인 템플릿:', template);
-          
-          // 템플릿 이름을 올바른 형태로 변환
-          const workplaceLabel = getWorkplaceLabel(template.workplace);
-          const timeSlotLabel = getTimeSlotLabel(template.timeSlot);
-          template.name = `${workplaceLabel}, ${timeSlotLabel}`;
-          console.log('변환된 이름:', template.name);
-          
-          return template;
-        });
+        // 활성화된 템플릿만 필터링하고 name을 올바른 형태로 변환
+        const templates = (data.checklists || [])
+          .filter((template: any) => template.isActive) // 활성화된 템플릿만 선택
+          .map((template: any) => {
+            console.log('처리 중인 템플릿:', template);
+            
+            // 템플릿 이름을 올바른 형태로 변환
+            const workplaceLabel = getWorkplaceLabel(template.workplace);
+            const timeSlotLabel = getTimeSlotLabel(template.timeSlot);
+            template.name = `${workplaceLabel}, ${timeSlotLabel}`;
+            console.log('변환된 이름:', template.name);
+            
+            return template;
+          });
         
         console.log('최종 템플릿 목록:', templates);
         setAvailableTemplates(templates);
@@ -419,6 +422,16 @@ export default function DevChecklistGeneratorPage() {
                                 <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
                                   {group.templates.length}개 항목
                                 </span>
+                              </div>
+                              
+                              {/* 템플릿 ID 표시 (디버깅용) */}
+                              <div className="text-xs text-gray-400 ml-6 mb-2">
+                                {group.templates.map((template, index) => (
+                                  <div key={template.id} className="text-gray-400">
+                                    ID: {template.id.substring(0, 8)}... 
+                                    {template.isActive ? ' (활성)' : ' (비활성)'}
+                                  </div>
+                                ))}
                               </div>
                               
                               {/* 포함된 항목들 미리보기 (최대 3개) */}
