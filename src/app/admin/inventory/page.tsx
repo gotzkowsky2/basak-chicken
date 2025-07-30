@@ -206,6 +206,9 @@ export default function InventoryPage() {
         setNewTagName('');
         setNewTagColor('#3B82F6');
         setShowTagModal(false);
+        setSuccess('태그가 성공적으로 생성되었습니다.');
+        // 태그 목록 새로고침
+        await fetchTags();
       } else {
         const error = await response.json();
         setError(error.error || '태그 생성 실패');
@@ -440,13 +443,13 @@ export default function InventoryPage() {
           {/* 재고 아이템 생성/수정 폼 */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">
+              <h2 className="text-xl font-semibold mb-4 text-gray-900">
                 {editingId ? '재고 아이템 수정' : '새 재고 아이템 생성'}
               </h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
                     이름 *
                   </label>
                   <input
@@ -460,7 +463,7 @@ export default function InventoryPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
                       카테고리 *
                     </label>
                     <select
@@ -478,7 +481,7 @@ export default function InventoryPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
                       단위 *
                     </label>
                     <select
@@ -499,7 +502,7 @@ export default function InventoryPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
                       현재 재고 *
                     </label>
                     <input
@@ -513,7 +516,7 @@ export default function InventoryPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
                       최소 재고 *
                     </label>
                     <input
@@ -528,7 +531,7 @@ export default function InventoryPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
                     공급업체 (선택사항)
                   </label>
                   <input
@@ -542,7 +545,7 @@ export default function InventoryPage() {
                 {/* 태그 선택 */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-900">
                       태그 선택 (선택사항)
                     </label>
                     <button
@@ -713,17 +716,16 @@ export default function InventoryPage() {
                               <span className="text-sm text-gray-500">{getCategoryLabel(item.category)}</span>
                             </div>
                             {/* 태그 표시 */}
-                            {(() => { console.log('태그 관계:', item.tagRelations); return null; })()}
                             {item.tagRelations && item.tagRelations.length > 0 && (
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {item.tagRelations.map((tagRelation) => (
                                   <span
                                     key={tagRelation.tag.id}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border"
                                     style={{
-                                      backgroundColor: `${tagRelation.tag.color}20`,
+                                      backgroundColor: `${tagRelation.tag.color}15`,
                                       color: tagRelation.tag.color,
-                                      border: `1px solid ${tagRelation.tag.color}40`
+                                      borderColor: `${tagRelation.tag.color}30`
                                     }}
                                   >
                                     {tagRelation.tag.name}

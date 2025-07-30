@@ -9,14 +9,34 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
+    console.log('연결 항목 업데이트 API 호출됨');
+    
     // 인증 확인
     const adminAuth = request.cookies.get("admin_auth")?.value;
-    if (!adminAuth) {
+    const employeeAuth = request.cookies.get("employee_auth")?.value;
+    
+    if (!adminAuth && !employeeAuth) {
+      console.log('인증 실패: 쿠키 없음');
       return NextResponse.json({ error: "관리자 인증이 필요합니다." }, { status: 401 });
+    }
+
+    const authId = adminAuth || employeeAuth;
+    const employee = await prisma.employee.findUnique({ 
+      where: { id: authId },
+      select: { name: true, isSuperAdmin: true }
+    });
+
+    if (!employee || !employee.isSuperAdmin) {
+      console.log('권한 없음:', employee);
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     }
 
     const { id: templateId, itemId } = await params;
     const { connectedItems } = await request.json();
+    
+    console.log('템플릿 ID:', templateId);
+    console.log('항목 ID:', itemId);
+    console.log('연결 항목들:', connectedItems);
 
     // 템플릿과 항목 존재 확인
     const template = await prisma.checklistTemplate.findUnique({
@@ -49,9 +69,13 @@ export async function PUT(
         order: index
       }));
 
+      console.log('생성할 연결들:', connections);
+      
       await prisma.checklistItemConnection.createMany({
         data: connections
       });
+      
+      console.log('연결 항목 생성 완료');
     }
 
     return NextResponse.json({ message: "연결된 항목이 업데이트되었습니다." });

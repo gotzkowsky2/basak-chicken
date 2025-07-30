@@ -34,6 +34,12 @@ interface Template {
   timeSlot: string;
 }
 
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export default function ChecklistItemsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [template, setTemplate] = useState<Template | null>(null);
@@ -44,6 +50,7 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
   const [templateId, setTemplateId] = useState<string>('');
+  const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
     const init = async () => {
@@ -51,6 +58,7 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
       setTemplateId(resolvedParams.id);
       await fetchTemplate(resolvedParams.id);
       await fetchItems(resolvedParams.id);
+      await fetchTags();
     };
     init();
   }, [params]);
@@ -78,6 +86,18 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
       console.error('항목 조회 오류:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const response = await fetch('/api/admin/tags');
+      if (response.ok) {
+        const data = await response.json();
+        setTags(data);
+      }
+    } catch (error) {
+      console.error('태그 조회 오류:', error);
     }
   };
 
@@ -129,6 +149,10 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
   const handleSaveConnections = async (connectedItems: any[]) => {
     if (!selectedItem) return;
 
+    console.log('저장할 연결 항목들:', connectedItems);
+    console.log('템플릿 ID:', templateId);
+    console.log('선택된 항목 ID:', selectedItem.id);
+
     try {
       const response = await fetch(`/api/admin/checklists/${templateId}/items/${selectedItem.id}/connections`, {
         method: 'PUT',
@@ -136,13 +160,22 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
         body: JSON.stringify({ connectedItems })
       });
 
+      console.log('API 응답 상태:', response.status);
+      
       if (response.ok) {
+        const result = await response.json();
+        console.log('저장 성공:', result);
         setIsModalOpen(false);
         setSelectedItem(null);
-        fetchItems(templateId);
+        await fetchItems(templateId);
+      } else {
+        const errorData = await response.json();
+        console.error('저장 실패:', errorData);
+        alert('연결 항목 저장에 실패했습니다: ' + (errorData.error || '알 수 없는 오류'));
       }
     } catch (error) {
       console.error('연결 항목 저장 오류:', error);
+      alert('연결 항목 저장 중 오류가 발생했습니다.');
     }
   };
 
@@ -162,7 +195,7 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
             <ArrowLeft size={20} />
             뒤로가기
           </button>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-gray-900">
             {template?.name} - 항목 관리
           </h1>
         </div>
@@ -170,10 +203,10 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
 
       {/* 새 항목 추가 */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">새 항목 추가</h2>
+        <h2 className="text-lg font-semibold mb-4 text-gray-900">새 항목 추가</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
               항목 내용
             </label>
             <input
@@ -185,7 +218,7 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
               설명 (선택사항)
             </label>
             <textarea
@@ -209,7 +242,7 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
       {/* 항목 목록 */}
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b">
-          <h2 className="text-lg font-semibold">체크리스트 항목</h2>
+          <h2 className="text-lg font-semibold text-gray-900">체크리스트 항목</h2>
         </div>
         <div className="divide-y">
           {items.map((item) => (
@@ -246,7 +279,7 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
               {/* 연결된 항목들 */}
               {item.connectedItems.length > 0 && (
                 <div className="ml-6 border-l-2 border-gray-200 pl-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">
                     연결된 항목들:
                   </h4>
                   <div className="space-y-2">
@@ -307,6 +340,7 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
                type: ci.connectedItem.type as 'inventory' | 'precaution' | 'manual'
              }))
            }}
+           tags={tags}
          />
        )}
     </div>

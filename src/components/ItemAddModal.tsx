@@ -39,6 +39,10 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [allItems, setAllItems] = useState<ConnectedItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTagSectionOpen, setIsTagSectionOpen] = useState(false);
+
+  console.log('ItemAddModal 렌더링 - 태그 개수:', tags.length);
+  console.log('태그들:', tags);
 
   useEffect(() => {
     if (isOpen) {
@@ -70,12 +74,16 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
         });
       }
 
+      console.log('API 호출 파라미터:', params.toString());
+      console.log('선택된 태그들:', selectedTags);
+
       const response = await fetch(`/api/admin/search-connections?${params}`, {
         credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
+        console.log('API 응답 데이터:', data);
         setAllItems(data.results || []);
       } else {
         console.error('항목 로드 실패');
@@ -98,11 +106,14 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
 
   // 태그 토글
   const toggleTag = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
+    console.log('태그 토글:', tagId);
+    setSelectedTags(prev => {
+      const newTags = prev.includes(tagId) 
         ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
-    );
+        : [...prev, tagId];
+      console.log('새로운 선택된 태그들:', newTags);
+      return newTags;
+    });
   };
 
   // 카테고리 변경
@@ -143,8 +154,8 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
         {/* 헤더 */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div>
@@ -161,7 +172,7 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
           </button>
         </div>
 
-        <div className="flex h-[calc(90vh-140px)]">
+        <div className="flex h-[calc(80vh-180px)]">
           {/* 왼쪽: 검색 및 필터 */}
           <div className="w-1/2 border-r border-gray-200 p-6 overflow-y-auto">
             {/* 검색 */}
@@ -179,25 +190,25 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
             </div>
 
             {/* 카테고리 필터 */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
                 <Filter className="w-4 h-4 mr-2" />
                 카테고리
               </h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 {categoryOptions.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => handleCategoryChange(option.value as any)}
-                    className={`p-3 text-left rounded-lg border transition-colors ${
+                    className={`p-2 text-left rounded-lg border transition-colors ${
                       searchType === option.value
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="flex items-center">
-                      <span className="text-lg mr-2">{option.icon}</span>
-                      <span className="text-sm font-medium">{option.label}</span>
+                      <span className="text-base mr-1">{option.icon}</span>
+                      <span className="text-xs font-medium">{option.label}</span>
                     </div>
                   </button>
                 ))}
@@ -205,43 +216,65 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
             </div>
 
             {/* 태그 필터 */}
-            {tags.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+            <div className="mb-4">
+              <button
+                onClick={() => setIsTagSectionOpen(!isTagSectionOpen)}
+                className="w-full flex items-center justify-between p-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center">
                   <Tag className="w-4 h-4 mr-2" />
-                  태그 (AND 조건)
-                </h4>
-                <div className="space-y-2">
-                  {tags.map((tag) => (
-                    <label
-                      key={tag.id}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTags.includes(tag.id)}
-                        onChange={() => toggleTag(tag.id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
-                      />
-                      <div className="flex items-center">
-                        <div
-                          className="w-3 h-3 rounded-full mr-2"
-                          style={{ backgroundColor: tag.color }}
-                        />
-                        <span className="text-sm text-gray-700">{tag.name}</span>
-                      </div>
-                    </label>
-                  ))}
+                  태그 (AND 조건) {tags.length > 0 && `(${tags.length}개)`}
+                  {selectedTags.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                      {selectedTags.length}개 선택
+                    </span>
+                  )}
                 </div>
-                {selectedTags.length > 0 && (
-                  <div className="mt-3 p-2 bg-blue-50 rounded-lg">
-                    <p className="text-xs text-blue-700">
-                      선택된 태그: {selectedTags.length}개 (모든 태그를 포함하는 항목만 표시)
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+                <span className={`transform transition-transform ${isTagSectionOpen ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {isTagSectionOpen && (
+                <div className="mt-2">
+                  {tags.length > 0 ? (
+                    <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                      {tags.map((tag) => (
+                        <label
+                          key={tag.id}
+                          className="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTags.includes(tag.id)}
+                            onChange={() => toggleTag(tag.id)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                          />
+                          <div className="flex items-center">
+                            <div
+                              className="w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="text-sm text-gray-700">{tag.name}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500 border border-gray-200 rounded-lg">
+                      <p className="text-sm">사용 가능한 태그가 없습니다.</p>
+                    </div>
+                  )}
+                  {selectedTags.length > 0 && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-blue-700">
+                        선택된 태그: {selectedTags.length}개 (모든 태그를 포함하는 항목만 표시)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* 검색 결과 */}
             <div>
@@ -337,16 +370,16 @@ export default function ItemAddModal({ isOpen, onClose, onSave, editingItem, tag
         </div>
 
         {/* 푸터 */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
           >
             취소
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
           >
             저장 ({connectedItems.length}개 연결)
           </button>
