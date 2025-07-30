@@ -185,7 +185,10 @@ export default function ChecklistPage() {
   // 진행 상태 불러오기
   const fetchProgress = async () => {
     try {
-      const response = await fetch('/api/employee/checklist-progress', {
+      // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+      const today = new Date().toISOString().split('T')[0];
+      
+      const response = await fetch(`/api/employee/checklist-progress?date=${today}`, {
         credentials: 'include'
       });
 
@@ -320,10 +323,17 @@ export default function ChecklistPage() {
 
   const fetchChecklists = async () => {
     try {
+      // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+      const today = new Date().toISOString().split('T')[0];
+      
+      console.log('체크리스트 조회 시작, 날짜:', today);
+      
       // checklist-progress API를 사용하여 실제 생성된 체크리스트 인스턴스 조회
-      const response = await fetch('/api/employee/checklist-progress', { 
+      const response = await fetch(`/api/employee/checklist-progress?date=${today}`, { 
         credentials: "include" 
       });
+      
+      console.log('API 응답 상태:', response.status);
       
       if (response.ok) {
         const instances = await response.json();
@@ -424,7 +434,10 @@ export default function ChecklistPage() {
           }
         }
       } else {
-        setError("체크리스트를 불러오는데 실패했습니다.");
+        console.error('체크리스트 불러오기 실패 - 상태:', response.status);
+        const errorText = await response.text();
+        console.error('에러 응답:', errorText);
+        setError(`체크리스트를 불러오는데 실패했습니다. (${response.status})`);
       }
     } catch (error) {
       console.error('체크리스트 조회 오류:', error);

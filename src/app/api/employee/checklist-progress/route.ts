@@ -4,26 +4,50 @@ import { cookies } from 'next/headers';
 
 const prisma = new PrismaClient();
 
-// 직원 인증 확인 함수
+// 직원 또는 관리자 인증 확인 함수
 async function verifyEmployeeAuth() {
   const cookieStore = await cookies();
   const employeeAuth = cookieStore.get('employee_auth');
+  const adminAuth = cookieStore.get('admin_auth');
   
-  if (!employeeAuth) {
-    throw new Error('직원 인증이 필요합니다.');
+  if (!employeeAuth && !adminAuth) {
+    throw new Error('인증이 필요합니다.');
   }
 
-  const employee = await prisma.employee.findFirst({
+  const authId = employeeAuth?.value || adminAuth?.value;
+  
+  // 먼저 직원으로 확인
+  let employee = await prisma.employee.findFirst({
     where: {
-      id: employeeAuth.value
+      id: authId
     }
   });
 
-  if (!employee) {
-    throw new Error('유효하지 않은 직원 세션입니다.');
+  if (employee) {
+    return employee;
   }
 
-  return employee;
+  // 직원이 아니면 관리자로 확인
+  const admin = await prisma.admin.findFirst({
+    where: {
+      id: authId
+    }
+  });
+
+  if (admin) {
+    // 관리자인 경우 첫 번째 활성 직원 정보를 반환 (뷰어 용도)
+    const firstEmployee = await prisma.employee.findFirst({
+      where: {
+        isActive: true
+      }
+    });
+    
+    if (firstEmployee) {
+      return firstEmployee;
+    }
+  }
+
+  throw new Error('유효하지 않은 세션입니다.');
 }
 
 // GET: 오늘 날짜의 체크리스트 진행 상태 조회
@@ -44,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     const instances = await prisma.checklistInstance.findMany({
       where: {
-        employeeId: employee.id,
+        // employeeId: employee.id, // 모든 직원의 체크리스트를 볼 수 있도록 주석 처리
         date: {
           gte: targetDate,
           lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000) // 다음 날 00:00

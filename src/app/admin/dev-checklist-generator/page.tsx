@@ -63,6 +63,7 @@ export default function DevChecklistGeneratorPage() {
   // 사용 가능한 템플릿 불러오기
   const fetchTemplates = async () => {
     try {
+      setLoading(true);
       console.log('템플릿 불러오기 시작...');
       const response = await fetch('/api/admin/checklists', {
         credentials: 'include'
@@ -74,8 +75,8 @@ export default function DevChecklistGeneratorPage() {
         const data = await response.json();
         console.log('API 응답 데이터:', data);
         
-        // 활성화된 템플릿만 필터링하고 name을 올바른 형태로 변환
-        const templates = (data.checklists || [])
+        // API는 배열을 직접 반환하므로 data 자체가 배열
+        const templates = (Array.isArray(data) ? data : [])
           .filter((template: any) => template.isActive) // 활성화된 템플릿만 선택
           .map((template: any) => {
             console.log('처리 중인 템플릿:', template);
@@ -95,9 +96,13 @@ export default function DevChecklistGeneratorPage() {
         console.error('템플릿 불러오기 실패 - 상태:', response.status);
         const errorText = await response.text();
         console.error('에러 응답:', errorText);
+        setMessage({ type: 'error', text: `템플릿 불러오기 실패: ${response.status}` });
       }
     } catch (error) {
       console.error('템플릿 불러오기 오류:', error);
+      setMessage({ type: 'error', text: '템플릿 불러오기 중 오류가 발생했습니다.' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -388,6 +393,12 @@ export default function DevChecklistGeneratorPage() {
             )}
 
             {/* 템플릿 그룹별 표시 */}
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">템플릿을 불러오는 중...</p>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {(() => {
                 const groupedData = getGroupedTemplateGroups();
@@ -471,6 +482,7 @@ export default function DevChecklistGeneratorPage() {
                 ));
               })()}
             </div>
+            )}
 
             {availableTemplates.length === 0 && (
               <div className="text-center py-8 text-gray-500">
@@ -480,6 +492,17 @@ export default function DevChecklistGeneratorPage() {
                     체크리스트 관리 페이지
                   </a>에서 템플릿을 먼저 등록해주세요.
                 </p>
+                <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left">
+                  <p className="text-sm font-medium mb-2">디버깅 정보:</p>
+                  <p className="text-xs text-gray-600">템플릿 개수: {availableTemplates.length}</p>
+                  <p className="text-xs text-gray-600">로딩 상태: {loading ? '로딩 중' : '완료'}</p>
+                  <button 
+                    onClick={fetchTemplates}
+                    className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                  >
+                    템플릿 다시 불러오기
+                  </button>
+                </div>
               </div>
             )}
           </div>

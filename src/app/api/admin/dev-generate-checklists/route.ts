@@ -95,12 +95,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 활성 직원 찾기
-    const activeEmployee = await prisma.employee.findFirst({
-      where: {
-        isActive: true
-      }
-    });
+    // 현재 로그인한 직원 찾기 (employee_auth 쿠키 사용)
+    const cookieStore = await cookies();
+    const employeeAuth = cookieStore.get('employee_auth');
+    
+    let activeEmployee;
+    if (employeeAuth) {
+      activeEmployee = await prisma.employee.findFirst({
+        where: {
+          id: employeeAuth.value,
+          isActive: true
+        }
+      });
+    }
+    
+    // 직원이 로그인하지 않았거나 찾을 수 없는 경우, 첫 번째 활성 직원 사용
+    if (!activeEmployee) {
+      activeEmployee = await prisma.employee.findFirst({
+        where: {
+          isActive: true
+        }
+      });
+    }
 
     if (!activeEmployee) {
       return NextResponse.json(
