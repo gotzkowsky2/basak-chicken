@@ -6,8 +6,8 @@ async function checkDatabase() {
   try {
     console.log('=== 데이터베이스 상태 확인 ===\n');
 
-    // ChecklistProgress 확인
-    const progress = await prisma.checklistProgress.findMany({
+    // ChecklistInstance 확인
+    const instances = await prisma.checklistInstance.findMany({
       include: {
         employee: true,
         template: true,
@@ -15,15 +15,15 @@ async function checkDatabase() {
       }
     });
 
-    console.log('📋 ChecklistProgress 개수:', progress.length);
-    progress.forEach(p => {
+    console.log('📋 ChecklistInstance 개수:', instances.length);
+    instances.forEach(p => {
       console.log(`- ID: ${p.id}`);
-      console.log(`  직원: ${p.employee.name}`);
-      console.log(`  템플릿: ${p.template.name}`);
+      console.log(`  직원: ${p.employee?.name || 'Unknown'}`);
+      console.log(`  템플릿: ${p.template?.content || 'Unknown'}`);
       console.log(`  날짜: ${p.date.toISOString()}`);
       console.log(`  완료: ${p.isCompleted}`);
       console.log(`  제출: ${p.isSubmitted}`);
-      console.log(`  연결된 항목: ${p.connectedItemsProgress.length}개`);
+      console.log(`  연결된 항목: ${p.connectedItemsProgress?.length || 0}개`);
       console.log('');
     });
 

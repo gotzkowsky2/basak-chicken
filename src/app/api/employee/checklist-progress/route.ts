@@ -81,14 +81,10 @@ export async function GET(request: NextRequest) {
               include: {
                 children: {
                   include: {
-                    inventoryItem: true,
-                    precautions: true,
-                    manuals: true
+                    connectedItems: true
                   }
                 },
-                inventoryItem: true,
-                precautions: true,
-                manuals: true
+                connectedItems: true
               },
               where: {
                 parentId: null // 최상위 항목들만 (카테고리)
@@ -114,6 +110,7 @@ export async function GET(request: NextRequest) {
         templateId: instance.templateId,
         template: {
           id: instance.template.id,
+          name: instance.template.name,
           content: instance.template.content,
           itemsCount: instance.template.items?.length || 0
         }
@@ -131,9 +128,18 @@ export async function GET(request: NextRequest) {
           include: {
             items: {
               include: {
-                inventoryItem: true,
-                precautions: true,
-                manuals: true
+                children: {
+                  include: {
+                    connectedItems: true
+                  }
+                },
+                connectedItems: true
+              },
+              where: {
+                parentId: null
+              },
+              orderBy: {
+                order: 'asc'
               }
             }
           }
@@ -166,7 +172,7 @@ export async function POST(request: NextRequest) {
     const employee = await verifyEmployeeAuth();
     const body = await request.json();
     
-    const { templateId, isCompleted, notes, connectedItemsProgress } = body;
+    const { templateId, isCompleted, notes, connectedItemsProgress, completedBy, completedAt } = body;
 
     if (!templateId) {
       return NextResponse.json(
@@ -193,31 +199,49 @@ export async function POST(request: NextRequest) {
 
     if (instance) {
       // 기존 인스턴스 업데이트
+      const updateData: any = {
+        isCompleted,
+        notes,
+        updatedAt: new Date()
+      };
+      
+      if (completedBy !== undefined) {
+        updateData.completedBy = completedBy;
+      }
+      if (completedAt !== undefined) {
+        updateData.completedAt = completedAt ? new Date(completedAt) : null;
+      }
+      
       instance = await prisma.checklistInstance.update({
         where: {
           id: instance.id
         },
-        data: {
-          isCompleted,
-          notes,
-          updatedAt: new Date()
-        },
+        data: updateData,
         include: {
           connectedItemsProgress: true
         }
       });
     } else {
       // 새로운 인스턴스 생성
+      const createData: any = {
+        employeeId: employee.id,
+        templateId,
+        date: targetDate,
+        workplace: 'COMMON', // 기본값, 템플릿에서 가져와야 함
+        timeSlot: 'COMMON', // 기본값, 템플릿에서 가져와야 함
+        isCompleted,
+        notes
+      };
+      
+      if (completedBy !== undefined) {
+        createData.completedBy = completedBy;
+      }
+      if (completedAt !== undefined) {
+        createData.completedAt = completedAt ? new Date(completedAt) : null;
+      }
+      
       instance = await prisma.checklistInstance.create({
-        data: {
-          employeeId: employee.id,
-          templateId,
-          date: targetDate,
-          workplace: 'COMMON', // 기본값, 템플릿에서 가져와야 함
-          timeSlot: 'COMMON', // 기본값, 템플릿에서 가져와야 함
-          isCompleted,
-          notes
-        },
+        data: createData,
         include: {
           connectedItemsProgress: true
         }
@@ -236,14 +260,25 @@ export async function POST(request: NextRequest) {
       // 새로운 연결된 항목 진행 상태 생성
       if (connectedItemsProgress.length > 0) {
         await prisma.connectedItemProgress.createMany({
-          data: connectedItemsProgress.map((item: any) => ({
-            instanceId: instance.id,
-            itemId: item.itemId,
-            currentStock: item.currentStock,
-            updatedStock: item.updatedStock,
-            isCompleted: item.isCompleted,
-            notes: item.notes
-          }))
+          data: connectedItemsProgress.map((item: any) => {
+            const itemData: any = {
+              instanceId: instance.id,
+              itemId: item.itemId,
+              currentStock: item.currentStock,
+              updatedStock: item.updatedStock,
+              isCompleted: item.isCompleted,
+              notes: item.notes
+            };
+            
+            if (item.completedBy !== undefined) {
+              itemData.completedBy = item.completedBy;
+            }
+            if (item.completedAt !== undefined) {
+              itemData.completedAt = item.completedAt ? new Date(item.completedAt) : null;
+            }
+            
+            return itemData;
+          })
         });
       }
     }
@@ -258,9 +293,12 @@ export async function POST(request: NextRequest) {
           include: {
             items: {
               include: {
-                inventoryItem: true,
-                precautions: true,
-                manuals: true
+                children: {
+                  include: {
+                    connectedItems: true
+                  }
+                },
+                connectedItems: true
               }
             }
           }

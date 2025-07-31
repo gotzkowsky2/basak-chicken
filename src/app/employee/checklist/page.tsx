@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 
 interface ChecklistTemplate {
   id: string;
+  name: string; // 템플릿 이름 사용
   content: string;
   workplace: string;
   category: string;
@@ -26,9 +27,15 @@ interface ChecklistItem {
   isRequired: boolean;
   isActive: boolean;
   children?: ChecklistItem[];
-  inventoryItem?: InventoryItem;
-  precautions?: Precaution[];
-  manuals?: Manual[];
+  connectedItems?: ChecklistItemConnection[]; // 연결된 항목들
+}
+
+interface ChecklistItemConnection {
+  id: string;
+  checklistItemId: string;
+  itemType: string; // "inventory", "precaution", "manual"
+  itemId: string;
+  order: number;
 }
 
 interface InventoryItem {
@@ -73,9 +80,13 @@ interface Employee {
 }
 
 interface ChecklistItemResponse {
-  templateId: string;
+  id: string;
+  content: string;
+  instructions?: string;
   isCompleted: boolean;
-  notes: string;
+  completedBy?: string;
+  completedAt?: string;
+  notes?: string;
 }
 
 const workplaceOptions = [
@@ -98,227 +109,226 @@ const categoryLabels = {
   SUPPLIES: "부대용품",
   INGREDIENTS: "재료",
   COMMON: "공통",
-  MANUAL: "매뉴얼",
 };
 
 export default function ChecklistPage() {
   const [checklists, setChecklists] = useState<ChecklistTemplate[]>([]);
-  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [selectedChecklist, setSelectedChecklist] = useState<ChecklistTemplate | null>(null);
+  const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // 체크리스트 항목 상태 관리
   const [checklistItems, setChecklistItems] = useState<{[key: string]: ChecklistItemResponse}>({});
+  
+  // 연결된 항목들의 상태 관리
+  const [connectedItemsStatus, setConnectedItemsStatus] = useState<{[key: string]: any}>({});
+  
+  // 메모 입력 상태
   const [showMemoInputs, setShowMemoInputs] = useState<{[key: string]: boolean}>({});
-  const [selectedDetailItem, setSelectedDetailItem] = useState<ChecklistItem | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [stockUpdateData, setStockUpdateData] = useState({
-    itemId: "",
-    newStock: 0,
-    notes: ""
-  });
-  const [showStockModal, setShowStockModal] = useState(false);
-  const [purchaseRequestData, setPurchaseRequestData] = useState({
-    itemId: "",
-    quantity: 0,
-    reason: ""
-  });
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-  const [timeSlotStatuses, setTimeSlotStatuses] = useState<any[]>([]);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<any>(null);
-  const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
+  
+  // 필터 상태
   const [filters, setFilters] = useState({
     workplace: "",
     timeSlot: "",
-    category: "CHECKLIST"
+    category: ""
   });
 
-  // 새로운 상태 변수들 추가
-  const [selectedChecklist, setSelectedChecklist] = useState<ChecklistTemplate | null>(null);
-  const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
-  const [checklistStatuses, setChecklistStatuses] = useState<{[key: string]: 'not_started' | 'in_progress' | 'completed'}>({});
+  // 시간대 잠금 관련 상태
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<any>(null);
+  const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
 
-  // 누락된 상태 변수들 추가
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [notes, setNotes] = useState("");
-  const [connectedItemsStatus, setConnectedItemsStatus] = useState<{[key: string]: {
-    currentStock: number;
-    updatedStock: number;
-    isCompleted: boolean;
-    notes: string;
-  }}>({});
+  // 상세 작업 모달 관련 상태
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
-  const [itemWorkData, setItemWorkData] = useState<{
-    currentStock?: number;
-    updatedStock?: number;
-    notes?: string;
-    isCompleted?: boolean;
-  }>({});
+  const [itemWorkData, setItemWorkData] = useState<any>({});
   const [savedProgress, setSavedProgress] = useState<{[key: string]: any}>({});
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
-  useEffect(() => {
-    fetchChecklists();
-    fetchProgress();
-    fetchTimeSlotStatuses();
-  }, [filters]);
+  // 연결된 항목의 실제 내용을 가져오는 함수
+  const getConnectedItemDetails = async (itemType: string, itemId: string) => {
+    try {
+      const response = await fetch(`/api/employee/connected-items?type=${itemType}&id=${itemId}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return null;
+    } catch (error) {
+      console.error('연결된 항목 상세 정보 조회 오류:', error);
+      return null;
+    }
+  };
 
-  // 체크리스트 항목이나 연결된 항목 상태가 변경될 때 자동 저장
+  // 연결된 항목 상세 정보 상태
+  const [connectedItemDetails, setConnectedItemDetails] = useState<{[key: string]: any}>({});
+
+  // 연결된 항목 상세 정보 로드
+  const loadConnectedItemDetails = async (item: any) => {
+    if (item.connectedItems && item.connectedItems.length > 0) {
+      const details: {[key: string]: any} = {};
+      
+      for (const connection of item.connectedItems) {
+        const key = `${connection.itemType}_${connection.itemId}`;
+        if (!connectedItemDetails[key]) {
+          const detail = await getConnectedItemDetails(connection.itemType, connection.itemId);
+          if (detail) {
+            details[key] = detail;
+          }
+        }
+      }
+      
+      if (Object.keys(details).length > 0) {
+        setConnectedItemDetails(prev => ({ ...prev, ...details }));
+      }
+    }
+  };
+
+  // 체크리스트 선택 시 연결된 항목 상세 정보 로드
   useEffect(() => {
-    console.log('자동 저장 useEffect 트리거됨');
-    console.log('체크리스트 개수:', checklists.length);
-    console.log('체크리스트 항목:', checklistItems);
-    console.log('연결된 항목 상태:', connectedItemsStatus);
-    
-    if (checklists.length > 0) {
-      checklists.forEach(checklist => {
-        console.log(`체크리스트 ${checklist.id} 저장 시도`);
-        if (checklistItems[checklist.id]) {
-          saveProgress(checklist.id);
-        } else {
-          console.log(`체크리스트 ${checklist.id}에 대한 항목이 없음`);
+    if (selectedChecklist && selectedChecklist.items) {
+      selectedChecklist.items.forEach(item => {
+        if (item.connectedItems && item.connectedItems.length > 0) {
+          loadConnectedItemDetails(item);
         }
       });
     }
-  }, [checklistItems, connectedItemsStatus]);
+  }, [selectedChecklist]);
 
-  // 진행 상태 불러오기
-  const fetchProgress = async () => {
-    try {
-      // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
-      const today = new Date().toISOString().split('T')[0];
-      
-      const response = await fetch(`/api/employee/checklist-progress?date=${today}`, {
-        credentials: 'include'
-      });
+  // 현재 로그인한 직원 정보
+  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
 
-      if (response.ok) {
-        const progressData = await response.json();
-        
-        // 체크리스트 항목 상태 복원
-        const checklistItemsState: {[key: string]: ChecklistItemResponse} = {};
-        const connectedItemsState: {[key: string]: any} = {};
-        const savedProgressState: {[key: string]: any} = {};
-
-        progressData.forEach((progress: any) => {
-          // 체크리스트 항목 상태
-          checklistItemsState[progress.templateId] = {
-            templateId: progress.templateId,
-            isCompleted: progress.isCompleted,
-            notes: progress.notes || ""
-          };
-
-          // 연결된 항목들의 상태
-          progress.connectedItemsProgress.forEach((itemProgress: any) => {
-            connectedItemsState[itemProgress.itemId] = {
-              currentStock: itemProgress.currentStock || 0,
-              updatedStock: itemProgress.updatedStock || 0,
-              isCompleted: itemProgress.isCompleted,
-              notes: itemProgress.notes || ""
-            };
-
-            savedProgressState[itemProgress.itemId] = {
-              currentStock: itemProgress.currentStock || 0,
-              updatedStock: itemProgress.updatedStock || 0,
-              isCompleted: itemProgress.isCompleted,
-              notes: itemProgress.notes || ""
-            };
-          });
-        });
-
-        setChecklistItems(checklistItemsState);
-        setConnectedItemsStatus(connectedItemsState);
-        setSavedProgress(savedProgressState);
-      }
-    } catch (error) {
-      console.error('진행 상태 불러오기 오류:', error);
-    }
-  };
-
-  // 시간대별 체크리스트 상태 불러오기
-  const fetchTimeSlotStatuses = async () => {
-    try {
-      const response = await fetch('/api/employee/timeslot-status', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const statusData = await response.json();
-        setTimeSlotStatuses(statusData);
-      }
-    } catch (error) {
-      console.error('시간대별 상태 불러오기 오류:', error);
-    }
-  };
-
-  // 작성 중인 체크리스트 확인
-  const checkExistingProgress = async () => {
+  // 현재 직원 정보 가져오기
+  const fetchCurrentEmployee = async () => {
     try {
       const response = await fetch('/api/employee/checklist-progress', {
         credentials: 'include'
       });
-
+      
       if (response.ok) {
-        const progressData = await response.json();
-        
-        // 현재 필터와 일치하는 진행 중인 체크리스트가 있는지 확인
-        const existingProgress = progressData.find((progress: any) => {
-          return progress.template.workplace === filters.workplace && 
-                 progress.template.timeSlot === filters.timeSlot &&
-                 !progress.isSubmitted; // 제출되지 않은 것만
-        });
-
-        if (existingProgress) {
-          // 작성 중인 체크리스트가 있음을 알림
-          const shouldContinue = confirm(
-            `${getWorkplaceLabel(filters.workplace)} - ${getTimeSlotLabel(filters.timeSlot)} 체크리스트가 작성 중입니다.\n\n이어서 작성하시겠습니까?`
-          );
-
-          if (shouldContinue) {
-            // 기존 진행 상태를 불러와서 계속 작성
-            await loadExistingProgress(existingProgress);
-          }
+        const data = await response.json();
+        if (data.employee) {
+          setCurrentEmployee(data.employee);
         }
       }
+    } catch (error) {
+      console.error('직원 정보 조회 오류:', error);
+    }
+  };
+
+  // 컴포넌트 마운트 시 직원 정보 가져오기
+  useEffect(() => {
+    fetchCurrentEmployee();
+  }, []);
+
+  useEffect(() => {
+    fetchChecklists();
+  }, []);
+
+  // 체크리스트 진행 상태 가져오기
+  const fetchProgress = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await fetch(`/api/employee/checklist-progress?date=${today}`, {
+        credentials: "include"
+      });
+
+      if (response.ok) {
+        const progress = await response.json();
+        console.log('기존 진행 상태:', progress);
+        
+        // 진행 상태를 체크리스트 항목 상태로 변환
+        const itemsStatus: {[key: string]: ChecklistItemResponse} = {};
+        const connectedStatus: {[key: string]: any} = {};
+        
+        progress.forEach((instance: any) => {
+          itemsStatus[instance.templateId] = {
+            id: instance.id,
+            content: instance.content,
+            isCompleted: instance.isCompleted,
+            completedBy: instance.completedBy,
+            completedAt: instance.completedAt,
+            notes: instance.notes || ""
+          };
+
+          // 연결된 항목들의 진행 상태도 로드
+          if (instance.connectedItemsProgress) {
+            instance.connectedItemsProgress.forEach((connectedItem: any) => {
+              connectedStatus[connectedItem.itemId] = {
+                isCompleted: connectedItem.isCompleted,
+                completedBy: connectedItem.completedBy,
+                completedAt: connectedItem.completedAt,
+                notes: connectedItem.notes || ""
+              };
+            });
+          }
+        });
+        
+        setChecklistItems(itemsStatus);
+        setConnectedItemsStatus(connectedStatus);
+      }
+    } catch (error) {
+      console.error('진행 상태 조회 오류:', error);
+    }
+  };
+
+  const fetchTimeSlotStatuses = async () => {
+    try {
+      const response = await fetch('/api/employee/timeslot-status', {
+        credentials: "include"
+      });
+
+      if (response.ok) {
+        const statuses = await response.json();
+        console.log('시간대 상태:', statuses);
+      }
+    } catch (error) {
+      console.error('시간대 상태 조회 오류:', error);
+    }
+  };
+
+  const checkExistingProgress = async () => {
+    try {
+      await fetchProgress();
+      await fetchTimeSlotStatuses();
     } catch (error) {
       console.error('기존 진행 상태 확인 오류:', error);
     }
   };
 
-  // 기존 진행 상태 불러오기
-  const loadExistingProgress = async (progress: any) => {
-    // 체크리스트 항목 상태 복원
-    const checklistItemsState: {[key: string]: ChecklistItemResponse} = {};
-    const connectedItemsState: {[key: string]: any} = {};
-    const savedProgressState: {[key: string]: any} = {};
+  // 기존 진행 상태 로드
+  const loadExistingProgress = (progress: any[]) => {
+    const itemsStatus: {[key: string]: ChecklistItemResponse} = {};
+    const connectedStatus: {[key: string]: any} = {};
 
-    // 체크리스트 항목 상태
-    checklistItemsState[progress.templateId] = {
-      templateId: progress.templateId,
-      isCompleted: progress.isCompleted,
-      notes: progress.notes || ""
-    };
-
-    // 연결된 항목들의 상태
-    progress.connectedItemsProgress.forEach((itemProgress: any) => {
-      connectedItemsState[itemProgress.itemId] = {
-        currentStock: itemProgress.currentStock || 0,
-        updatedStock: itemProgress.updatedStock || 0,
-        isCompleted: itemProgress.isCompleted,
-        notes: itemProgress.notes || ""
+    progress.forEach((instance: any) => {
+      itemsStatus[instance.templateId] = {
+        id: instance.id,
+        content: instance.content,
+        isCompleted: instance.isCompleted,
+        completedBy: instance.completedBy,
+        completedAt: instance.completedAt,
+        notes: instance.notes || ""
       };
 
-      savedProgressState[itemProgress.itemId] = {
-        currentStock: itemProgress.currentStock || 0,
-        updatedStock: itemProgress.updatedStock || 0,
-        isCompleted: itemProgress.isCompleted,
-        notes: itemProgress.notes || ""
-      };
+      // 연결된 항목들의 진행 상태도 로드
+      if (instance.connectedItemsProgress) {
+        instance.connectedItemsProgress.forEach((connectedItem: any) => {
+          connectedStatus[connectedItem.itemId] = {
+            isCompleted: connectedItem.isCompleted,
+            completedBy: connectedItem.completedBy,
+            completedAt: connectedItem.completedAt,
+            notes: connectedItem.notes || ""
+          };
+        });
+      }
     });
 
-    setChecklistItems(checklistItemsState);
-    setConnectedItemsStatus(connectedItemsState);
-    setSavedProgress(savedProgressState);
+    setChecklistItems(itemsStatus);
+    setConnectedItemsStatus(connectedStatus);
   };
 
   const fetchChecklists = async () => {
@@ -382,7 +392,8 @@ export default function ChecklistPage() {
           
           return {
             id: templateName, // 템플릿 그룹 ID로 사용
-            content: templateName, // 템플릿 그룹 이름
+            name: templateName, // 템플릿 그룹 이름
+            content: templateName, // 템플릿 그룹 이름 (호환성)
             workplace: firstInstance.workplace,
             category: firstInstance.template.category,
             timeSlot: firstInstance.timeSlot,
@@ -404,7 +415,8 @@ export default function ChecklistPage() {
         const initialItems: {[key: string]: ChecklistItemResponse} = {};
         checklistsData.forEach((group) => {
           initialItems[group.id] = {
-            templateId: group.id,
+            id: group.id, // 템플릿 그룹 ID로 사용
+            content: group.content,
             isCompleted: group.isCompleted || false,
             notes: group.notes || "",
           };
@@ -447,28 +459,136 @@ export default function ChecklistPage() {
     }
   };
 
-  const handleCheckboxChange = (id: string) => {
-    console.log(`체크박스 변경 호출됨: ${id}`);
+  // 연결된 항목 체크박스 변경 핸들러
+  const handleConnectedItemCheckboxChange = (connectionId: string, parentItemId: string) => {
+    const isCompleted = !connectedItemsStatus[connectionId]?.isCompleted;
     
-    setChecklistItems(prev => {
+    // 먼저 연결항목 상태 업데이트
+    const newConnectedStatus = {
+      ...connectedItemsStatus,
+      [connectionId]: {
+        ...connectedItemsStatus[connectionId],
+        isCompleted: isCompleted,
+        completedBy: isCompleted ? currentEmployee?.name : undefined,
+        completedAt: isCompleted ? new Date().toISOString() : undefined
+      }
+    };
+    
+    setConnectedItemsStatus(newConnectedStatus);
+    
+    // 상위 항목 상태 즉시 업데이트
+    const parentItem = selectedChecklist?.items?.find(item => item.id === parentItemId);
+    if (parentItem && parentItem.connectedItems) {
+      const allConnectedCompleted = parentItem.connectedItems.every(connection => 
+        connection.id === connectionId ? isCompleted : newConnectedStatus[connection.id]?.isCompleted === true
+      );
+      
+      setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => {
+        return {
+          ...prev,
+          [parentItemId]: {
+            ...prev[parentItemId],
+            isCompleted: allConnectedCompleted,
+            completedBy: allConnectedCompleted ? currentEmployee?.name : undefined,
+            completedAt: allConnectedCompleted ? new Date().toISOString() : undefined
+          }
+        };
+      });
+    }
+  };
+
+  // 상위 항목 상태 업데이트
+  const updateParentItemStatus = (parentItemId: string) => {
+    const parentItem = selectedChecklist?.items?.find(item => item.id === parentItemId);
+    if (parentItem && parentItem.connectedItems) {
+      const allConnectedCompleted = parentItem.connectedItems.every(connection => 
+        connectedItemsStatus[connection.id]?.isCompleted === true
+      );
+      
+      // 모든 연결된 항목이 완료되면 상위 항목도 자동으로 완료
+      setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => {
+        const newItems = {
+          ...prev,
+          [parentItemId]: {
+            ...prev[parentItemId],
+            isCompleted: allConnectedCompleted,
+            completedBy: allConnectedCompleted ? currentEmployee?.name : undefined,
+            completedAt: allConnectedCompleted ? new Date().toISOString() : undefined
+          }
+        };
+        return newItems;
+      });
+    }
+  };
+
+  // 접기/펼치기 상태 관리
+  const [expandedItems, setExpandedItems] = useState<{[key: string]: boolean}>({});
+
+  // 항목 접기/펼치기 토글
+  const toggleItemExpansion = (itemId: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
+  // 체크박스 변경 핸들러 수정 - 연결항목이 있는 경우 체크 불가
+  const handleCheckboxChange = (id: string) => {
+    const item = selectedChecklist?.items?.find(item => item.id === id);
+    
+    // 연결항목이 있는 경우 직접 체크 불가
+    if (item && item.connectedItems && item.connectedItems.length > 0) {
+      // 연결항목이 펼쳐져 있지 않으면 펼치기
+      if (!expandedItems[id]) {
+        toggleItemExpansion(id);
+      }
+      return;
+    }
+    
+    const isCompleted = !checklistItems[id]?.isCompleted;
+    
+    setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => {
       const newItems = {
         ...prev,
         [id]: {
           ...prev[id],
-          isCompleted: !prev[id].isCompleted
+          isCompleted: isCompleted,
+          completedBy: isCompleted ? currentEmployee?.name : undefined,
+          completedAt: isCompleted ? new Date().toISOString() : undefined
         }
       };
-      console.log('체크박스 변경 후 새로운 상태:', newItems);
       return newItems;
     });
-
-    // 즉시 진행 상태 저장
-    console.log(`체크박스 변경 후 저장 호출: ${id}`);
     saveProgress(id);
   };
 
+  // 진행상황 계산 함수
+  const calculateProgress = () => {
+    if (!selectedChecklist?.items) return { completed: 0, total: 0 };
+    
+    let completed = 0;
+    let total = 0;
+    
+    selectedChecklist.items.forEach(item => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+        const allConnectedCompleted = item.connectedItems.every(connection => 
+          connectedItemsStatus[connection.id]?.isCompleted
+        );
+        if (allConnectedCompleted) completed++;
+        total++;
+      } else {
+        // 연결된 항목이 없는 경우, 메인 항목만 체크
+        if (checklistItems[item.id]?.isCompleted) completed++;
+        total++;
+      }
+    });
+    
+    return { completed, total };
+  };
+
   const handleNotesChange = (id: string, notes: string) => {
-    setChecklistItems(prev => ({
+    setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => ({
       ...prev,
       [id]: {
         ...prev[id],
@@ -478,7 +598,7 @@ export default function ChecklistPage() {
   };
 
   const toggleMemoInput = (id: string) => {
-    setShowMemoInputs(prev => ({
+    setShowMemoInputs((prev: {[key: string]: boolean}) => ({
       ...prev,
       [id]: !prev[id]
     }));
@@ -495,8 +615,8 @@ export default function ChecklistPage() {
     } else {
       // 초기 데이터 설정
       setItemWorkData({
-        currentStock: item.inventoryItem?.currentStock || 0,
-        updatedStock: item.inventoryItem?.currentStock || 0,
+        currentStock: 0,
+        updatedStock: 0,
         notes: "",
         isCompleted: false
       });
@@ -529,14 +649,14 @@ export default function ChecklistPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          itemId: selectedItem.inventoryItem?.id,
+          itemId: selectedItem.id,
           currentStock: itemWorkData.updatedStock
         })
       });
 
       if (response.ok) {
         // 성공 시 현재 수량 업데이트
-        setItemWorkData(prev => ({
+        setItemWorkData((prev: any) => ({
           ...prev,
           currentStock: itemWorkData.updatedStock
         }));
@@ -550,39 +670,13 @@ export default function ChecklistPage() {
     }
   };
 
-  // 항목 완료 처리
   const completeItem = () => {
-    if (!selectedItem) return;
-
-    // 재고 수량이 업데이트되었는지 확인
-    const isStockUpdated = itemWorkData.currentStock === itemWorkData.updatedStock;
-
-    if (!isStockUpdated) {
-      alert('재고를 확인하고 수량을 업데이트해주세요.');
-      return;
-    }
-
-    // 연결된 항목 상태 업데이트
-    setConnectedItemsStatus(prev => ({
+    setItemWorkData((prev: any) => ({
       ...prev,
-      [selectedItem.id]: {
-        currentStock: itemWorkData.currentStock || 0,
-        updatedStock: itemWorkData.updatedStock || 0,
-        isCompleted: true,
-        notes: itemWorkData.notes || ""
-      }
+      isCompleted: !prev.isCompleted
     }));
-
-    setItemWorkData(prev => ({
-      ...prev,
-      isCompleted: true
-    }));
-
-    alert('항목이 완료되었습니다.');
-    closeDetailModal();
   };
 
-  // 진행 상태 저장
   const saveProgress = async (templateId: string) => {
     try {
       console.log('저장 시작:', templateId);
@@ -638,11 +732,17 @@ export default function ChecklistPage() {
       
       if (allSuccess) {
         console.log('모든 그룹 인스턴스가 성공적으로 저장되었습니다.');
+        setSuccess('진행 상태가 저장되었습니다.');
+        setTimeout(() => setSuccess(''), 3000);
       } else {
         console.error('일부 인스턴스 저장에 실패했습니다.');
+        setError('일부 항목 저장에 실패했습니다.');
+        setTimeout(() => setError(''), 3000);
       }
     } catch (error) {
       console.error('진행 상태 저장 오류:', error);
+      setError('저장 중 오류가 발생했습니다.');
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -703,64 +803,41 @@ export default function ChecklistPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setError("");
-    setSuccess("");
-
-    const completedItems = Object.values(checklistItems).filter(item => item.isCompleted);
-
-    if (completedItems.length === 0) {
-      setError("체크된 항목이 없습니다. 제출할 수 없습니다.");
-      setSubmitting(false);
-      return;
-    }
 
     try {
-      const response = await fetch("/api/employee/checklist-submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          workplace: filters.workplace,
-          timeSlot: filters.timeSlot,
-          category: filters.category,
-          completedItems,
-          notes,
-        }),
-      });
+      // 모든 체크리스트 항목 저장
+      const savePromises = Object.keys(checklistItems).map(templateId => 
+        saveProgress(templateId)
+      );
 
-      const data = await response.json();
+      await Promise.all(savePromises);
 
-      if (response.ok) {
-        setSuccess("체크리스트가 성공적으로 제출되었습니다.");
-        setNotes("");
-        // 체크리스트 항목 초기화
-        const initialItems: {[key: string]: ChecklistItemResponse} = {};
-        checklists.forEach((item: ChecklistTemplate) => {
-          initialItems[item.id] = {
-            templateId: item.id,
-            isCompleted: false,
-            notes: "",
-          };
-        });
-        setChecklistItems(initialItems);
-        // 3초 후 성공 메시지 제거
-        setTimeout(() => setSuccess(""), 3000);
-      } else {
-        setError(data.error || "체크리스트 제출에 실패했습니다.");
+      // 시간대 잠금 해제
+      if (filters.workplace && filters.timeSlot) {
+        await unlockTimeSlot(filters.workplace, filters.timeSlot);
       }
+
+      setSuccess('체크리스트가 성공적으로 제출되었습니다.');
+      setTimeout(() => {
+        setSuccess('');
+        setCurrentView('list');
+      }, 2000);
     } catch (error) {
-      setError("서버 오류가 발생했습니다.");
+      console.error('체크리스트 제출 오류:', error);
+      setError('제출 중 오류가 발생했습니다.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const getWorkplaceLabel = (value: string) => {
-    return workplaceOptions.find(option => option.value === value)?.label || value;
+    const option = workplaceOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
   };
 
   const getTimeSlotLabel = (value: string) => {
-    return timeSlotOptions.find(option => option.value === value)?.label || value;
+    const option = timeSlotOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
   };
 
   const getCategoryLabel = (value: string) => {
@@ -768,36 +845,132 @@ export default function ChecklistPage() {
   };
 
   // 체크리스트 상태 계산 함수
-  const getChecklistStatus = (checklist: ChecklistTemplate) => {
-    const itemResponses = checklistItems[checklist.id];
-    if (!itemResponses) return 'not_started';
+  const getChecklistStatus = (checklist: any) => {
+    const instance = checklist.groupInstances?.[0];
+    if (!instance) return { status: '미시작', color: 'gray', progress: null };
     
-    if (itemResponses.isCompleted) return 'completed';
-    return 'in_progress';
+    if (instance.isSubmitted) {
+      return { status: '제출 완료', color: 'green', progress: null };
+    }
+    
+    if (instance.isCompleted) {
+      return { status: '완료', color: 'blue', progress: null };
+    }
+    
+    // 진행상황 계산
+    const totalItems = checklist.items?.length || 0;
+    if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null };
+    
+    const completedItems = checklist.items?.filter((item: any) => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+        return item.connectedItems.every((connection: any) => 
+          connectedItemsStatus[connection.id]?.isCompleted
+        );
+      } else {
+        // 연결된 항목이 없는 경우, 메인 항목만 체크
+        return checklistItems[item.id]?.isCompleted;
+      }
+    }).length || 0;
+    
+    if (completedItems === 0) {
+      return { status: '미시작', color: 'gray', progress: null };
+    } else if (completedItems === totalItems) {
+      return { status: '완료', color: 'blue', progress: null };
+    } else {
+      return { 
+        status: '진행중', 
+        color: 'yellow', 
+        progress: `${completedItems}/${totalItems}`
+      };
+    }
   };
 
-  // 체크리스트 선택 함수
+  // 상태 정보 가져오기
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case '미시작':
+        return {
+          label: '미시작',
+          color: 'bg-gray-100 text-gray-800',
+          icon: '⭕'
+        };
+      case '진행중':
+        return {
+          label: '진행중',
+          color: 'bg-yellow-100 text-yellow-800',
+          icon: '🔄'
+        };
+      case '완료':
+        return {
+          label: '완료',
+          color: 'bg-blue-100 text-blue-800',
+          icon: '✅'
+        };
+      case '제출 완료':
+        return {
+          label: '제출 완료',
+          color: 'bg-green-100 text-green-800',
+          icon: '📤'
+        };
+      default:
+        return {
+          label: '미시작',
+          color: 'bg-gray-100 text-gray-800',
+          icon: '⭕'
+        };
+    }
+  };
+
   const handleChecklistSelect = (checklist: ChecklistTemplate) => {
     setSelectedChecklist(checklist);
     setCurrentView('detail');
-  };
+    
+    // 기존 진행 상태 로드
+    const existingInstance = checklist.groupInstances?.[0];
+    if (existingInstance) {
+      // 메인 항목 상태 복원
+      setChecklistItems((prev) => ({
+        ...prev,
+        [checklist.id]: {
+          id: existingInstance.id,
+          content: checklist.content,
+          isCompleted: existingInstance.isCompleted,
+          completedBy: existingInstance.completedBy,
+          completedAt: existingInstance.completedAt,
+          notes: existingInstance.notes || ""
+        }
+      }));
 
-  // 목록으로 돌아가기 함수
-  const handleBackToList = () => {
-    setSelectedChecklist(null);
-    setCurrentView('list');
-  };
-
-  // 상태별 색상 및 텍스트
-  const getStatusInfo = (status: 'not_started' | 'in_progress' | 'completed') => {
-    switch (status) {
-      case 'not_started':
-        return { color: 'text-gray-500', bgColor: 'bg-gray-100', text: '미시작' };
-      case 'in_progress':
-        return { color: 'text-blue-600', bgColor: 'bg-blue-100', text: '작성중' };
-      case 'completed':
-        return { color: 'text-green-600', bgColor: 'bg-green-100', text: '완료' };
+      // 연결된 항목 상태 복원
+      if (existingInstance.connectedItemsProgress) {
+        const connectedStatus: {[key: string]: any} = {};
+        existingInstance.connectedItemsProgress.forEach((connectedItem: any) => {
+          connectedStatus[connectedItem.itemId] = {
+            isCompleted: connectedItem.isCompleted,
+            completedBy: connectedItem.completedBy,
+            completedAt: connectedItem.completedAt,
+            notes: connectedItem.notes || ""
+          };
+        });
+        setConnectedItemsStatus(connectedStatus);
+      }
     }
+    
+    // 연결된 항목 상세 정보 로드
+    if (checklist.items) {
+      checklist.items.forEach(item => {
+        if (item.connectedItems && item.connectedItems.length > 0) {
+          loadConnectedItemDetails(item);
+        }
+      });
+    }
+  };
+
+  const handleBackToList = () => {
+    setCurrentView('list');
+    setSelectedChecklist(null);
+    // 상태는 유지 (setChecklistItems와 setConnectedItemsStatus는 초기화하지 않음)
   };
 
   // 모든 항목이 체크되었는지 확인 (체크리스트 + 연결된 항목들)
@@ -816,11 +989,7 @@ export default function ChecklistPage() {
     return checklistCompleted;
   });
 
-  // 디버깅용 로그
-  console.log('체크리스트 항목 상태:', checklistItems);
-  console.log('모든 항목이 체크되었나요?', allItemsChecked);
-  console.log('총 항목 수:', Object.values(checklistItems).length);
-  console.log('체크된 항목 수:', Object.values(checklistItems).filter(item => item.isCompleted).length);
+
 
   // 오늘 날짜 포맷팅
   const today = new Date();
@@ -860,7 +1029,8 @@ export default function ChecklistPage() {
         {/* 목록 화면 */}
         {currentView === 'list' && (
           <>
-            {/* 필터 */}
+            {/* 필터 설정 - 나중에 체크리스트가 많으면 사용 */}
+            {/*
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">필터 설정</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -918,6 +1088,7 @@ export default function ChecklistPage() {
                 </div>
               </div>
             </div>
+            */}
 
             {/* 체크리스트 목록 */}
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -931,42 +1102,73 @@ export default function ChecklistPage() {
                 <div className="space-y-4">
                   {checklists.map((checklist) => {
                     const status = getChecklistStatus(checklist);
-                    const statusInfo = getStatusInfo(status);
+                    const statusInfo = getStatusInfo(status.status);
                     
                     return (
                       <div 
-                        key={checklist.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all cursor-pointer"
-                        onClick={() => handleChecklistSelect(checklist)}
+                        key={checklist.id} 
+                        className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                          status.status === '제출 완료' 
+                            ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed' 
+                            : 'bg-white border-gray-200 hover:border-blue-300'
+                        }`}
+                        onClick={() => {
+                          if (status.status !== '제출 완료') {
+                            handleChecklistSelect(checklist);
+                          }
+                        }}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-semibold text-gray-800">
-                                {checklist.content}
-                              </h3>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.color}`}>
-                                {statusInfo.text}
-                              </span>
+                            {/* 메인 제목과 상태 */}
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="font-semibold text-gray-900">
+                                    {checklist.name || checklist.content}
+                                  </h3>
+                                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusInfo.color}`}>
+                                    {statusInfo.icon} {statusInfo.label}
+                                  </span>
+                                  {status.progress && (
+                                    <span className="text-sm text-gray-600">
+                                      ({status.progress})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                             
-                            <div className="flex gap-2 text-sm text-gray-600">
-                              <span className="px-2 py-1 bg-gray-100 rounded">
-                                {getWorkplaceLabel(checklist.workplace)}
-                              </span>
-                              <span className="px-2 py-1 bg-gray-100 rounded">
-                                {getTimeSlotLabel(checklist.timeSlot)}
-                              </span>
-                              <span className="px-2 py-1 bg-gray-100 rounded">
-                                {getCategoryLabel(checklist.category)}
-                              </span>
+
+
+                            {/* 추가 정보 */}
+                            <div className="flex items-center justify-between text-sm text-gray-500">
+                              <div className="flex items-center gap-4">
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                  </svg>
+                                  체크 항목: {checklist.items?.length || 0}개
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                  </svg>
+                                  연결 항목: {checklist.items?.reduce((total, item) => {
+                                    const itemConnections = item.connectedItems?.length || 0;
+                                    const childConnections = item.children?.reduce((childTotal, child) => 
+                                      childTotal + (child.connectedItems?.length || 0), 0) || 0;
+                                    return total + itemConnections + childConnections;
+                                  }, 0) || 0}개
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="text-gray-400">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
                           </div>
                         </div>
                       </div>
@@ -980,138 +1182,309 @@ export default function ChecklistPage() {
 
         {/* 상세 화면 */}
         {currentView === 'detail' && selectedChecklist && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             {/* 헤더 */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <button
-                  onClick={handleBackToList}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  목록으로 돌아가기
-                </button>
-                <h2 className="text-2xl font-bold text-gray-800 mt-2">
-                  {selectedChecklist.content}
-                </h2>
-              </div>
-              
-              <div className="flex gap-2">
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                  {getWorkplaceLabel(selectedChecklist.workplace)}
-                </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                  {getTimeSlotLabel(selectedChecklist.timeSlot)}
-                </span>
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleBackToList}
+                    className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    뒤로
+                  </button>
+                  <div className="h-4 w-px bg-white/30"></div>
+                  <h2 className="text-lg font-bold">
+                    {selectedChecklist.name || selectedChecklist.content}
+                  </h2>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <div className="text-sm text-white/90">
+                    {currentEmployee?.name || '직원'}
+                  </div>
+                  <div className="flex gap-1">
+                    <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium">
+                      {getWorkplaceLabel(selectedChecklist.workplace)}
+                    </span>
+                    <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium">
+                      {getTimeSlotLabel(selectedChecklist.timeSlot)}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* 체크리스트 항목들 */}
-            <div className="space-y-4">
-              {/* 디버깅 정보 */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-                <div className="text-sm text-yellow-800">
-                  <strong>디버깅 정보:</strong><br/>
-                  - selectedChecklist.id: {selectedChecklist.id}<br/>
-                  - selectedChecklist.items 길이: {selectedChecklist.items?.length || 0}<br/>
-                  - groupInstances 길이: {selectedChecklist.groupInstances?.length || 0}<br/>
-                  - groupInstances 첫 번째 인스턴스 items 길이: {selectedChecklist.groupInstances?.[0]?.template?.items?.length || 0}<br/>
-                  - groupInstances 첫 번째 인스턴스 template ID: {selectedChecklist.groupInstances?.[0]?.template?.id || 'N/A'}
+            {/* 체크리스트 내용 */}
+            <div className="p-4">
+              {/* 진행 상황 표시 */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-gray-700">진행 상황</span>
+                  <span className="text-xs text-gray-500">
+                    {(() => {
+                      const progress = calculateProgress();
+                      return `${progress.completed} / ${progress.total} 완료`;
+                    })()}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${(() => {
+                        const progress = calculateProgress();
+                        return progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
+                      })()}%` 
+                    }}
+                  ></div>
                 </div>
               </div>
 
-              {selectedChecklist.items && selectedChecklist.items.length > 0 ? (
-                selectedChecklist.items.map((item) => (
-                  <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                    {/* 카테고리 헤더 */}
-                    <div className="flex items-start gap-3 mb-3">
-                      <input
-                        type="checkbox"
-                        checked={checklistItems[item.id]?.isCompleted || false}
-                        onChange={() => handleCheckboxChange(item.id)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold text-lg text-gray-800 mb-1">
-                          {item.content}
-                        </div>
-                        {item.instructions && (
-                          <div className="text-sm text-gray-600 mb-2">
-                            {item.instructions}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 하위 항목들 */}
-                    {item.children && item.children.length > 0 && (
-                      <div className="ml-8 space-y-2">
-                        {item.children.map((child) => (
-                          <div key={child.id} className="border-l-2 border-gray-200 pl-4 py-2">
-                            <div className="flex items-start gap-3">
-                              <input
-                                type="checkbox"
-                                checked={checklistItems[child.id]?.isCompleted || false}
-                                onChange={() => handleCheckboxChange(child.id)}
-                                className="mt-1"
-                              />
-                              <div className="flex-1">
-                                <div className="font-medium text-gray-800 mb-1">
-                                  {child.content}
+              {/* 체크리스트 항목들 */}
+              <div className="space-y-3">
+                {selectedChecklist.items && selectedChecklist.items.length > 0 ? (
+                  // 모든 항목을 표시 (parentId 필터링 제거)
+                  selectedChecklist.items
+                    .sort((a, b) => a.order - b.order)
+                    .map((item) => {
+                      const isCompleted = checklistItems[item.id]?.isCompleted || false;
+                      
+                      return (
+                        <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
+                          {/* 메인 항목 헤더 */}
+                          <div className={`px-4 py-3 ${isCompleted ? 'bg-green-50 border-b border-green-200' : 'bg-gray-50 border-b border-gray-200'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 flex-1">
+                                <input
+                                  type="checkbox"
+                                  checked={checklistItems[item.id]?.isCompleted || false}
+                                  onChange={() => handleCheckboxChange(item.id)}
+                                  className={`mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
+                                    item.connectedItems && item.connectedItems.length > 0 ? 'cursor-pointer' : ''
+                                  }`}
+                                />
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-sm text-gray-800">
+                                    {item.content}
+                                  </h3>
+                                  {item.instructions && (
+                                    <p className="text-xs text-gray-600 mt-0.5">
+                                      {item.instructions}
+                                    </p>
+                                  )}
                                 </div>
-                                {child.instructions && (
-                                  <div className="text-sm text-gray-600 mb-2">
-                                    {child.instructions}
-                                  </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                {/* 연결항목 개수 표시 */}
+                                {item.connectedItems && item.connectedItems.length > 0 && (
+                                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                    연결항목 {item.connectedItems.length}개
+                                  </span>
                                 )}
                                 
-                                {/* 연결된 항목들 */}
-                                {child.inventoryItem && (
-                                  <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-2">
-                                    <div className="text-sm font-medium text-blue-800 mb-1">
-                                      재고 확인: {child.inventoryItem.name}
-                                    </div>
-                                    <div className="text-xs text-blue-600">
-                                      현재: {child.inventoryItem.currentStock} {child.inventoryItem.unit}
-                                    </div>
-                                  </div>
+                                {/* 펼치기/접기 버튼 */}
+                                {item.connectedItems && item.connectedItems.length > 0 && (
+                                  <button
+                                    onClick={() => toggleItemExpansion(item.id)}
+                                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                                  >
+                                    <svg 
+                                      className={`w-4 h-4 transition-transform ${expandedItems[item.id] ? 'rotate-180' : ''}`} 
+                                      fill="none" 
+                                      stroke="currentColor" 
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                  </button>
+                                )}
+                                
+                                {isCompleted && (
+                                  <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    완료
+                                  </span>
                                 )}
                               </div>
                             </div>
+                            
+                            {/* 체크한 사람 이름 표시 */}
+                            {checklistItems[item.id]?.completedBy && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <span className="text-xs text-gray-500">완료:</span>
+                                <span className="text-xs font-medium text-green-700">
+                                  {checklistItems[item.id].completedBy}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          
+                          {/* 연결된 항목들 (펼쳐졌을 때만 표시) */}
+                          {expandedItems[item.id] && item.connectedItems && item.connectedItems.length > 0 && (
+                            <div className="bg-white p-4 space-y-3">
+                              <div className="text-xs font-medium text-gray-700 mb-2">
+                                연결된 세부항목
+                              </div>
+                              {item.connectedItems.map((connection) => {
+                                const key = `${connection.itemType}_${connection.itemId}`;
+                                const detail = connectedItemDetails[key];
+                                const isDetailLoaded = !!detail;
 
-                    {/* 카테고리 자체가 항목인 경우 (하위 항목이 없는 경우) */}
-                    {(!item.children || item.children.length === 0) && (
-                      <div className="ml-8">
-                        <div className="text-sm text-gray-500 italic">
-                          이 카테고리는 체크만 하면 됩니다.
+                                return (
+                                  <div key={connection.id} className="border border-gray-200 rounded p-2 bg-gray-50">
+                                    <div className="flex items-start gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={connectedItemsStatus[connection.id]?.isCompleted || false}
+                                        onChange={() => handleConnectedItemCheckboxChange(connection.id, item.id)}
+                                        className="mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1 mb-1">
+                                          <span className="text-xs font-medium text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">
+                                            {connection.itemType === 'inventory' ? '재고' : 
+                                             connection.itemType === 'precaution' ? '주의' : '메뉴얼'}
+                                          </span>
+                                          <span className="font-medium text-xs text-gray-800 truncate">
+                                            {isDetailLoaded ? 
+                                              (detail.name || detail.title || '제목 없음') : 
+                                              '로딩 중...'}
+                                          </span>
+                                        </div>
+                                        
+                                        {/* 태그 표시 */}
+                                        {isDetailLoaded && detail.tags && detail.tags.length > 0 && (
+                                          <div className="flex flex-wrap gap-1 mb-1">
+                                            {detail.tags.map((tag: any) => (
+                                              <span 
+                                                key={tag.id} 
+                                                className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded"
+                                              >
+                                                {tag.name}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                        
+                                        {/* 연결된 항목의 상세 정보 */}
+                                        <div className="text-xs text-gray-600 line-clamp-2">
+                                          {isDetailLoaded ? 
+                                            (detail.content || detail.description || '내용 없음') : 
+                                            '로딩 중...'}
+                                        </div>
+                                        
+                                        {/* 체크한 사람 이름 표시 */}
+                                        {connectedItemsStatus[connection.id]?.completedBy && (
+                                          <div className="flex items-center gap-1 mt-1">
+                                            <span className="text-xs text-gray-500">완료:</span>
+                                            <span className="text-xs font-medium text-green-700">
+                                              {connectedItemsStatus[connection.id].completedBy}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    {/* 연결된 항목용 메모 입력 */}
+                                    <div className="mt-2 ml-5">
+                                      <button
+                                        onClick={() => toggleMemoInput(connection.id)}
+                                        className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                                      >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        메모 {connectedItemsStatus[connection.id]?.notes ? '수정' : '추가'}
+                                      </button>
+                                      {showMemoInputs[connection.id] && (
+                                        <div className="mt-1">
+                                          <textarea
+                                            value={connectedItemsStatus[connection.id]?.notes || ''}
+                                            onChange={(e) => handleNotesChange(connection.id, e.target.value)}
+                                            placeholder="메모를 입력하세요..."
+                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs"
+                                            rows={2}
+                                          />
+                                        </div>
+                                      )}
+                                      {connectedItemsStatus[connection.id]?.notes && !showMemoInputs[connection.id] && (
+                                        <div className="mt-1 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-700">
+                                          {connectedItemsStatus[connection.id].notes}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {/* 하위 항목이 없을 때 간소화된 메시지 */}
+                          {(!item.connectedItems || item.connectedItems.length === 0) && (
+                            <div className="px-4 py-2 bg-gray-50">
+                              <div className="text-xs text-gray-400 italic">
+                                연결된 세부항목 없음
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      );
+                    })
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p className="text-sm font-medium mb-1">체크리스트 항목이 없습니다</p>
+                    <p className="text-xs">이 체크리스트에는 아직 항목이 등록되지 않았습니다.</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p>이 체크리스트에는 세부 항목이 없습니다.</p>
-                  <p className="text-sm mt-2">groupInstances 데이터를 확인해주세요.</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* 저장 버튼 */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => saveProgress(selectedChecklist.id)}
-                disabled={submitting}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
-              >
-                {submitting ? '저장 중...' : '저장'}
-              </button>
+              {/* 하단 액션 버튼들 */}
+              <div className="mt-6 flex items-center justify-between pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-3 text-xs text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    총 {selectedChecklist.items?.length || 0}개 항목
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {(() => {
+                      const progress = calculateProgress();
+                      return `${progress.completed}개 완료`;
+                    })()}
+                  </span>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => saveProgress(selectedChecklist.id)}
+                    disabled={submitting}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {submitting ? '저장 중...' : '저장'}
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {submitting ? '제출 중...' : '제출'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

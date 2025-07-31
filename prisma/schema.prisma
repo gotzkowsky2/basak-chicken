@@ -164,6 +164,8 @@ model ChecklistInstance {
   
   // 상태 관리
   isCompleted   Boolean  @default(false)
+  completedBy   String?  // 완료한 직원 이름
+  completedAt   DateTime? // 완료 시간
   isSubmitted   Boolean  @default(false)
   submittedAt   DateTime?
   isReopened    Boolean  @default(false)
@@ -195,6 +197,8 @@ model ConnectedItemProgress {
   currentStock Int?
   updatedStock Int?
   isCompleted Boolean @default(false)
+  completedBy String? // 완료한 직원 이름
+  completedAt DateTime? // 완료 시간
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

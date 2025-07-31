@@ -32,14 +32,14 @@ export async function POST(request: NextRequest) {
         httpOnly: true,
         path: "/",
         sameSite: 'lax',
-        secure: isProd ? true : false,
+        secure: false, // HTTP 환경에서도 작동하도록 false로 설정
         ...domainOption
       });
       response.cookies.set("temp_pw_auth", "1", {
         httpOnly: true,
         path: "/",
         sameSite: 'lax',
-        secure: isProd ? true : false,
+        secure: false, // HTTP 환경에서도 작동하도록 false로 설정
         ...domainOption
       });
       return response;
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       path: "/",
       sameSite: 'lax',
-      secure: isProd ? true : false,
+      secure: false, // HTTP 환경에서도 작동하도록 false로 설정
       ...domainOption
     });
     // 임시비밀번호 쿠키 삭제
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       maxAge: -1,
       expires: new Date(0),
       sameSite: 'lax',
-      secure: isProd ? true : false,
+      secure: false, // HTTP 환경에서도 작동하도록 false로 설정
       ...domainOption
     });
     return response;
