@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { cookies } from 'next/headers';
+import nodemailer from 'nodemailer';
 
 const prisma = new PrismaClient();
 
@@ -170,13 +171,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     console.log('=== 체크리스트 진행 상태 저장 시작 ===');
+    console.log('요청 URL:', request.url);
+    console.log('요청 메서드:', request.method);
+    
     const employee = await verifyEmployeeAuth();
     console.log('인증된 직원:', employee);
     
     const body = await request.json();
     console.log('요청 본문:', JSON.stringify(body, null, 2));
     
-    const { templateId, isCompleted, notes, connectedItemsProgress, completedBy, completedAt } = body;
+    const { templateId, isCompleted, notes, connectedItemsProgress, completedBy, completedAt, sendEmail, checklistItemsProgress } = body;
 
     console.log('=== POST 요청 데이터 ===');
     console.log('templateId:', templateId);
@@ -386,6 +390,84 @@ export async function POST(request: NextRequest) {
 
     console.log('업데이트된 인스턴스:', updatedInstance);
 
+    // 이메일 발송이 요청된 경우
+    if (sendEmail && checklistItemsProgress) {
+      try {
+        console.log('=== 이메일 발송 시작 ===');
+        console.log('templateId:', templateId);
+        console.log('checklistItemsProgress:', checklistItemsProgress);
+        console.log('connectedItemsProgress:', connectedItemsProgress);
+        
+        // 템플릿 정보 가져오기
+        const templateWithItems = await prisma.checklistTemplate.findUnique({
+          where: { id: templateId },
+          include: {
+            items: {
+              include: {
+                connectedItems: true
+              }
+            }
+          }
+        });
+
+        console.log('템플릿 조회 결과:', templateWithItems ? '성공' : '실패');
+        console.log('템플릿 이름:', templateWithItems?.name);
+        console.log('템플릿 항목 수:', templateWithItems?.items?.length);
+
+        if (templateWithItems) {
+          // 이메일 내용 생성
+          console.log('이메일 내용 생성 시작...');
+          const emailContent = await generateEmailContent(templateWithItems, checklistItemsProgress, connectedItemsProgress || [], employee);
+          console.log('이메일 내용 생성 완료');
+          console.log('이메일 제목:', emailContent.subject);
+          
+          // 이메일 발송 (직원 등록 API와 동일한 방식)
+          console.log('이메일 발송 시작...');
+          const transporter = nodemailer.createTransport({
+            host: process.env.BASAK_SMTP_HOST,
+            port: Number(process.env.BASAK_SMTP_PORT),
+            secure: false,
+            auth: {
+              user: process.env.BASAK_SMTP_USER,
+              pass: process.env.BASAK_SMTP_PASS,
+            },
+          });
+          
+          await transporter.sendMail({
+            from: process.env.BASAK_SMTP_FROM,
+            to: 'service@kathario.de',
+            subject: emailContent.subject,
+            html: emailContent.html,
+          });
+          
+          console.log('이메일 발송 완료');
+          
+          // 이메일 발송 성공 후 제출 완료 상태로 업데이트
+          await prisma.checklistInstance.update({
+            where: {
+              id: instance.id
+            },
+            data: {
+              isSubmitted: true,
+              submittedAt: new Date()
+            }
+          });
+          
+          console.log('제출 완료 상태로 업데이트 완료');
+        } else {
+          console.error('템플릿을 찾을 수 없습니다. templateId:', templateId);
+        }
+      } catch (emailError) {
+        console.error('이메일 발송 오류:', emailError);
+        console.error('오류 스택:', emailError.stack);
+        // 이메일 발송 실패해도 체크리스트 저장은 성공으로 처리
+      }
+    } else {
+      console.log('이메일 발송 조건 불충족:');
+      console.log('sendEmail:', sendEmail);
+      console.log('checklistItemsProgress 존재:', !!checklistItemsProgress);
+    }
+
     return NextResponse.json(updatedInstance);
   } catch (error: any) {
     console.error('체크리스트 진행 상태 저장 오류:', error);
@@ -393,5 +475,260 @@ export async function POST(request: NextRequest) {
       { error: error.message || '진행 상태 저장 중 오류가 발생했습니다.' },
       { status: 500 }
     );
+  }
+}
+
+async function generateEmailContent(template: any, checklistItemsProgress: any[], connectedItemsProgress: any[], employee: any) {
+  const today = new Date().toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
+
+  // 완료된 메인 항목들
+  const completedMainItems = checklistItemsProgress.map(progress => {
+    const item = template.items.find((item: any) => item.id === progress.itemId);
+    return {
+      content: item?.content || '알 수 없는 항목',
+      completedBy: progress.completedBy,
+      completedAt: progress.completedAt,
+      notes: progress.notes
+    };
+  });
+
+  // 완료된 연결 항목들 (상세 정보 포함)
+  const completedConnectedItems = connectedItemsProgress
+    .filter(progress => progress.isCompleted)
+    .map(async (progress) => {
+      // 연결된 항목의 상세 정보 찾기
+      let itemDetails = null;
+      for (const item of template.items) {
+        if (item.connectedItems) {
+          const connectedItem = item.connectedItems.find((conn: any) => conn.id === progress.connectionId);
+          if (connectedItem) {
+            // 연결된 항목의 실제 상세 정보 가져오기
+            let connectedItemDetails = null;
+            try {
+              if (connectedItem.itemType === 'inventory') {
+                const inventoryItem = await prisma.inventoryItem.findUnique({
+                  where: { id: connectedItem.itemId }
+                });
+                connectedItemDetails = {
+                  title: inventoryItem?.name || '알 수 없는 재고',
+                  type: '재고',
+                  content: `${inventoryItem?.name || '알 수 없는 재고'} (${inventoryItem?.currentStock || 0}${inventoryItem?.unit || '개'})`
+                };
+              } else if (connectedItem.itemType === 'precaution') {
+                const precaution = await prisma.precaution.findUnique({
+                  where: { id: connectedItem.itemId }
+                });
+                connectedItemDetails = {
+                  title: precaution?.title || '알 수 없는 주의사항',
+                  type: '주의사항',
+                  content: precaution?.content || '알 수 없는 주의사항'
+                };
+              } else if (connectedItem.itemType === 'manual') {
+                const manual = await prisma.manual.findUnique({
+                  where: { id: connectedItem.itemId }
+                });
+                connectedItemDetails = {
+                  title: manual?.title || '알 수 없는 메뉴얼',
+                  type: '메뉴얼',
+                  content: manual?.content || '알 수 없는 메뉴얼'
+                };
+              }
+            } catch (error) {
+              console.error('연결된 항목 상세 정보 조회 오류:', error);
+            }
+
+            itemDetails = {
+              parentItem: item.content,
+              connectionId: progress.connectionId,
+              itemType: connectedItem.itemType,
+              title: connectedItemDetails?.title || '알 수 없는 항목',
+              type: connectedItemDetails?.type || '알 수 없는 유형',
+              content: connectedItemDetails?.content || '알 수 없는 내용',
+              completedBy: progress.completedBy,
+              completedAt: progress.completedAt,
+              notes: progress.notes
+            };
+            break;
+          }
+        }
+      }
+      return itemDetails;
+    });
+
+  // Promise.all로 모든 비동기 작업 완료 대기
+  const resolvedConnectedItems = await Promise.all(completedConnectedItems);
+  const validConnectedItems = resolvedConnectedItems.filter(Boolean);
+
+  // 위치와 시간대를 한글로 변환
+  const getWorkplaceLabel = (workplace: string) => {
+    const workplaceMap: { [key: string]: string } = {
+      'HALL': '홀',
+      'KITCHEN': '주방',
+      'COMMON': '공통'
+    };
+    return workplaceMap[workplace] || workplace;
+  };
+
+  const getTimeSlotLabel = (timeSlot: string) => {
+    const timeSlotMap: { [key: string]: string } = {
+      'MORNING': '오전',
+      'AFTERNOON': '오후',
+      'EVENING': '저녁',
+      'COMMON': '공통'
+    };
+    return timeSlotMap[timeSlot] || timeSlot;
+  };
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #4F46E5; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+        .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+        .section { margin-bottom: 20px; }
+        .section h3 { color: #4F46E5; border-bottom: 2px solid #4F46E5; padding-bottom: 5px; }
+        .item { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #4F46E5; }
+        .item-title { font-weight: bold; margin-bottom: 5px; }
+        .item-details { color: #666; font-size: 14px; }
+        .completed-by { color: #059669; font-weight: bold; }
+        .notes { background: #f0f9ff; padding: 10px; border-radius: 4px; margin-top: 5px; }
+        .summary { background: #dbeafe; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        .type-badge { 
+          display: inline-block; 
+          padding: 2px 8px; 
+          border-radius: 12px; 
+          font-size: 12px; 
+          font-weight: bold; 
+          margin-left: 8px; 
+        }
+        .type-inventory { background: #fef3c7; color: #92400e; }
+        .type-precaution { background: #fee2e2; color: #991b1b; }
+        .type-manual { background: #dbeafe; color: #1e40af; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📋 체크리스트 제출 알림</h1>
+          <p>${today}</p>
+        </div>
+        
+        <div class="content">
+          <div class="section">
+            <h3>📝 체크리스트 정보</h3>
+            <div class="item">
+              <div class="item-title">${template.name}</div>
+              <div class="item-details">위치: ${getWorkplaceLabel(template.workplace)} | 시간대: ${getTimeSlotLabel(template.timeSlot)}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>👤 제출자 정보</h3>
+            <div class="item">
+              <div class="item-title">${employee.name}</div>
+              <div class="item-details">부서: ${employee.department} | 이메일: ${employee.email}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>✅ 완료된 메인 항목 (${completedMainItems.length}개)</h3>
+            ${completedMainItems.map(item => `
+              <div class="item">
+                <div class="item-title">${item.content}</div>
+                <div class="item-details">
+                  <span class="completed-by">완료자: ${item.completedBy}</span> | 
+                  완료시간: ${new Date(item.completedAt).toLocaleString('ko-KR')}
+                </div>
+                ${item.notes ? `<div class="notes">📝 메모: ${item.notes}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+
+          ${validConnectedItems.length > 0 ? `
+            <div class="section">
+              <h3>🔗 완료된 하위 항목 (${validConnectedItems.length}개)</h3>
+              ${validConnectedItems.map(item => `
+                <div class="item">
+                  <div class="item-title">
+                    ${item.title}
+                    <span class="type-badge type-${item.itemType}">${item.type}</span>
+                  </div>
+                  <div class="item-details">
+                    <span class="completed-by">완료자: ${item.completedBy}</span> | 
+                    완료시간: ${new Date(item.completedAt).toLocaleString('ko-KR')}
+                  </div>
+                  <div class="item-content" style="margin-top: 8px; font-size: 14px; color: #555;">
+                    ${item.content}
+                  </div>
+                  ${item.notes ? `<div class="notes">📝 메모: ${item.notes}</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          <div class="summary">
+            <h3>📊 요약</h3>
+            <p>• 총 완료된 메인 항목: ${completedMainItems.length}개</p>
+            <p>• 총 완료된 하위 항목: ${validConnectedItems.length}개</p>
+            <p>• 제출 시간: ${new Date().toLocaleString('ko-KR')}</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    subject: `[체크리스트 제출] ${template.name} - ${employee.name}`,
+    html: htmlContent
+  };
+}
+
+async function sendEmail(emailContent: { subject: string; html: string }) {
+  console.log('=== 이메일 발송 시작 ===');
+  console.log('SMTP 설정:');
+  console.log('Host:', process.env.BASAK_SMTP_HOST);
+  console.log('Port:', process.env.BASAK_SMTP_PORT);
+  console.log('User:', process.env.BASAK_SMTP_USER);
+  console.log('From:', process.env.BASAK_SMTP_FROM);
+  
+  const transporter = nodemailer.createTransport({
+    host: process.env.BASAK_SMTP_HOST,
+    port: parseInt(process.env.BASAK_SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.BASAK_SMTP_USER,
+      pass: process.env.BASAK_SMTP_PASS
+    }
+  });
+
+  const mailOptions = {
+    from: process.env.BASAK_SMTP_FROM,
+    to: 'service@kathario.de',
+    subject: emailContent.subject,
+    html: emailContent.html
+  };
+
+  console.log('메일 옵션:', {
+    from: mailOptions.from,
+    to: mailOptions.to,
+    subject: mailOptions.subject
+  });
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('이메일이 성공적으로 발송되었습니다.');
+  } catch (error) {
+    console.error('이메일 발송 실패:', error);
+    throw error;
   }
 } 

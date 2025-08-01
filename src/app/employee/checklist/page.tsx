@@ -602,6 +602,8 @@ export default function ChecklistPage() {
             groupInstances: groupInstances,
             // 그룹의 완료 상태 (모든 인스턴스가 완료되었는지)
             isCompleted: groupInstances.every((instance: any) => instance.isCompleted),
+            // 제출 완료 상태 (모든 인스턴스가 제출되었는지)
+            isSubmitted: groupInstances.every((instance: any) => instance.isSubmitted),
             // 그룹의 메모 (첫 번째 인스턴스의 메모 사용)
             notes: firstInstance.notes || ""
           };
@@ -912,6 +914,23 @@ export default function ChecklistPage() {
     return { completed, total };
   };
 
+  // 모든 항목이 완료되었는지 확인하는 함수
+  const isAllItemsCompleted = () => {
+    if (!selectedChecklist?.items) return false;
+    
+    return selectedChecklist.items.every(item => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+        return item.connectedItems.every(connection => 
+          connectedItemsStatus[connection.id]?.isCompleted
+        );
+      } else {
+        // 연결된 항목이 없는 경우, 메인 항목만 체크
+        return checklistItems[item.id]?.isCompleted;
+      }
+    });
+  };
+
   const handleNotesChange = (id: string, notes: string) => {
     // 메인 항목인지 연결 항목인지 확인
     const isConnectedItem = connectedItemsStatus[id];
@@ -942,6 +961,55 @@ export default function ChecklistPage() {
       ...prev,
       [id]: !prev[id]
     }));
+  };
+
+  // 메모 저장 함수
+  const saveMemo = async (id: string) => {
+    try {
+      // 메인 항목인지 연결 항목인지 확인
+      const isConnectedItem = connectedItemsStatus[id];
+      
+      if (isConnectedItem) {
+        // 연결 항목의 메모 저장
+        await saveProgressWithState(
+          selectedChecklist?.id || '',
+          checklistItems,
+          {
+            ...connectedItemsStatus,
+            [id]: {
+              ...connectedItemsStatus[id],
+              notes: connectedItemsStatus[id].notes
+            }
+          }
+        );
+      } else {
+        // 메인 항목의 메모 저장
+        await saveProgressWithState(
+          selectedChecklist?.id || '',
+          {
+            ...checklistItems,
+            [id]: {
+              ...checklistItems[id],
+              notes: checklistItems[id]?.notes || ''
+            }
+          },
+          connectedItemsStatus
+        );
+      }
+      
+      // 성공 메시지 표시
+      setSuccess('메모가 저장되었습니다.');
+      setTimeout(() => setSuccess(''), 2000);
+      
+      // 메모 입력창 닫기
+      setShowMemoInputs((prev: {[key: string]: boolean}) => ({
+        ...prev,
+        [id]: false
+      }));
+    } catch (error) {
+      console.error('메모 저장 오류:', error);
+      setError('메모 저장에 실패했습니다.');
+    }
   };
 
   // 상세 작업 모달 열기
@@ -1246,15 +1314,90 @@ export default function ChecklistPage() {
 
     try {
       // 모든 체크리스트 항목 저장
-      const savePromises = Object.keys(checklistItems).map(templateId => 
-        saveProgress(templateId)
-      );
-
-      await Promise.all(savePromises);
+      if (selectedChecklist) {
+        await saveProgress(selectedChecklist.id);
+      }
 
       // 시간대 잠금 해제
       if (filters.workplace && filters.timeSlot) {
         await unlockTimeSlot(filters.workplace, filters.timeSlot);
+      }
+
+      // 이메일 발송
+      if (selectedChecklist) {
+        try {
+          // 실제 템플릿 ID 찾기
+          const actualTemplateId = selectedChecklist.groupInstances?.[0]?.templateId;
+          console.log('실제 템플릿 ID:', actualTemplateId);
+          
+          const emailData = {
+            templateId: actualTemplateId || selectedChecklist.id,
+            checklistItemsProgress: selectedChecklist.items
+              ?.filter((item: any) => {
+                // 실제 ChecklistItem이고 완료된 것만
+                return item.id && checklistItems[item.id]?.isCompleted;
+              })
+              .map((item: any) => ({
+                itemId: item.id,
+                isCompleted: checklistItems[item.id].isCompleted,
+                notes: checklistItems[item.id].notes || "",
+                completedBy: checklistItems[item.id].completedBy,
+                completedAt: checklistItems[item.id].completedAt
+              })) || [],
+            connectedItemsProgress: Object.entries(connectedItemsStatus)
+              .map(([connectionId, status]: [string, any]) => ({
+                connectionId: connectionId,
+                itemId: status.itemId,
+                isCompleted: status.isCompleted,
+                notes: status.notes || "",
+                completedBy: status.completedBy,
+                completedAt: status.completedAt,
+                currentStock: status.currentStock,
+                updatedStock: status.updatedStock
+              }))
+          };
+
+          console.log('=== 이메일 발송 데이터 ===');
+          console.log('selectedChecklist 전체:', selectedChecklist);
+          console.log('selectedChecklist.id:', selectedChecklist?.id);
+          console.log('selectedChecklist.name:', selectedChecklist?.name);
+          console.log('emailData:', JSON.stringify(emailData, null, 2));
+
+          // 이메일 발송을 위한 별도 요청
+          try {
+            console.log('이메일 발송 요청 시작...');
+            const emailResponse = await fetch('/api/employee/checklist-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                ...emailData,
+                sendEmail: true // 이메일 발송 플래그 추가
+              })
+            });
+
+            if (emailResponse.ok) {
+              console.log('이메일 발송 성공');
+            } else {
+              console.error('이메일 발송 실패');
+            }
+          } catch (emailError) {
+            console.error('이메일 발송 오류:', emailError);
+          }
+        } catch (emailError) {
+          console.error('이메일 발송 오류:', emailError);
+        }
+      }
+
+      // 제출 완료 상태로 업데이트
+      if (selectedChecklist) {
+        setChecklists(prevChecklists => 
+          prevChecklists.map(checklist => 
+            checklist.id === selectedChecklist.id 
+              ? { ...checklist, isSubmitted: true }
+              : checklist
+          )
+        );
       }
 
       setSuccess('체크리스트가 성공적으로 제출되었습니다.');
@@ -1555,16 +1698,20 @@ export default function ChecklistPage() {
             */}
 
             {/* 체크리스트 목록 */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">오늘의 체크리스트</h2>
+            <div className="space-y-6">
+              {/* 미완료 체크리스트 */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-6">진행 중인 체크리스트</h2>
               
-              {checklists.length === 0 ? (
+              {checklists.filter(c => !c.isSubmitted).length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  <p>오늘 등록된 체크리스트가 없습니다.</p>
+                  <p>진행 중인 체크리스트가 없습니다.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {checklists.map((checklist) => {
+                  {checklists
+                    .filter(checklist => !checklist.isSubmitted)
+                    .map((checklist) => {
                     const status = getChecklistStatus(checklist);
                     const statusInfo = getStatusInfo(status.status);
                     
@@ -1670,11 +1817,71 @@ export default function ChecklistPage() {
                 </div>
               )}
             </div>
+
+              {/* 제출 완료된 체크리스트 */}
+              {checklists.filter(c => c.isSubmitted).length > 0 && (
+                <div className="bg-green-50 rounded-xl shadow-lg p-6 border border-green-200">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                    <span className="text-green-600">✅</span>
+                    제출 완료된 체크리스트
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    {checklists
+                      .filter(checklist => checklist.isSubmitted)
+                      .map((checklist) => {
+                        return (
+                          <div 
+                            key={checklist.id} 
+                            className="border border-green-200 rounded-lg p-4 bg-white"
+                            onClick={() => handleChecklistSelect(checklist)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-800 mb-1">{checklist.name}</h3>
+                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <span>{getWorkplaceLabel(checklist.workplace)}</span>
+                                  <span>•</span>
+                                  <span>{getTimeSlotLabel(checklist.timeSlot)}</span>
+                                  <span>•</span>
+                                  <span>{getCategoryLabel(checklist.category)}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-3">
+                                <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  <span className="mr-1">✅</span>
+                                  제출 완료
+                                </div>
+                                
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
 
         {/* 상세 화면 */}
         {currentView === 'detail' && selectedChecklist && (
+          <>
+            {/* 제출 완료된 체크리스트인 경우 알림 */}
+            {selectedChecklist.isSubmitted && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-600">✅</span>
+                  <span className="font-medium">이 체크리스트는 이미 제출 완료되었습니다.</span>
+                </div>
+                <p className="text-sm mt-1">수정할 수 없으며, 읽기 전용으로 표시됩니다.</p>
+              </div>
+            )}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             {/* 헤더 */}
             <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
@@ -1757,10 +1964,10 @@ export default function ChecklistPage() {
                                   type="checkbox"
                                   checked={checklistItems[item.id]?.isCompleted || false}
                                   onChange={async () => await handleCheckboxChange(item.id)}
-                                  disabled={isDisabledByOther}
+                                  disabled={isDisabledByOther || selectedChecklist.isSubmitted}
                                   className={`mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
                                     item.connectedItems && item.connectedItems.length > 0 ? 'cursor-pointer' : ''
-                                  } ${isDisabledByOther ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  } ${(isDisabledByOther || selectedChecklist.isSubmitted) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 />
                                 <div className="flex-1">
                                   <h3 className="font-semibold text-sm text-gray-800">
@@ -1820,6 +2027,60 @@ export default function ChecklistPage() {
                               </div>
                             )}
 
+                            {/* 메모 표시 및 입력 */}
+                            <div className="mt-2">
+                              {/* 기존 메모 표시 */}
+                              {checklistItems[item.id]?.notes && !showMemoInputs[item.id] && (
+                                <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border-l-2 border-blue-300">
+                                  <div className="font-medium text-gray-800 mb-1">메모:</div>
+                                  <div className="text-gray-700">{checklistItems[item.id].notes}</div>
+                                  <button
+                                    onClick={() => toggleMemoInput(item.id)}
+                                    className="text-blue-600 hover:text-blue-800 text-xs mt-1"
+                                  >
+                                    수정
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* 메모 입력창 */}
+                              {showMemoInputs[item.id] && (
+                                <div className="mt-2">
+                                  <textarea
+                                    value={checklistItems[item.id]?.notes || ''}
+                                    onChange={(e) => handleNotesChange(item.id, e.target.value)}
+                                    placeholder="메모를 입력하세요..."
+                                    className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-medium"
+                                    rows={3}
+                                  />
+                                  <div className="flex gap-2 mt-2">
+                                    <button
+                                      onClick={() => saveMemo(item.id)}
+                                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                    >
+                                      저장
+                                    </button>
+                                    <button
+                                      onClick={() => toggleMemoInput(item.id)}
+                                      className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                                    >
+                                      취소
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 메모 추가 버튼 (메모가 없고 입력창이 열려있지 않을 때) */}
+                              {!checklistItems[item.id]?.notes && !showMemoInputs[item.id] && (
+                                <button
+                                  onClick={() => toggleMemoInput(item.id)}
+                                  className="text-blue-600 hover:text-blue-800 text-xs mt-1"
+                                >
+                                  메모 추가
+                                </button>
+                              )}
+                            </div>
+
                           </div>
                           
                           {/* 연결된 항목들 (펼쳐졌을 때만 표시) */}
@@ -1840,9 +2101,9 @@ export default function ChecklistPage() {
                                     type="checkbox"
                                     checked={connectedItemsStatus[connection.id]?.isCompleted || false}
                                     onChange={async () => await handleConnectedItemCheckboxChange(connection.id, item.id)}
-                                    disabled={connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name}
+                                    disabled={(connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name) || selectedChecklist.isSubmitted}
                                     className={`mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
-                                      connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name 
+                                      (connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name) || selectedChecklist.isSubmitted
                                         ? 'opacity-50 cursor-not-allowed' : ''
                                     }`}
                                   />
@@ -1895,30 +2156,55 @@ export default function ChecklistPage() {
                                     
                                     {/* 연결된 항목용 메모 입력 */}
                                     <div className="mt-2 ml-5">
-                                      <button
-                                        onClick={() => toggleMemoInput(connection.id)}
-                                        className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                                      >
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        메모 {connectedItemsStatus[connection.id]?.notes ? '수정' : '추가'}
-                                      </button>
+                                      {/* 기존 메모 표시 */}
+                                      {connectedItemsStatus[connection.id]?.notes && !showMemoInputs[connection.id] && (
+                                        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border-l-2 border-blue-300 mb-2">
+                                          <div className="font-medium text-gray-800 mb-1">메모:</div>
+                                          <div className="text-gray-700">{connectedItemsStatus[connection.id].notes}</div>
+                                          <button
+                                            onClick={() => toggleMemoInput(connection.id)}
+                                            className="text-blue-600 hover:text-blue-800 text-xs mt-1"
+                                          >
+                                            수정
+                                          </button>
+                                        </div>
+                                      )}
+
+                                      {/* 메모 입력창 */}
                                       {showMemoInputs[connection.id] && (
-                                        <div className="mt-1">
+                                        <div className="mt-2">
                                           <textarea
                                             value={connectedItemsStatus[connection.id]?.notes || ''}
                                             onChange={(e) => handleNotesChange(connection.id, e.target.value)}
                                             placeholder="메모를 입력하세요..."
-                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs"
-                                            rows={2}
+                                            className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-medium"
+                                            rows={3}
                                           />
+                                          <div className="flex gap-2 mt-2">
+                                            <button
+                                              onClick={() => saveMemo(connection.id)}
+                                              className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                            >
+                                              저장
+                                            </button>
+                                            <button
+                                              onClick={() => toggleMemoInput(connection.id)}
+                                              className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                                            >
+                                              취소
+                                            </button>
+                                          </div>
                                         </div>
                                       )}
-                                      {connectedItemsStatus[connection.id]?.notes && !showMemoInputs[connection.id] && (
-                                        <div className="mt-1 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-700">
-                                          {connectedItemsStatus[connection.id].notes}
-                                        </div>
+
+                                      {/* 메모 추가 버튼 (메모가 없고 입력창이 열려있지 않을 때) */}
+                                      {!connectedItemsStatus[connection.id]?.notes && !showMemoInputs[connection.id] && (
+                                        <button
+                                          onClick={() => toggleMemoInput(connection.id)}
+                                          className="text-blue-600 hover:text-blue-800 text-xs"
+                                        >
+                                          메모 추가
+                                        </button>
                                       )}
                                     </div>
                                   </div>
@@ -1979,8 +2265,12 @@ export default function ChecklistPage() {
                   </button>
                   <button
                     onClick={handleSubmit}
-                    disabled={submitting}
-                    className="px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                    disabled={submitting || !isAllItemsCompleted()}
+                    className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${
+                      isAllItemsCompleted() 
+                        ? 'bg-green-600 text-white hover:bg-green-700' 
+                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    }`}
                   >
                     {submitting ? '제출 중...' : '제출'}
                   </button>
@@ -1988,6 +2278,7 @@ export default function ChecklistPage() {
               </div>
             </div>
           </div>
+        </>
         )}
       </div>
     </div>
