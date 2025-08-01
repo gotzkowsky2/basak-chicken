@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // 로그인 성공: employee_auth 쿠키 발급
+    // 로그인 성공: 쿠키 발급
     const response = NextResponse.json({
       success: true,
       redirectTo: (employee as any).isSuperAdmin ? "/admin-choose" : "/employee"
@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
     const isProd = process.env.NODE_ENV === "production";
     const prodDomain = "crew.basak-chicken.com";
     const domainOption = isProd ? { domain: prodDomain } : {};
+    
+    // 모든 직원에게 employee_auth 쿠키 발급
     response.cookies.set("employee_auth", employee.id, {
       httpOnly: true,
       path: "/",
@@ -60,6 +62,17 @@ export async function POST(request: NextRequest) {
       secure: false, // HTTP 환경에서도 작동하도록 false로 설정
       ...domainOption
     });
+    
+    // 최고 관리자인 경우 admin_auth 쿠키도 발급
+    if ((employee as any).isSuperAdmin) {
+      response.cookies.set("admin_auth", employee.id, {
+        httpOnly: true,
+        path: "/",
+        sameSite: 'lax',
+        secure: false, // HTTP 환경에서도 작동하도록 false로 설정
+        ...domainOption
+      });
+    }
     // 임시비밀번호 쿠키 삭제
     response.cookies.set("temp_pw_auth", "", {
       httpOnly: true,

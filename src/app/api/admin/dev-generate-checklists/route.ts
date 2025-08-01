@@ -49,8 +49,17 @@ export async function GET(request: NextRequest) {
         }
       },
       include: {
-        template: true,
-        employee: true
+        template: {
+          include: {
+            items: {
+              include: {
+                connectedItems: true
+              }
+            }
+          }
+        },
+        employee: true,
+        connectedItemsProgress: true
       },
       orderBy: [
         { workplace: 'asc' },

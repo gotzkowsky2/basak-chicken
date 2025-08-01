@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 
 const prisma = new PrismaClient();
 
+// 관리자 인증 확인 함수
 async function verifyAdminAuth() {
   const cookieStore = await cookies();
   const adminAuth = cookieStore.get('admin_auth');
@@ -31,42 +32,68 @@ async function verifyAdminAuth() {
   return employee;
 }
 
+// POST: 개별 체크리스트 삭제
 export async function POST(request: NextRequest) {
   try {
     // 관리자 인증 확인
     const admin = await verifyAdminAuth();
     
     const body = await request.json();
-    const { targetDate } = body;
+    
+    const { instanceId } = body;
 
-    if (!targetDate) {
+    if (!instanceId) {
       return NextResponse.json(
-        { error: '날짜가 필요합니다.' },
+        { error: '체크리스트 인스턴스 ID가 필요합니다.' },
         { status: 400 }
       );
     }
 
-    // 해당 날짜의 모든 체크리스트 삭제 (ChecklistInstance 사용)
-    const deletedChecklists = await prisma.checklistInstance.deleteMany({
-      where: {
-        date: {
-          gte: new Date(targetDate),
-          lt: new Date(new Date(targetDate).getTime() + 24 * 60 * 60 * 1000)
-        }
+    // 체크리스트 인스턴스 확인
+    const instance = await prisma.checklistInstance.findUnique({
+      where: { id: instanceId },
+      include: {
+        template: true,
+        connectedItemsProgress: true
       }
     });
 
+    if (!instance) {
+      return NextResponse.json(
+        { error: '해당 체크리스트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 연결된 항목들의 진행 상태 먼저 삭제
+    if (instance.connectedItemsProgress.length > 0) {
+      await prisma.connectedItemProgress.deleteMany({
+        where: { instanceId: instanceId }
+      });
+    }
+
+    // 체크리스트 인스턴스 삭제
+    await prisma.checklistInstance.delete({
+      where: { id: instanceId }
+    });
+
     return NextResponse.json({
-      message: '테스트용 체크리스트 삭제 완료',
-      date: targetDate,
-      deletedCount: deletedChecklists.count
+      success: true,
+      message: '체크리스트가 성공적으로 삭제되었습니다.',
+      deletedInstance: {
+        id: instance.id,
+        templateName: instance.template.name,
+        workplace: instance.workplace,
+        timeSlot: instance.timeSlot,
+        date: instance.date
+      }
     });
 
   } catch (error: any) {
-    console.error('체크리스트 삭제 오류:', error);
+    console.error('개별 체크리스트 삭제 오류:', error);
     return NextResponse.json(
       { error: error.message || '체크리스트 삭제 중 오류가 발생했습니다.' },
       { status: 500 }
     );
   }
-}
+} 

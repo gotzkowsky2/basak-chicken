@@ -25,7 +25,12 @@ export async function GET(
       select: { isSuperAdmin: true }
     });
 
-    if (!employee || !employee.isSuperAdmin) {
+    if (!employee) {
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+    }
+
+    // admin_auth 쿠키가 있거나 최고 관리자인 경우만 허용
+    if (!adminAuth && !employee.isSuperAdmin) {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     }
 
@@ -70,7 +75,12 @@ export async function PUT(
       select: { id: true, name: true, isSuperAdmin: true }
     });
 
-    if (!employee || (!employee.isSuperAdmin && !adminAuth)) {
+    if (!employee) {
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+    }
+
+    // admin_auth 쿠키가 있거나 최고 관리자인 경우만 허용
+    if (!adminAuth && !employee.isSuperAdmin) {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     }
 
@@ -156,7 +166,12 @@ export async function DELETE(
       select: { isSuperAdmin: true }
     });
 
-    if (!employee || !employee.isSuperAdmin) {
+    if (!employee) {
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+    }
+
+    // admin_auth 쿠키가 있거나 최고 관리자인 경우만 허용
+    if (!adminAuth && !employee.isSuperAdmin) {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     }
 

@@ -68,7 +68,6 @@ export async function GET(request: NextRequest) {
 
     const instances = await prisma.checklistInstance.findMany({
       where: {
-        // employeeId: employee.id, // 모든 직원의 체크리스트를 볼 수 있도록 주석 처리
         date: {
           gte: targetDate,
           lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000) // 다음 날 00:00
@@ -95,7 +94,8 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        connectedItemsProgress: true
+        connectedItemsProgress: true,
+        checklistItemProgresses: true
       },
       orderBy: {
         createdAt: 'asc'
@@ -169,10 +169,19 @@ export async function GET(request: NextRequest) {
 // POST: 체크리스트 진행 상태 저장/업데이트
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== 체크리스트 진행 상태 저장 시작 ===');
     const employee = await verifyEmployeeAuth();
+    console.log('인증된 직원:', employee);
+    
     const body = await request.json();
+    console.log('요청 본문:', JSON.stringify(body, null, 2));
     
     const { templateId, isCompleted, notes, connectedItemsProgress, completedBy, completedAt } = body;
+
+    console.log('=== POST 요청 데이터 ===');
+    console.log('templateId:', templateId);
+    console.log('isCompleted:', isCompleted);
+    console.log('connectedItemsProgress:', connectedItemsProgress);
 
     if (!templateId) {
       return NextResponse.json(
@@ -181,14 +190,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 템플릿 정보 조회
+    const template = await prisma.checklistTemplate.findUnique({
+      where: { id: templateId }
+    });
+
+    if (!template) {
+      return NextResponse.json(
+        { error: '템플릿을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    console.log('템플릿 정보:', {
+      id: template.id,
+      name: template.name,
+      workplace: template.workplace,
+      timeSlot: template.timeSlot,
+      category: template.category
+    });
+
     // 오늘 날짜 (시간 제외)
     const today = new Date();
     const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    // 기존 인스턴스 확인
+    // 기존 인스턴스 확인 (employeeId 필터링 제거)
     let instance = await prisma.checklistInstance.findFirst({
       where: {
-        employeeId: employee.id,
         templateId: templateId,
         date: targetDate
       },
@@ -196,6 +224,8 @@ export async function POST(request: NextRequest) {
         connectedItemsProgress: true
       }
     });
+
+    console.log('기존 인스턴스:', instance);
 
     if (instance) {
       // 기존 인스턴스 업데이트
@@ -205,12 +235,13 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date()
       };
       
-      if (completedBy !== undefined) {
-        updateData.completedBy = completedBy;
-      }
-      if (completedAt !== undefined) {
-        updateData.completedAt = completedAt ? new Date(completedAt) : null;
-      }
+      // completedBy와 completedAt은 일시적으로 제거
+      // if (completedBy !== undefined) {
+      //   updateData.completedBy = completedBy;
+      // }
+      // if (completedAt !== undefined) {
+      //   updateData.completedAt = completedAt ? new Date(completedAt) : null;
+      // }
       
       instance = await prisma.checklistInstance.update({
         where: {
@@ -227,18 +258,21 @@ export async function POST(request: NextRequest) {
         employeeId: employee.id,
         templateId,
         date: targetDate,
-        workplace: 'COMMON', // 기본값, 템플릿에서 가져와야 함
-        timeSlot: 'COMMON', // 기본값, 템플릿에서 가져와야 함
+        workplace: template.workplace || 'COMMON', // 기본값 설정
+        timeSlot: template.timeSlot || 'COMMON', // 기본값 설정
         isCompleted,
         notes
       };
       
-      if (completedBy !== undefined) {
-        createData.completedBy = completedBy;
-      }
-      if (completedAt !== undefined) {
-        createData.completedAt = completedAt ? new Date(completedAt) : null;
-      }
+      // completedBy와 completedAt은 일시적으로 제거
+      // if (completedBy !== undefined) {
+      //   createData.completedBy = completedBy;
+      // }
+      // if (completedAt !== undefined) {
+      //   createData.completedAt = completedAt ? new Date(completedAt) : null;
+      // }
+      
+      console.log('새 인스턴스 생성 데이터:', createData);
       
       instance = await prisma.checklistInstance.create({
         data: createData,
@@ -259,26 +293,68 @@ export async function POST(request: NextRequest) {
 
       // 새로운 연결된 항목 진행 상태 생성
       if (connectedItemsProgress.length > 0) {
+        const connectedItemsData = connectedItemsProgress.map((item: any) => {
+          const itemData: any = {
+            instanceId: instance.id,
+            itemId: item.itemId,
+            connectionId: item.connectionId,
+            currentStock: item.currentStock,
+            updatedStock: item.updatedStock,
+            isCompleted: item.isCompleted,
+            notes: item.notes
+          };
+          
+          if (item.completedBy !== undefined) {
+            itemData.completedBy = item.completedBy;
+          }
+          if (item.completedAt !== undefined) {
+            itemData.completedAt = item.completedAt ? new Date(item.completedAt) : null;
+          }
+          
+          return itemData;
+        });
+
+        console.log('연결된 항목 데이터:', connectedItemsData);
+        
         await prisma.connectedItemProgress.createMany({
-          data: connectedItemsProgress.map((item: any) => {
-            const itemData: any = {
-              instanceId: instance.id,
-              itemId: item.itemId,
-              currentStock: item.currentStock,
-              updatedStock: item.updatedStock,
-              isCompleted: item.isCompleted,
-              notes: item.notes
-            };
-            
-            if (item.completedBy !== undefined) {
-              itemData.completedBy = item.completedBy;
-            }
-            if (item.completedAt !== undefined) {
-              itemData.completedAt = item.completedAt ? new Date(item.completedAt) : null;
-            }
-            
-            return itemData;
-          })
+          data: connectedItemsData
+        });
+      }
+    }
+
+    // 개별 항목들의 진행 상태 업데이트
+    if (body.checklistItemsProgress && Array.isArray(body.checklistItemsProgress)) {
+      // 기존 개별 항목 진행 상태 삭제
+      await prisma.checklistItemProgress.deleteMany({
+        where: {
+          instanceId: instance.id
+        }
+      });
+
+      // 새로운 개별 항목 진행 상태 생성
+      if (body.checklistItemsProgress.length > 0) {
+        const checklistItemsData = body.checklistItemsProgress.map((item: any) => {
+          const itemData: any = {
+            instanceId: instance.id,
+            itemId: item.itemId,
+            isCompleted: item.isCompleted,
+            notes: item.notes
+          };
+  
+          if (item.completedBy !== undefined) {
+            itemData.completedBy = item.completedBy;
+          }
+          if (item.completedAt !== undefined) {
+            itemData.completedAt = item.completedAt ? new Date(item.completedAt) : null;
+          }
+  
+          return itemData;
+        });
+
+        console.log('개별 항목 데이터:', checklistItemsData);
+    
+        await prisma.checklistItemProgress.createMany({
+          data: checklistItemsData
         });
       }
     }
@@ -303,9 +379,12 @@ export async function POST(request: NextRequest) {
             }
           }
         },
-        connectedItemsProgress: true
+        connectedItemsProgress: true,
+        checklistItemProgresses: true
       }
     });
+
+    console.log('업데이트된 인스턴스:', updatedInstance);
 
     return NextResponse.json(updatedInstance);
   } catch (error: any) {

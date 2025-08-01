@@ -43,7 +43,12 @@ export async function POST(req: NextRequest) {
       select: { name: true, isSuperAdmin: true }
     });
 
-    if (!employee || !employee.isSuperAdmin) {
+    if (!employee) {
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+    }
+
+    // admin_auth 쿠키가 있거나 최고 관리자인 경우만 허용
+    if (!adminAuth && !employee.isSuperAdmin) {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     }
 
@@ -122,7 +127,12 @@ export async function GET(req: NextRequest) {
       select: { isSuperAdmin: true }
     });
 
-    if (!employee || !employee.isSuperAdmin) {
+    if (!employee) {
+      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+    }
+
+    // admin_auth 쿠키가 있거나 최고 관리자인 경우만 허용
+    if (!adminAuth && !employee.isSuperAdmin) {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
     }
 
@@ -156,6 +166,11 @@ export async function GET(req: NextRequest) {
       where,
       orderBy: { inputDate: 'desc' },
       include: {
+        items: {
+          include: {
+            connectedItems: true
+          }
+        },
         _count: {
           select: { items: true }
         }
@@ -172,7 +187,8 @@ export async function GET(req: NextRequest) {
       inputter: template.inputter,
       inputDate: template.inputDate,
       isActive: template.isActive,
-      itemCount: template._count.items
+      itemCount: template._count.items,
+      items: template.items
     }));
 
     return NextResponse.json(transformedTemplates);

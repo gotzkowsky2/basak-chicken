@@ -203,16 +203,28 @@ export default function ChecklistPage() {
 
   // 현재 직원 정보 가져오기
   const fetchCurrentEmployee = async () => {
+    console.log('fetchCurrentEmployee 함수 호출됨');
     try {
-      const response = await fetch('/api/employee/checklist-progress', {
+      const response = await fetch('/api/employee/me', {
         credentials: 'include'
       });
       
+      console.log('API 응답 상태:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        if (data.employee) {
-          setCurrentEmployee(data.employee);
+        console.log('API 응답 데이터:', data);
+        // API는 employee 객체를 직접 반환하므로 data.employee가 아닌 data를 사용
+        if (data && data.id) {
+          setCurrentEmployee(data);
+          console.log('현재 직원 정보 설정됨:', data);
+        } else {
+          console.log('직원 데이터가 유효하지 않음:', data);
         }
+      } else {
+        console.error('직원 정보 조회 실패:', response.status);
+        const errorText = await response.text();
+        console.error('에러 응답:', errorText);
       }
     } catch (error) {
       console.error('직원 정보 조회 오류:', error);
@@ -245,30 +257,124 @@ export default function ChecklistPage() {
         const connectedStatus: {[key: string]: any} = {};
         
         progress.forEach((instance: any) => {
-          itemsStatus[instance.templateId] = {
-            id: instance.id,
-            content: instance.content,
-            isCompleted: instance.isCompleted,
-            completedBy: instance.completedBy,
-            completedAt: instance.completedAt,
-            notes: instance.notes || ""
-          };
+          console.log('인스턴스 처리 중:', instance);
+          
+          // 개별 항목의 진행 상태 로드 (연결된 항목이 없는 항목만)
+          if (instance.checklistItemProgresses) {
+            console.log('checklistItemProgresses:', instance.checklistItemProgresses);
+            instance.checklistItemProgresses.forEach((itemProgress: any) => {
+              console.log('itemProgress:', itemProgress);
+              
+              // 연결된 항목이 있는지 확인
+              const hasConnectedItems = instance.template?.items?.find((item: any) => 
+                item.id === itemProgress.itemId && item.connectedItems && item.connectedItems.length > 0
+              );
+              
+              // 연결된 항목이 없는 경우에만 직접 로드
+              if (!hasConnectedItems) {
+                itemsStatus[itemProgress.itemId] = {
+                  id: itemProgress.itemId,
+                  content: itemProgress.item?.content || '',
+                  isCompleted: itemProgress.isCompleted,
+                  completedBy: itemProgress.completedBy,
+                  completedAt: itemProgress.completedAt,
+                  notes: itemProgress.notes || ""
+                };
+              }
+            });
+          }
 
           // 연결된 항목들의 진행 상태도 로드
           if (instance.connectedItemsProgress) {
+            console.log('=== 연결된 항목 진행 상태 로드 시작 ===');
+            console.log('instance.connectedItemsProgress:', instance.connectedItemsProgress);
             instance.connectedItemsProgress.forEach((connectedItem: any) => {
-              connectedStatus[connectedItem.itemId] = {
+              // connectionId를 키로 사용 (connection.id와 일치해야 함)
+              const key = connectedItem.connectionId;
+              connectedStatus[key] = {
+                itemId: connectedItem.itemId, // itemId 추가
                 isCompleted: connectedItem.isCompleted,
                 completedBy: connectedItem.completedBy,
                 completedAt: connectedItem.completedAt,
-                notes: connectedItem.notes || ""
+                notes: connectedItem.notes || "",
+                currentStock: connectedItem.currentStock,
+                updatedStock: connectedItem.updatedStock
               };
+              console.log(`연결된 항목 ${key} 로드: isCompleted=${connectedItem.isCompleted}, completedBy=${connectedItem.completedBy}`);
+            });
+            console.log('최종 connectedStatus:', connectedStatus);
+          } else {
+            console.log('connectedItemsProgress가 없습니다.');
+          }
+
+          // 연결된 항목들의 상태를 기반으로 상위 체크리스트 항목들의 상태를 계산
+          if (instance.template?.items) {
+            instance.template.items.forEach((item: any) => {
+              if (item.connectedItems && item.connectedItems.length > 0) {
+                console.log(`=== 상위 항목 ${item.id} (${item.content}) 처리 중 ===`);
+                console.log('연결된 항목들:', item.connectedItems);
+                
+                // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되었는지 확인
+                const allConnectedCompleted = item.connectedItems.every((connection: any) => {
+                  const key = connection.id; // connection.id를 키로 사용 (connectedStatus에서도 동일하게 사용)
+                  const isCompleted = connectedStatus[key]?.isCompleted === true;
+                  console.log(`연결된 항목 ${key}: ${isCompleted ? '완료' : '미완료'}`);
+                  return isCompleted;
+                });
+                
+                console.log(`모든 연결된 항목 완료 여부: ${allConnectedCompleted}`);
+                
+                // 상위 항목의 상태를 연결된 항목들의 상태에 따라 설정
+                // 모든 연결된 항목이 완료되었을 때만 상위 항목도 완료
+                if (allConnectedCompleted) {
+                  // 연결된 항목 중 가장 최근에 완료된 항목의 completedBy 정보 사용
+                  const lastCompletedItem = item.connectedItems
+                    .map((connection: any) => ({
+                      connection,
+                      status: connectedStatus[connection.id]
+                    }))
+                    .filter((item: any) => item.status?.isCompleted)
+                    .sort((a: any, b: any) => {
+                      const dateA = a.status.completedAt ? new Date(a.status.completedAt).getTime() : 0;
+                      const dateB = b.status.completedAt ? new Date(b.status.completedAt).getTime() : 0;
+                      return dateB - dateA; // 최신 날짜가 앞으로
+                    })[0];
+
+                  itemsStatus[item.id] = {
+                    id: item.id,
+                    content: item.content || '',
+                    isCompleted: true,
+                    completedBy: lastCompletedItem?.status?.completedBy || currentEmployee?.name,
+                    completedAt: lastCompletedItem?.status?.completedAt || new Date().toISOString(),
+                    notes: ''
+                  };
+                  console.log(`상위 항목 ${item.id} 완료로 설정 (완료자: ${itemsStatus[item.id].completedBy})`);
+                } else {
+                  // 연결된 항목 중 하나라도 완료되지 않았으면 상위 항목도 완료되지 않음
+                  itemsStatus[item.id] = {
+                    id: item.id,
+                    content: item.content || '',
+                    isCompleted: false,
+                    completedBy: undefined,
+                    completedAt: undefined,
+                    notes: ''
+                  };
+                  console.log(`상위 항목 ${item.id} 미완료로 설정`);
+                }
+              }
             });
           }
         });
         
+        console.log('로드된 메인 항목 상태:', itemsStatus);
+        console.log('로드된 연결 항목 상태:', connectedStatus);
+        
         setChecklistItems(itemsStatus);
         setConnectedItemsStatus(connectedStatus);
+        
+        console.log('=== fetchProgress 완료 ===');
+        console.log('설정된 checklistItems:', itemsStatus);
+        console.log('설정된 connectedItemsStatus:', connectedStatus);
       }
     } catch (error) {
       console.error('진행 상태 조회 오류:', error);
@@ -277,7 +383,8 @@ export default function ChecklistPage() {
 
   const fetchTimeSlotStatuses = async () => {
     try {
-      const response = await fetch('/api/employee/timeslot-status', {
+      // 기본값으로 모든 시간대 상태 조회
+      const response = await fetch('/api/employee/timeslot-status?workplace=COMMON&timeSlot=COMMON', {
         credentials: "include"
       });
 
@@ -305,7 +412,9 @@ export default function ChecklistPage() {
     const connectedStatus: {[key: string]: any} = {};
 
     progress.forEach((instance: any) => {
-      itemsStatus[instance.templateId] = {
+      // 템플릿 키 생성
+      const templateKey = `${getWorkplaceLabel(instance.workplace)}, ${getTimeSlotLabel(instance.timeSlot)}`;
+      itemsStatus[templateKey] = {
         id: instance.id,
         content: instance.content,
         isCompleted: instance.isCompleted,
@@ -316,13 +425,102 @@ export default function ChecklistPage() {
 
       // 연결된 항목들의 진행 상태도 로드
       if (instance.connectedItemsProgress) {
+        console.log('연결된 항목 진행 상태 로드:', instance.connectedItemsProgress);
         instance.connectedItemsProgress.forEach((connectedItem: any) => {
-          connectedStatus[connectedItem.itemId] = {
+          // connectionId를 키로 사용
+          const key = connectedItem.connectionId; // connectionId만 사용 (connection.id와 일치해야 함)
+          connectedStatus[key] = {
+            itemId: connectedItem.itemId, // itemId 추가
             isCompleted: connectedItem.isCompleted,
             completedBy: connectedItem.completedBy,
             completedAt: connectedItem.completedAt,
-            notes: connectedItem.notes || ""
+            notes: connectedItem.notes || "",
+            currentStock: connectedItem.currentStock,
+            updatedStock: connectedItem.updatedStock
           };
+          console.log(`연결된 항목 ${key} 로드: isCompleted=${connectedItem.isCompleted}, completedBy=${connectedItem.completedBy}`);
+        });
+      }
+
+      // 개별 체크리스트 항목들의 진행 상태 로드 (연결된 항목이 없는 항목만)
+      if (instance.checklistItemProgresses) {
+        instance.checklistItemProgresses.forEach((itemProgress: any) => {
+          // 연결된 항목이 있는지 확인
+          const hasConnectedItems = instance.template?.items?.find((item: any) => 
+            item.id === itemProgress.itemId && item.connectedItems && item.connectedItems.length > 0
+          );
+          
+          // 연결된 항목이 없는 경우에만 직접 로드
+          if (!hasConnectedItems) {
+            itemsStatus[itemProgress.itemId] = {
+              id: itemProgress.itemId,
+              content: '', // API에서 content는 별도로 가져와야 함
+              isCompleted: itemProgress.isCompleted,
+              completedBy: itemProgress.completedBy,
+              completedAt: itemProgress.completedAt,
+              notes: itemProgress.notes || ""
+            };
+          }
+        });
+      }
+
+      // 연결된 항목들의 상태를 기반으로 상위 체크리스트 항목들의 상태를 계산
+      if (instance.template?.items) {
+        instance.template.items.forEach((item: any) => {
+          if (item.connectedItems && item.connectedItems.length > 0) {
+            console.log(`=== 상위 항목 ${item.id} (${item.content}) 처리 중 ===`);
+            console.log('연결된 항목들:', item.connectedItems);
+            
+            // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되었는지 확인
+            const allConnectedCompleted = item.connectedItems.every((connection: any) => {
+              const key = connection.id;
+              const isCompleted = connectedStatus[key]?.isCompleted === true;
+              console.log(`연결된 항목 ${key}: ${isCompleted ? '완료' : '미완료'}`);
+              return isCompleted;
+            });
+            
+            console.log(`모든 연결된 항목 완료 여부: ${allConnectedCompleted}`);
+            
+            // 상위 항목의 상태를 연결된 항목들의 상태에 따라 설정
+            // 모든 연결된 항목이 완료되었을 때만 상위 항목도 완료
+            if (allConnectedCompleted) {
+              // 연결된 항목 중 가장 최근에 완료된 항목의 정보 사용
+              const completedConnectedItems = item.connectedItems
+                .map((connection: any) => ({
+                  connection,
+                  status: connectedStatus[connection.id]
+                }))
+                .filter((item: any) => item.status?.isCompleted)
+                .sort((a: any, b: any) => {
+                  const dateA = a.status.completedAt ? new Date(a.status.completedAt).getTime() : 0;
+                  const dateB = b.status.completedAt ? new Date(b.status.completedAt).getTime() : 0;
+                  return dateB - dateA; // 최신 날짜가 앞으로
+                });
+              
+              const lastCompletedItem = completedConnectedItems[0];
+              
+              itemsStatus[item.id] = {
+                id: item.id,
+                content: item.content || '',
+                isCompleted: true,
+                completedBy: lastCompletedItem?.status?.completedBy || currentEmployee?.name,
+                completedAt: lastCompletedItem?.status?.completedAt || new Date().toISOString(),
+                notes: ''
+              };
+              console.log(`상위 항목 ${item.id} 완료로 설정 (completedBy: ${lastCompletedItem?.status?.completedBy})`);
+            } else {
+              // 연결된 항목 중 하나라도 완료되지 않았으면 상위 항목도 완료되지 않음
+              itemsStatus[item.id] = {
+                id: item.id,
+                content: item.content || '',
+                isCompleted: false,
+                completedBy: undefined,
+                completedAt: undefined,
+                notes: ''
+              };
+              console.log(`상위 항목 ${item.id} 미완료로 설정`);
+            }
+          }
         });
       }
     });
@@ -460,7 +658,7 @@ export default function ChecklistPage() {
   };
 
   // 연결된 항목 체크박스 변경 핸들러
-  const handleConnectedItemCheckboxChange = (connectionId: string, parentItemId: string) => {
+  const handleConnectedItemCheckboxChange = async (connectionId: string, parentItemId: string) => {
     const isCompleted = !connectedItemsStatus[connectionId]?.isCompleted;
     
     // 먼저 연결항목 상태 업데이트
@@ -468,6 +666,7 @@ export default function ChecklistPage() {
       ...connectedItemsStatus,
       [connectionId]: {
         ...connectedItemsStatus[connectionId],
+        itemId: connectedItemsStatus[connectionId]?.itemId || connectionId, // itemId 보존
         isCompleted: isCompleted,
         completedBy: isCompleted ? currentEmployee?.name : undefined,
         completedAt: isCompleted ? new Date().toISOString() : undefined
@@ -484,16 +683,102 @@ export default function ChecklistPage() {
       );
       
       setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => {
-        return {
-          ...prev,
-          [parentItemId]: {
-            ...prev[parentItemId],
-            isCompleted: allConnectedCompleted,
-            completedBy: allConnectedCompleted ? currentEmployee?.name : undefined,
-            completedAt: allConnectedCompleted ? new Date().toISOString() : undefined
-          }
-        };
+        if (allConnectedCompleted) {
+          // 연결된 항목 중 가장 최근에 완료된 항목의 completedBy 정보 사용
+          const lastCompletedItem = parentItem.connectedItems
+            ?.map((connection: any) => ({
+              connection,
+              status: newConnectedStatus[connection.id]
+            }))
+            ?.filter((item: any) => item.status?.isCompleted)
+            ?.sort((a: any, b: any) => {
+              const dateA = a.status.completedAt ? new Date(a.status.completedAt).getTime() : 0;
+              const dateB = b.status.completedAt ? new Date(b.status.completedAt).getTime() : 0;
+              return dateB - dateA; // 최신 날짜가 앞으로
+            })[0];
+
+          return {
+            ...prev,
+            [parentItemId]: {
+              ...prev[parentItemId],
+              isCompleted: true,
+              completedBy: lastCompletedItem?.status?.completedBy || currentEmployee?.name,
+              completedAt: lastCompletedItem?.status?.completedAt || new Date().toISOString()
+            }
+          };
+        } else {
+          return {
+            ...prev,
+            [parentItemId]: {
+              ...prev[parentItemId],
+              isCompleted: false,
+              completedBy: undefined,
+              completedAt: undefined
+            }
+          };
+        }
       });
+    }
+    
+    // 상태 업데이트 후 즉시 저장
+    if (selectedChecklist) {
+      try {
+        // 업데이트된 checklistItems 상태 계산 (현재 상태를 기반으로)
+        const updatedChecklistItems = { ...checklistItems };
+        if (parentItem && parentItem.connectedItems) {
+          const allConnectedCompleted = parentItem.connectedItems.every(connection => 
+            connection.id === connectionId ? isCompleted : newConnectedStatus[connection.id]?.isCompleted === true
+          );
+          
+          if (allConnectedCompleted) {
+            // 연결된 항목 중 가장 최근에 완료된 항목의 completedBy 정보 사용
+            const lastCompletedItem = parentItem.connectedItems
+              ?.map((connection: any) => ({
+                connection,
+                status: newConnectedStatus[connection.id]
+              }))
+              ?.filter((item: any) => item.status?.isCompleted)
+              ?.sort((a: any, b: any) => {
+                const dateA = a.status.completedAt ? new Date(a.status.completedAt).getTime() : 0;
+                const dateB = b.status.completedAt ? new Date(b.status.completedAt).getTime() : 0;
+                return dateB - dateA; // 최신 날짜가 앞으로
+              })[0];
+
+            updatedChecklistItems[parentItemId] = {
+              ...updatedChecklistItems[parentItemId],
+              id: parentItemId,
+              content: parentItem.content || '',
+              isCompleted: true,
+              completedBy: lastCompletedItem?.status?.completedBy || currentEmployee?.name,
+              completedAt: lastCompletedItem?.status?.completedAt || new Date().toISOString(),
+              notes: updatedChecklistItems[parentItemId]?.notes || ''
+            };
+          } else {
+            updatedChecklistItems[parentItemId] = {
+              ...updatedChecklistItems[parentItemId],
+              id: parentItemId,
+              content: parentItem.content || '',
+              isCompleted: false,
+              completedBy: undefined,
+              completedAt: undefined,
+              notes: updatedChecklistItems[parentItemId]?.notes || ''
+            };
+          }
+        }
+        
+        console.log('=== 연결항목 체크박스 변경 시 저장 데이터 ===');
+        console.log('updatedChecklistItems:', updatedChecklistItems);
+        console.log('newConnectedStatus:', newConnectedStatus);
+        
+        await saveProgressWithState(selectedChecklist.id, updatedChecklistItems, newConnectedStatus);
+        console.log('연결항목 체크박스 변경 후 즉시 저장 완료');
+        
+        // 저장 후 최신 데이터 다시 로드
+        await fetchProgress();
+      } catch (error) {
+        console.error('연결항목 체크박스 변경 후 저장 실패:', error);
+        setError('저장 중 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -507,16 +792,40 @@ export default function ChecklistPage() {
       
       // 모든 연결된 항목이 완료되면 상위 항목도 자동으로 완료
       setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => {
-        const newItems = {
-          ...prev,
-          [parentItemId]: {
-            ...prev[parentItemId],
-            isCompleted: allConnectedCompleted,
-            completedBy: allConnectedCompleted ? currentEmployee?.name : undefined,
-            completedAt: allConnectedCompleted ? new Date().toISOString() : undefined
-          }
-        };
-        return newItems;
+        if (allConnectedCompleted) {
+          // 연결된 항목 중 가장 최근에 완료된 항목의 completedBy 정보 사용
+          const lastCompletedItem = parentItem.connectedItems
+            ?.map((connection: any) => ({
+              connection,
+              status: connectedItemsStatus[connection.id]
+            }))
+            ?.filter((item: any) => item.status?.isCompleted)
+            ?.sort((a: any, b: any) => {
+              const dateA = a.status.completedAt ? new Date(a.status.completedAt).getTime() : 0;
+              const dateB = b.status.completedAt ? new Date(b.status.completedAt).getTime() : 0;
+              return dateB - dateA; // 최신 날짜가 앞으로
+            })[0];
+
+          return {
+            ...prev,
+            [parentItemId]: {
+              ...prev[parentItemId],
+              isCompleted: true,
+              completedBy: lastCompletedItem?.status?.completedBy || currentEmployee?.name,
+              completedAt: lastCompletedItem?.status?.completedAt || new Date().toISOString()
+            }
+          };
+        } else {
+          return {
+            ...prev,
+            [parentItemId]: {
+              ...prev[parentItemId],
+              isCompleted: false,
+              completedBy: undefined,
+              completedAt: undefined
+            }
+          };
+        }
       });
     }
   };
@@ -533,7 +842,7 @@ export default function ChecklistPage() {
   };
 
   // 체크박스 변경 핸들러 수정 - 연결항목이 있는 경우 체크 불가
-  const handleCheckboxChange = (id: string) => {
+  const handleCheckboxChange = async (id: string) => {
     const item = selectedChecklist?.items?.find(item => item.id === id);
     
     // 연결항목이 있는 경우 직접 체크 불가
@@ -547,19 +856,35 @@ export default function ChecklistPage() {
     
     const isCompleted = !checklistItems[id]?.isCompleted;
     
-    setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => {
-      const newItems = {
-        ...prev,
-        [id]: {
-          ...prev[id],
-          isCompleted: isCompleted,
-          completedBy: isCompleted ? currentEmployee?.name : undefined,
-          completedAt: isCompleted ? new Date().toISOString() : undefined
-        }
-      };
-      return newItems;
-    });
-    saveProgress(id);
+    // 새로운 상태를 미리 계산
+    const newChecklistItems = {
+      ...checklistItems,
+      [id]: {
+        ...checklistItems[id],
+        id: id,
+        content: item?.content || '',
+        isCompleted: isCompleted,
+        completedBy: isCompleted ? currentEmployee?.name : undefined,
+        completedAt: isCompleted ? new Date().toISOString() : undefined
+      }
+    };
+    
+    // 상태 업데이트
+    setChecklistItems(newChecklistItems);
+    
+    // 선택된 체크리스트의 템플릿 ID로 즉시 저장 (업데이트된 상태 사용)
+    if (selectedChecklist) {
+      try {
+        // 임시로 상태를 업데이트하여 저장 함수에서 사용
+        const originalChecklistItems = checklistItems;
+        // saveProgress 함수에서 새로운 상태를 사용하도록 수정
+        await saveProgressWithState(selectedChecklist.id, newChecklistItems, connectedItemsStatus);
+        console.log('체크박스 변경 후 즉시 저장 완료');
+      } catch (error) {
+        console.error('체크박스 변경 후 저장 실패:', error);
+        setError('저장 중 오류가 발생했습니다.');
+      }
+    }
   };
 
   // 진행상황 계산 함수
@@ -588,13 +913,28 @@ export default function ChecklistPage() {
   };
 
   const handleNotesChange = (id: string, notes: string) => {
-    setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        notes
-      }
-    }));
+    // 메인 항목인지 연결 항목인지 확인
+    const isConnectedItem = connectedItemsStatus[id];
+    
+    if (isConnectedItem) {
+      // 연결 항목의 메모 업데이트
+      setConnectedItemsStatus((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          notes
+        }
+      }));
+    } else {
+      // 메인 항목의 메모 업데이트
+      setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          notes
+        }
+      }));
+    }
   };
 
   const toggleMemoInput = (id: string) => {
@@ -678,36 +1018,131 @@ export default function ChecklistPage() {
   };
 
   const saveProgress = async (templateId: string) => {
+    return saveProgressWithState(templateId, checklistItems, connectedItemsStatus);
+  };
+
+  const saveProgressWithState = async (templateId: string, currentChecklistItems: any, currentConnectedItemsStatus: any) => {
     try {
-      console.log('저장 시작:', templateId);
-      console.log('현재 체크리스트 항목:', checklistItems);
-      console.log('연결된 항목 상태:', connectedItemsStatus);
+      console.log('=== saveProgress 시작 ===');
+      console.log('전달받은 templateId:', templateId);
+      console.log('현재 체크리스트 항목:', currentChecklistItems);
+      console.log('연결된 항목 상태:', currentConnectedItemsStatus);
 
       // 선택된 체크리스트 그룹 찾기
       const selectedGroup = checklists.find(checklist => checklist.id === templateId);
-      if (!selectedGroup || !selectedGroup.groupInstances) {
+      if (!selectedGroup) {
         console.error('선택된 그룹을 찾을 수 없습니다:', templateId);
         return;
       }
 
-      // 그룹의 모든 인스턴스에 대해 저장
-      const savePromises = selectedGroup.groupInstances.map(async (instance: any) => {
-        const connectedItemsProgress = Object.entries(connectedItemsStatus).map(([itemId, status]) => ({
-          itemId,
-          currentStock: status.currentStock,
-          updatedStock: status.updatedStock,
-          isCompleted: status.isCompleted,
-          notes: status.notes
-        }));
+      console.log('선택된 그룹:', selectedGroup);
+
+      // 완료 상태 계산
+      const calculateCompletionStatus = () => {
+        const totalItems = selectedGroup.items?.length || 0;
+        if (totalItems === 0) return false;
+        
+        const completedItems = selectedGroup.items?.filter((item: any) => {
+          console.log('항목 확인:', item.id, item.content);
+          console.log('항목 상태:', currentChecklistItems[item.id]);
+          
+          if (item.connectedItems && item.connectedItems.length > 0) {
+            // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+            const allConnectedCompleted = item.connectedItems.every((connection: any) => 
+              currentConnectedItemsStatus[connection.id]?.isCompleted
+            );
+            console.log('연결된 항목 완료 상태:', allConnectedCompleted);
+            return allConnectedCompleted;
+          } else {
+            // 연결된 항목이 없는 경우, 메인 항목만 체크
+            const isCompleted = currentChecklistItems[item.id]?.isCompleted;
+            console.log('메인 항목 완료 상태:', isCompleted);
+            return isCompleted;
+          }
+        }).length || 0;
+        
+        console.log('완료된 항목 수:', completedItems, '전체 항목 수:', totalItems);
+        return completedItems === totalItems;
+      };
+
+      const isCompleted = calculateCompletionStatus();
+      console.log('계산된 완료 상태:', isCompleted);
+
+      // 저장할 인스턴스들 결정
+      let instancesToSave = [];
+      
+      if (selectedGroup.groupInstances && selectedGroup.groupInstances.length > 0) {
+        // 그룹 인스턴스가 있는 경우 (개발용 체크리스트 생성기에서 생성된 경우)
+        instancesToSave = selectedGroup.groupInstances;
+        console.log('그룹 인스턴스 사용:', instancesToSave);
+      } else {
+        // 그룹 인스턴스가 없는 경우 (일반적인 경우)
+        // 현재 직원과 템플릿 정보로 인스턴스 생성
+        instancesToSave = [{
+          template: {
+            id: templateId,
+            workplace: selectedGroup.workplace,
+            timeSlot: selectedGroup.timeSlot
+          }
+        }];
+        console.log('새 인스턴스 생성:', instancesToSave);
+      }
+
+      // 인스턴스들에 대해 저장
+      const savePromises = instancesToSave.map(async (instance: any) => {
+        // 모든 연결된 항목에 대해 진행 상태 생성 (체크 해제된 항목도 포함)
+        console.log('=== connectedItemsProgress 생성 중 ===');
+        console.log('currentConnectedItemsStatus:', currentConnectedItemsStatus);
+        
+        const connectedItemsProgress = selectedGroup.items
+          ?.flatMap((item: any) => item.connectedItems || [])
+          .map((connection: any) => {
+            const status = currentConnectedItemsStatus[connection.id];
+            const result = {
+              connectionId: connection.id,
+              itemId: status?.itemId || connection.itemId,
+              currentStock: status?.currentStock,
+              updatedStock: status?.updatedStock,
+              isCompleted: status ? status.isCompleted : false, // status가 있으면 그 값을, 없으면 false
+              notes: status?.notes || "",
+              completedBy: status?.completedBy,
+              completedAt: status?.completedAt
+            };
+            console.log(`연결된 항목 ${connection.id}: status=${JSON.stringify(status)}, isCompleted=${result.isCompleted}`);
+            return result;
+          }) || [];
+        
+        console.log('생성된 connectedItemsProgress:', connectedItemsProgress);
+
+        // 실제 템플릿 ID 사용 - instance.templateId 사용
+        const actualTemplateId = instance.templateId || instance.template?.id;
+        console.log('실제 템플릿 ID:', actualTemplateId);
+
+        if (!actualTemplateId) {
+          console.error('템플릿 ID를 찾을 수 없습니다.');
+          return { success: false, error: '템플릿 ID를 찾을 수 없습니다.' };
+        }
 
         const saveData = {
-          templateId: instance.template.id, // 실제 템플릿 ID 사용
-          isCompleted: checklistItems[templateId]?.isCompleted || false,
-          notes: checklistItems[templateId]?.notes || "",
-          connectedItemsProgress
+          templateId: actualTemplateId, // 실제 템플릿 ID 사용
+          isCompleted: isCompleted, // 계산된 완료 상태 사용
+          notes: "", // 템플릿 레벨의 메모는 비워둠
+          connectedItemsProgress,
+          checklistItemsProgress: selectedGroup.items
+            ?.filter((item: any) => currentChecklistItems[item.id]?.isCompleted) // 체크된 항목만 필터링
+            .map((item: any) => ({
+              itemId: item.id, // 실제 ChecklistItem ID 사용
+              isCompleted: currentChecklistItems[item.id].isCompleted,
+              notes: currentChecklistItems[item.id].notes || "",
+              completedBy: currentChecklistItems[item.id].completedBy,
+              completedAt: currentChecklistItems[item.id].completedAt
+            })) || [],
+          completedBy: currentEmployee?.name || "Unknown",
+          completedAt: isCompleted ? new Date().toISOString() : null
         };
 
-        console.log('저장할 데이터:', saveData);
+        console.log('=== API에 전달할 데이터 ===');
+        console.log('saveData:', JSON.stringify(saveData, null, 2));
 
         const response = await fetch('/api/employee/checklist-progress', {
           method: 'POST',
@@ -715,6 +1150,8 @@ export default function ChecklistPage() {
           credentials: 'include',
           body: JSON.stringify(saveData)
         });
+
+        console.log('API 응답 상태:', response.status);
 
         if (response.ok) {
           const result = await response.json();
@@ -731,9 +1168,12 @@ export default function ChecklistPage() {
       const allSuccess = results.every(result => result.success);
       
       if (allSuccess) {
-        console.log('모든 그룹 인스턴스가 성공적으로 저장되었습니다.');
+        console.log('모든 인스턴스가 성공적으로 저장되었습니다.');
         setSuccess('진행 상태가 저장되었습니다.');
         setTimeout(() => setSuccess(''), 3000);
+        
+        // 저장 후 상태 다시 로드하지 않음 (로컬 상태 유지)
+        // await fetchProgress();
       } else {
         console.error('일부 인스턴스 저장에 실패했습니다.');
         setError('일부 항목 저장에 실패했습니다.');
@@ -853,11 +1293,7 @@ export default function ChecklistPage() {
       return { status: '제출 완료', color: 'green', progress: null };
     }
     
-    if (instance.isCompleted) {
-      return { status: '완료', color: 'blue', progress: null };
-    }
-    
-    // 진행상황 계산
+    // 진행상황 계산 - 실제 체크 상태 기반
     const totalItems = checklist.items?.length || 0;
     if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null };
     
@@ -929,7 +1365,9 @@ export default function ChecklistPage() {
     // 기존 진행 상태 로드
     const existingInstance = checklist.groupInstances?.[0];
     if (existingInstance) {
-      // 메인 항목 상태 복원
+      console.log('기존 인스턴스 로드:', existingInstance);
+      
+      // 메인 항목 상태 복원 - 체크리스트 ID를 키로 사용
       setChecklistItems((prev) => ({
         ...prev,
         [checklist.id]: {
@@ -942,19 +1380,40 @@ export default function ChecklistPage() {
         }
       }));
 
-      // 연결된 항목 상태 복원
+      // 연결된 항목 상태 복원 - connectionId를 키로 사용
       if (existingInstance.connectedItemsProgress) {
         const connectedStatus: {[key: string]: any} = {};
         existingInstance.connectedItemsProgress.forEach((connectedItem: any) => {
-          connectedStatus[connectedItem.itemId] = {
+          // connectionId를 키로 사용
+          const key = connectedItem.connectionId || connectedItem.itemId;
+          connectedStatus[key] = {
+            itemId: connectedItem.itemId, // itemId 추가
             isCompleted: connectedItem.isCompleted,
             completedBy: connectedItem.completedBy,
             completedAt: connectedItem.completedAt,
-            notes: connectedItem.notes || ""
+            notes: connectedItem.notes || "",
+            currentStock: connectedItem.currentStock,
+            updatedStock: connectedItem.updatedStock
           };
         });
+        
+        console.log('복원된 연결 항목 상태:', connectedStatus);
         setConnectedItemsStatus(connectedStatus);
       }
+    } else {
+      // 기존 인스턴스가 없는 경우 상태 초기화
+      setChecklistItems((prev) => ({
+        ...prev,
+        [checklist.id]: {
+          id: '',
+          content: checklist.content,
+          isCompleted: false,
+          completedBy: undefined,
+          completedAt: undefined,
+          notes: ""
+        }
+      }));
+      setConnectedItemsStatus({});
     }
     
     // 연결된 항목 상세 정보 로드
@@ -967,10 +1426,15 @@ export default function ChecklistPage() {
     }
   };
 
-  const handleBackToList = () => {
+  const handleBackToList = async () => {
+    // 화면 전환
     setCurrentView('list');
     setSelectedChecklist(null);
-    // 상태는 유지 (setChecklistItems와 setConnectedItemsStatus는 초기화하지 않음)
+    setExpandedItems({});
+    setShowMemoInputs({});
+    
+    // 새로고침으로 최신 데이터 로드
+    window.location.reload();
   };
 
   // 모든 항목이 체크되었는지 확인 (체크리스트 + 연결된 항목들)
@@ -1148,18 +1612,47 @@ export default function ChecklistPage() {
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                   </svg>
-                                  체크 항목: {checklist.items?.length || 0}개
+                                  체크 항목: {(() => {
+                                    const totalItems = checklist.items?.length || 0;
+                                    const completedItems = checklist.items?.filter(item => {
+                                      if (item.connectedItems && item.connectedItems.length > 0) {
+                                        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+                                        return item.connectedItems.every(connection => 
+                                          connectedItemsStatus[connection.id]?.isCompleted
+                                        );
+                                      } else {
+                                        // 연결된 항목이 없는 경우, 메인 항목만 체크
+                                        return checklistItems[item.id]?.isCompleted;
+                                      }
+                                    }).length || 0;
+                                    return `${completedItems}/${totalItems}개`;
+                                  })()}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                   </svg>
-                                  연결 항목: {checklist.items?.reduce((total, item) => {
-                                    const itemConnections = item.connectedItems?.length || 0;
-                                    const childConnections = item.children?.reduce((childTotal, child) => 
-                                      childTotal + (child.connectedItems?.length || 0), 0) || 0;
-                                    return total + itemConnections + childConnections;
-                                  }, 0) || 0}개
+                                  연결 항목: {(() => {
+                                    const totalConnections = checklist.items?.reduce((total, item) => {
+                                      const itemConnections = item.connectedItems?.length || 0;
+                                      const childConnections = item.children?.reduce((childTotal, child) => 
+                                        childTotal + (child.connectedItems?.length || 0), 0) || 0;
+                                      return total + itemConnections + childConnections;
+                                    }, 0) || 0;
+                                    
+                                    const completedConnections = checklist.items?.reduce((total, item) => {
+                                      const itemConnections = item.connectedItems?.filter(connection => 
+                                        connectedItemsStatus[connection.id]?.isCompleted
+                                      ).length || 0;
+                                      const childConnections = item.children?.reduce((childTotal, child) => 
+                                        childTotal + (child.connectedItems?.filter(connection => 
+                                          connectedItemsStatus[connection.id]?.isCompleted
+                                        ).length || 0), 0) || 0;
+                                      return total + itemConnections + childConnections;
+                                    }, 0) || 0;
+                                    
+                                    return `${completedConnections}/${totalConnections}개`;
+                                  })()}
                                 </span>
                               </div>
                               
@@ -1188,7 +1681,7 @@ export default function ChecklistPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={handleBackToList}
+                    onClick={async () => await handleBackToList()}
                     className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1252,6 +1745,7 @@ export default function ChecklistPage() {
                     .sort((a, b) => a.order - b.order)
                     .map((item) => {
                       const isCompleted = checklistItems[item.id]?.isCompleted || false;
+                      const isDisabledByOther = checklistItems[item.id]?.completedBy && checklistItems[item.id]?.completedBy !== currentEmployee?.name;
                       
                       return (
                         <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
@@ -1262,10 +1756,11 @@ export default function ChecklistPage() {
                                 <input
                                   type="checkbox"
                                   checked={checklistItems[item.id]?.isCompleted || false}
-                                  onChange={() => handleCheckboxChange(item.id)}
+                                  onChange={async () => await handleCheckboxChange(item.id)}
+                                  disabled={isDisabledByOther}
                                   className={`mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
                                     item.connectedItems && item.connectedItems.length > 0 ? 'cursor-pointer' : ''
-                                  }`}
+                                  } ${isDisabledByOther ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 />
                                 <div className="flex-1">
                                   <h3 className="font-semibold text-sm text-gray-800">
@@ -1324,6 +1819,7 @@ export default function ChecklistPage() {
                                 </span>
                               </div>
                             )}
+
                           </div>
                           
                           {/* 연결된 항목들 (펼쳐졌을 때만 표시) */}
@@ -1340,12 +1836,16 @@ export default function ChecklistPage() {
                                 return (
                                   <div key={connection.id} className="border border-gray-200 rounded p-2 bg-gray-50">
                                     <div className="flex items-start gap-2">
-                                      <input
-                                        type="checkbox"
-                                        checked={connectedItemsStatus[connection.id]?.isCompleted || false}
-                                        onChange={() => handleConnectedItemCheckboxChange(connection.id, item.id)}
-                                        className="mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                      />
+                                                                        <input
+                                    type="checkbox"
+                                    checked={connectedItemsStatus[connection.id]?.isCompleted || false}
+                                    onChange={async () => await handleConnectedItemCheckboxChange(connection.id, item.id)}
+                                    disabled={connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name}
+                                    className={`mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
+                                      connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name 
+                                        ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
+                                  />
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1 mb-1">
                                           <span className="text-xs font-medium text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">
@@ -1389,6 +1889,7 @@ export default function ChecklistPage() {
                                             </span>
                                           </div>
                                         )}
+
                                       </div>
                                     </div>
                                     

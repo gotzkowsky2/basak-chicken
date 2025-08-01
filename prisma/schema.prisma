@@ -175,6 +175,7 @@ model ChecklistInstance {
   
   // 메타데이터
   notes         String?
+  itemProgress  Json?    // 개별 항목 진행 상태를 JSON으로 저장
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -185,6 +186,7 @@ model ChecklistInstance {
   
   // 연결된 항목들의 진행 상태
   connectedItemsProgress ConnectedItemProgress[]
+  checklistItemProgresses ChecklistItemProgress[] @relation("ChecklistInstanceProgress")
 
   @@unique([workplace, timeSlot, date]) // 하루에 하나의 위치/시간대 조합만 존재
 }
@@ -194,6 +196,7 @@ model ConnectedItemProgress {
   id        String   @id @default(cuid())
   instanceId String
   itemId    String
+  connectionId String? // 연결된 항목의 ID (ChecklistItemConnection.id)
   currentStock Int?
   updatedStock Int?
   isCompleted Boolean @default(false)
@@ -204,6 +207,24 @@ model ConnectedItemProgress {
   updatedAt DateTime @updatedAt
 
   instance  ChecklistInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+}
+
+// 개별 체크리스트 항목의 진행 상태 저장 모델
+model ChecklistItemProgress {
+  id        String   @id @default(cuid())
+  instanceId String
+  itemId    String
+  isCompleted Boolean @default(false)
+  completedBy String? // 완료한 직원 이름
+  completedAt DateTime? // 완료 시간
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  instance  ChecklistInstance @relation("ChecklistInstanceProgress", fields: [instanceId], references: [id], onDelete: Cascade)
+  item      ChecklistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([instanceId, itemId]) // 한 인스턴스에서 같은 항목은 하나만 존재
 }
 
 // 새로운 모델들
@@ -353,6 +374,9 @@ model ChecklistItem {
   
   // 연결된 항목들 (새로운 관계 테이블 사용)
   connectedItems  ChecklistItemConnection[]
+  
+  // 진행 상태
+  progress        ChecklistItemProgress[]
 }
 
 // 체크리스트 항목과 연결된 항목들의 관계 테이블

@@ -9,6 +9,15 @@ interface ChecklistTemplate {
   category: string;
   timeSlot: string;
   isActive: boolean; // 활성 상태 추가
+  items?: {
+    id: string;
+    content: string;
+    connectedItems?: {
+      id: string;
+      itemType: string;
+      itemId: string;
+    }[];
+  }[];
 }
 
 interface ChecklistInstance {
@@ -23,6 +32,15 @@ interface ChecklistInstance {
     id: string;
     name: string;
     content: string;
+    items?: {
+      id: string;
+      content: string;
+      connectedItems?: {
+        id: string;
+        itemType: string;
+        itemId: string;
+      }[];
+    }[];
   };
 }
 
@@ -191,19 +209,37 @@ export default function DevChecklistGeneratorPage() {
   const getGroupedTemplateGroups = () => {
     console.log('getGroupedTemplateGroups 호출됨');
     const uniqueGroups = getUniqueTemplateGroups();
-    const grouped = new Map<string, { name: string; templates: ChecklistTemplate[] }[]>();
+    const grouped = new Map<string, { name: string; templates: ChecklistTemplate[]; totalItems: number; totalConnectedItems: number }[]>();
     
     uniqueGroups.forEach((templates, templateName) => {
       if (templates.length > 0) {
         try {
           const workplace = getWorkplaceLabel(templates[0].workplace);
           console.log('위치:', workplace, '템플릿명:', templateName, '항목수:', templates.length);
+          
+          // 실제 항목과 연결항목 개수 계산
+          let totalItems = 0;
+          let totalConnectedItems = 0;
+          
+          templates.forEach(template => {
+            if (template.items) {
+              totalItems += template.items.length;
+              template.items.forEach((item: any) => {
+                if (item.connectedItems) {
+                  totalConnectedItems += item.connectedItems.length;
+                }
+              });
+            }
+          });
+          
           if (!grouped.has(workplace)) {
             grouped.set(workplace, []);
           }
           grouped.get(workplace)!.push({
             name: templateName,
-            templates: templates
+            templates: templates,
+            totalItems: totalItems,
+            totalConnectedItems: totalConnectedItems
           });
         } catch (error) {
           console.error('그룹화 중 에러:', error, '템플릿:', templates[0]);
@@ -347,6 +383,45 @@ export default function DevChecklistGeneratorPage() {
     }
   };
 
+  // 개별 체크리스트 삭제
+  const handleDeleteSingleChecklist = async (instanceId: string, templateName: string) => {
+    if (!confirm(`정말로 "${templateName}" 체크리스트를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/admin/dev-delete-single-checklist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ instanceId })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ 
+          type: 'success', 
+          text: `"${templateName}" 체크리스트가 삭제되었습니다.` 
+        });
+        // 기존 체크리스트 목록 새로고침
+        fetchExistingChecklists(targetDate);
+      } else {
+        setMessage({ type: 'error', text: data.error || '체크리스트 삭제에 실패했습니다.' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '서버 오류가 발생했습니다.' });
+      console.error('개별 체크리스트 삭제 오류:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
@@ -408,7 +483,7 @@ export default function DevChecklistGeneratorPage() {
                       {workplace}
                     </h3>
                     <div className="space-y-3">
-                      {groups.map((group: { name: string; templates: ChecklistTemplate[] }) => (
+                      {groups.map((group: { name: string; templates: ChecklistTemplate[]; totalItems: number; totalConnectedItems: number }) => (
                         <div 
                           key={group.name} 
                           className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
@@ -425,7 +500,7 @@ export default function DevChecklistGeneratorPage() {
                                   type="checkbox"
                                   checked={isTemplateGroupSelected(group.name)}
                                   onChange={() => handleTemplateGroupToggle(group.name)}
-                                  className="mt-1"
+                                  className="mt-1 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                 />
                                 <div className="font-bold text-gray-800">
                                   {group.name}
@@ -439,7 +514,7 @@ export default function DevChecklistGeneratorPage() {
                               <div className="text-xs text-gray-400 ml-6 mb-2">
                                 {group.templates.map((template, index) => (
                                   <div key={template.id} className="text-gray-400">
-                                    ID: {template.id.substring(0, 8)}... 
+                                    {template.content}
                                     {template.isActive ? ' (활성)' : ' (비활성)'}
                                   </div>
                                 ))}
@@ -465,6 +540,12 @@ export default function DevChecklistGeneratorPage() {
                                 </span>
                                 <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                                   {getTimeSlotLabel(group.templates[0].timeSlot)}
+                                </span>
+                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                                  {group.totalItems}개 항목
+                                </span>
+                                <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                                  {group.totalConnectedItems}개 연결항목
                                 </span>
                               </div>
                             </div>
@@ -531,48 +612,77 @@ export default function DevChecklistGeneratorPage() {
                 </>
               )}
             </button>
-
-            <button
-              onClick={handleDeleteChecklists}
-              disabled={loading}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              전체 삭제
-            </button>
           </div>
         </div>
 
         {/* 기존 체크리스트 목록 */}
         {existingChecklists.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
-              {targetDate} 날짜의 기존 체크리스트 ({existingChecklists.length}개)
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-800">
+                {targetDate} 날짜의 기존 체크리스트 ({existingChecklists.length}개)
+              </h2>
+              <button
+                onClick={handleDeleteChecklists}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                전체 삭제
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {existingChecklists.map((checklist) => (
-                <div key={checklist.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-gray-800 mb-2">
-                    {checklist.template.name}
+              {existingChecklists.map((checklist) => {
+                // 항목 개수와 연결항목 개수 계산
+                const totalItems = checklist.template.items?.length || 0;
+                const totalConnectedItems = checklist.template.items?.reduce((total: number, item: any) => 
+                  total + (item.connectedItems?.length || 0), 0
+                ) || 0;
+                
+                return (
+                  <div key={checklist.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="font-semibold text-gray-800 mb-2">
+                      {checklist.template.name}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">
+                      {checklist.template.content}
+                    </div>
+                    <div className="flex gap-2 text-xs mb-2">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                        {getWorkplaceLabel(checklist.workplace)}
+                      </span>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                        {getTimeSlotLabel(checklist.timeSlot)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 text-xs mb-2">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                        {totalItems}개 항목
+                      </span>
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded">
+                        {totalConnectedItems}개 연결항목
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-500">
+                        상태: {checklist.isCompleted ? '완료' : '미완료'}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSingleChecklist(checklist.id, checklist.template.name)}
+                        disabled={loading}
+                        className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        삭제
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600 mb-2">
-                    {checklist.template.content}
-                  </div>
-                  <div className="flex gap-2 text-xs">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                      {getWorkplaceLabel(checklist.workplace)}
-                    </span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                      {getTimeSlotLabel(checklist.timeSlot)}
-                    </span>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    상태: {checklist.isCompleted ? '완료' : '미완료'}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
