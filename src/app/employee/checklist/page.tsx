@@ -17,7 +17,10 @@ import {
   ChecklistItem as ChecklistItemComponent, 
   ConnectedItem, 
   StatusDisplay, 
-  DetailModal 
+  DetailModal,
+  ChecklistDetailView,
+  ChecklistProgressBar,
+  ChecklistActions
 } from "@/components/checklist";
 
 export default function ChecklistPage() {
@@ -1611,423 +1614,40 @@ export default function ChecklistPage() {
               checklists={checklists}
               onChecklistSelect={handleChecklistSelect}
               getChecklistStatus={getChecklistStatus}
-              getStatusInfo={getStatusInfo}
               connectedItemsStatus={connectedItemsStatus}
               checklistItems={checklistItems}
+              getWorkplaceLabel={getWorkplaceLabel}
+              getTimeSlotLabel={getTimeSlotLabel}
+              getCategoryLabel={getCategoryLabel}
             />
           </>
         )}
 
         {/* 상세 화면 */}
         {currentView === 'detail' && selectedChecklist && (
-          <>
-            {/* 제출 완료된 체크리스트인 경우 알림 */}
-            {selectedChecklist.isSubmitted && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-green-600">✅</span>
-                  <span className="font-medium">이 체크리스트는 이미 제출 완료되었습니다.</span>
-                </div>
-                <p className="text-sm mt-1">수정할 수 없으며, 읽기 전용으로 표시됩니다.</p>
-              </div>
-            )}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            {/* 헤더 */}
-            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={async () => await handleBackToList()}
-                    className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    뒤로
-                  </button>
-                  <div className="h-4 w-px bg-white/30"></div>
-                  <h2 className="text-lg font-bold">
-                    {selectedChecklist.name || selectedChecklist.content}
-                  </h2>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <div className="text-sm text-white/90">
-                    {currentEmployee?.name || '직원'}
-                  </div>
-                  <div className="flex gap-1">
-                    <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium">
-                      {getWorkplaceLabel(selectedChecklist.workplace)}
-                    </span>
-                    <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium">
-                      {getTimeSlotLabel(selectedChecklist.timeSlot)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 체크리스트 내용 */}
-            <div className="p-4">
-              {/* 진행 상황 표시 */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-gray-700">진행 상황</span>
-                  <span className="text-xs text-gray-500">
-                    {(() => {
-                      const progress = calculateProgress();
-                      return `${progress.completed} / ${progress.total} 완료`;
-                    })()}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                  <div 
-                    className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${(() => {
-                        const progress = calculateProgress();
-                        return progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
-                      })()}%` 
-                    }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* 체크리스트 항목들 */}
-              <div className="space-y-3">
-                {selectedChecklist.items && selectedChecklist.items.length > 0 ? (
-                  // 모든 항목을 표시 (parentId 필터링 제거)
-                  selectedChecklist.items
-                    .sort((a, b) => a.order - b.order)
-                    .map((item) => {
-                      const isCompleted = checklistItems[item.id]?.isCompleted || false;
-                      const isDisabledByOther = checklistItems[item.id]?.completedBy && checklistItems[item.id]?.completedBy !== currentEmployee?.name;
-                      
-                      return (
-                        <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
-                          {/* 메인 항목 헤더 */}
-                          <div className={`px-4 py-3 ${isCompleted ? 'bg-green-50 border-b border-green-200' : 'bg-gray-50 border-b border-gray-200'}`}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 flex-1">
-                                <input
-                                  type="checkbox"
-                                  checked={checklistItems[item.id]?.isCompleted || false}
-                                  onChange={async () => await handleCheckboxChange(item.id)}
-                                  disabled={isDisabledByOther || selectedChecklist.isSubmitted}
-                                  className={`mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
-                                    item.connectedItems && item.connectedItems.length > 0 ? 'cursor-pointer' : ''
-                                  } ${(isDisabledByOther || selectedChecklist.isSubmitted) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                />
-                                <div className="flex-1">
-                                  <h3 className="font-semibold text-sm text-gray-800">
-                                    {item.content}
-                                  </h3>
-                                  {item.instructions && (
-                                    <p className="text-xs text-gray-600 mt-0.5">
-                                      {item.instructions}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center gap-2">
-                                {/* 연결항목 개수 표시 */}
-                                {item.connectedItems && item.connectedItems.length > 0 && (
-                                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                    연결항목 {item.connectedItems.length}개
-                                  </span>
-                                )}
-                                
-                                {/* 펼치기/접기 버튼 */}
-                                {item.connectedItems && item.connectedItems.length > 0 && (
-                                  <button
-                                    onClick={() => toggleItemExpansion(item.id)}
-                                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                                  >
-                                    <svg 
-                                      className={`w-4 h-4 transition-transform ${expandedItems[item.id] ? 'rotate-180' : ''}`} 
-                                      fill="none" 
-                                      stroke="currentColor" 
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                  </button>
-                                )}
-                                
-                                {isCompleted && (
-                                  <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    완료
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* 체크한 사람 이름 표시 */}
-                            {checklistItems[item.id]?.completedBy && (
-                              <div className="flex items-center gap-1 mt-2">
-                                <span className="text-xs text-gray-500">완료:</span>
-                                <span className="text-xs font-medium text-green-700">
-                                  {checklistItems[item.id].completedBy}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* 메모 표시 및 입력 */}
-                            <div className="mt-2">
-                              {/* 기존 메모 표시 */}
-                              {checklistItems[item.id]?.notes && !showMemoInputs[item.id] && (
-                                <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border-l-2 border-blue-300">
-                                  <div className="font-medium text-gray-800 mb-1">메모:</div>
-                                  <div className="text-gray-700">{checklistItems[item.id].notes}</div>
-                                  <button
-                                    onClick={() => toggleMemoInput(item.id)}
-                                    className="text-blue-600 hover:text-blue-800 text-xs mt-1"
-                                  >
-                                    수정
-                                  </button>
-                                </div>
-                              )}
-
-                              {/* 메모 입력창 */}
-                              {showMemoInputs[item.id] && (
-                                <div className="mt-2">
-                                  <textarea
-                                    value={checklistItems[item.id]?.notes || ''}
-                                    onChange={(e) => handleNotesChange(item.id, e.target.value)}
-                                    placeholder="메모를 입력하세요..."
-                                    className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-medium"
-                                    rows={3}
-                                  />
-                                  <div className="flex gap-2 mt-2">
-                                    <button
-                                      onClick={() => saveMemo(item.id)}
-                                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                                    >
-                                      저장
-                                    </button>
-                                    <button
-                                      onClick={() => toggleMemoInput(item.id)}
-                                      className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
-                                    >
-                                      취소
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* 메모 추가 버튼 (메모가 없고 입력창이 열려있지 않을 때) */}
-                              {!checklistItems[item.id]?.notes && !showMemoInputs[item.id] && (
-                                <button
-                                  onClick={() => toggleMemoInput(item.id)}
-                                  className="text-blue-600 hover:text-blue-800 text-xs mt-1"
-                                >
-                                  메모 추가
-                                </button>
-                              )}
-                            </div>
-
-                          </div>
-                          
-                          {/* 연결된 항목들 (펼쳐졌을 때만 표시) */}
-                          {expandedItems[item.id] && item.connectedItems && item.connectedItems.length > 0 && (
-                            <div className="bg-white p-4 space-y-3">
-                              <div className="text-xs font-medium text-gray-700 mb-2">
-                                연결된 세부항목
-                              </div>
-                              {item.connectedItems.map((connection) => {
-                                const key = `${connection.itemType}_${connection.itemId}`;
-                                const detail = connectedItemDetails[key];
-                                const isDetailLoaded = !!detail;
-
-                                return (
-                                  <div key={connection.id} className="border border-gray-200 rounded p-2 bg-gray-50">
-                                    <div className="flex items-start gap-2">
-                                                                        <input
-                                    type="checkbox"
-                                    checked={connectedItemsStatus[connection.id]?.isCompleted || false}
-                                    onChange={async () => await handleConnectedItemCheckboxChange(connection.id, item.id)}
-                                    disabled={(connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name) || selectedChecklist.isSubmitted}
-                                    className={`mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
-                                      (connectedItemsStatus[connection.id]?.completedBy && connectedItemsStatus[connection.id]?.completedBy !== currentEmployee?.name) || selectedChecklist.isSubmitted
-                                        ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
-                                  />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1 mb-1">
-                                          <span className="text-xs font-medium text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">
-                                            {connection.itemType === 'inventory' ? '재고' : 
-                                             connection.itemType === 'precaution' ? '주의' : '메뉴얼'}
-                                          </span>
-                                          <span className="font-medium text-xs text-gray-800 truncate">
-                                            {isDetailLoaded ? 
-                                              (detail.name || detail.title || '제목 없음') : 
-                                              '로딩 중...'}
-                                          </span>
-                                        </div>
-                                        
-                                        {/* 태그 표시 */}
-                                        {isDetailLoaded && detail.tags && detail.tags.length > 0 && (
-                                          <div className="flex flex-wrap gap-1 mb-1">
-                                            {detail.tags.map((tag: any) => (
-                                              <span 
-                                                key={tag.id} 
-                                                className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded"
-                                              >
-                                                {tag.name}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        )}
-                                        
-                                        {/* 연결된 항목의 상세 정보 */}
-                                        <div className="text-xs text-gray-600 line-clamp-2">
-                                          {isDetailLoaded ? 
-                                            (detail.content || detail.description || '내용 없음') : 
-                                            '로딩 중...'}
-                                        </div>
-                                        
-                                        {/* 체크한 사람 이름 표시 */}
-                                        {connectedItemsStatus[connection.id]?.completedBy && (
-                                          <div className="flex items-center gap-1 mt-1">
-                                            <span className="text-xs text-gray-500">완료:</span>
-                                            <span className="text-xs font-medium text-green-700">
-                                              {connectedItemsStatus[connection.id].completedBy}
-                                            </span>
-                                          </div>
-                                        )}
-
-                                      </div>
-                                    </div>
-                                    
-                                    {/* 연결된 항목용 메모 입력 */}
-                                    <div className="mt-2 ml-5">
-                                      {/* 기존 메모 표시 */}
-                                      {connectedItemsStatus[connection.id]?.notes && !showMemoInputs[connection.id] && (
-                                        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border-l-2 border-blue-300 mb-2">
-                                          <div className="font-medium text-gray-800 mb-1">메모:</div>
-                                          <div className="text-gray-700">{connectedItemsStatus[connection.id].notes}</div>
-                                          <button
-                                            onClick={() => toggleMemoInput(connection.id)}
-                                            className="text-blue-600 hover:text-blue-800 text-xs mt-1"
-                                          >
-                                            수정
-                                          </button>
-                                        </div>
-                                      )}
-
-                                      {/* 메모 입력창 */}
-                                      {showMemoInputs[connection.id] && (
-                                        <div className="mt-2">
-                                          <textarea
-                                            value={connectedItemsStatus[connection.id]?.notes || ''}
-                                            onChange={(e) => handleNotesChange(connection.id, e.target.value)}
-                                            placeholder="메모를 입력하세요..."
-                                            className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-medium"
-                                            rows={3}
-                                          />
-                                          <div className="flex gap-2 mt-2">
-                                            <button
-                                              onClick={() => saveMemo(connection.id)}
-                                              className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                                            >
-                                              저장
-                                            </button>
-                                            <button
-                                              onClick={() => toggleMemoInput(connection.id)}
-                                              className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
-                                            >
-                                              취소
-                                            </button>
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {/* 메모 추가 버튼 (메모가 없고 입력창이 열려있지 않을 때) */}
-                                      {!connectedItemsStatus[connection.id]?.notes && !showMemoInputs[connection.id] && (
-                                        <button
-                                          onClick={() => toggleMemoInput(connection.id)}
-                                          className="text-blue-600 hover:text-blue-800 text-xs"
-                                        >
-                                          메모 추가
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                          
-                          {/* 하위 항목이 없을 때 간소화된 메시지 */}
-                          {(!item.connectedItems || item.connectedItems.length === 0) && (
-                            <div className="px-4 py-2 bg-gray-50">
-                              <div className="text-xs text-gray-400 italic">
-                                연결된 세부항목 없음
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <p className="text-sm font-medium mb-1">체크리스트 항목이 없습니다</p>
-                    <p className="text-xs">이 체크리스트에는 아직 항목이 등록되지 않았습니다.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* 하단 액션 버튼들 */}
-              <div className="mt-6 flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="flex items-center gap-3 text-xs text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    총 {selectedChecklist.items?.length || 0}개 항목
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {(() => {
-                      const progress = calculateProgress();
-                      return `${progress.completed}개 완료`;
-                    })()}
-                  </span>
-                </div>
-                
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => saveProgress(selectedChecklist.id)}
-                    disabled={submitting}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
-                  >
-                    {submitting ? '저장 중...' : '저장'}
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting || !isAllItemsCompleted()}
-                    className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${
-                      isAllItemsCompleted() 
-                        ? 'bg-green-600 text-white hover:bg-green-700' 
-                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    }`}
-                  >
-                    {submitting ? '제출 중...' : '제출'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
+          <ChecklistDetailView
+            selectedChecklist={selectedChecklist}
+            currentEmployee={currentEmployee}
+            checklistItems={checklistItems}
+            connectedItemsStatus={connectedItemsStatus}
+            connectedItemDetails={connectedItemDetails}
+            expandedItems={expandedItems}
+            showMemoInputs={showMemoInputs}
+            submitting={submitting}
+            getWorkplaceLabel={getWorkplaceLabel}
+            getTimeSlotLabel={getTimeSlotLabel}
+            handleBackToList={handleBackToList}
+            calculateProgress={calculateProgress}
+            isAllItemsCompleted={isAllItemsCompleted}
+            handleCheckboxChange={handleCheckboxChange}
+            handleConnectedItemCheckboxChange={handleConnectedItemCheckboxChange}
+            toggleItemExpansion={toggleItemExpansion}
+            handleNotesChange={handleNotesChange}
+            toggleMemoInput={toggleMemoInput}
+            saveMemo={saveMemo}
+            saveProgress={saveProgress}
+            handleSubmit={handleSubmit}
+          />
         )}
       </div>
     </div>

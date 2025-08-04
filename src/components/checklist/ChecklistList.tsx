@@ -1,22 +1,27 @@
 "use client";
 import { ChecklistTemplate } from "@/types/checklist";
+import StatusDisplay from "./StatusDisplay";
 
 interface ChecklistListProps {
   checklists: ChecklistTemplate[];
   onChecklistSelect: (checklist: ChecklistTemplate) => void;
   getChecklistStatus: (checklist: any) => any;
-  getStatusInfo: (status: string) => any;
   connectedItemsStatus: any;
   checklistItems: any;
+  getWorkplaceLabel: (value: string) => string;
+  getTimeSlotLabel: (value: string) => string;
+  getCategoryLabel: (value: string) => string;
 }
 
 export default function ChecklistList({
   checklists,
   onChecklistSelect,
   getChecklistStatus,
-  getStatusInfo,
   connectedItemsStatus,
-  checklistItems
+  checklistItems,
+  getWorkplaceLabel,
+  getTimeSlotLabel,
+  getCategoryLabel
 }: ChecklistListProps) {
   return (
     <div className="space-y-6">
@@ -34,7 +39,6 @@ export default function ChecklistList({
               .filter(checklist => !checklist.isSubmitted)
               .map((checklist) => {
               const status = getChecklistStatus(checklist);
-              const statusInfo = getStatusInfo(status.status);
               
               return (
                 <div 
@@ -55,19 +59,15 @@ export default function ChecklistList({
                       {/* 메인 제목과 상태 */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-gray-900">
-                              {checklist.name || checklist.content}
-                            </h3>
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusInfo.color}`}>
-                              {statusInfo.icon} {statusInfo.label}
-                            </span>
-                            {status.progress && (
-                              <span className="text-sm text-gray-600">
-                                ({status.progress})
-                              </span>
-                            )}
-                          </div>
+                                                          <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="font-semibold text-gray-900">
+                                    {checklist.name || checklist.content}
+                                  </h3>
+                                  <StatusDisplay 
+                                    status={status.status} 
+                                    progress={status.progress}
+                                  />
+                                </div>
                         </div>
                       </div>
 
@@ -125,9 +125,9 @@ export default function ChecklistList({
 
                       {/* 템플릿 정보 */}
                       <div className="mt-2 text-xs text-gray-400">
-                        <span className="mr-3">위치: {checklist.workplace}</span>
-                        <span className="mr-3">시간대: {checklist.timeSlot}</span>
-                        <span>카테고리: {checklist.category}</span>
+                        <span className="mr-3">위치: {getWorkplaceLabel(checklist.workplace)}</span>
+                        <span className="mr-3">시간대: {getTimeSlotLabel(checklist.timeSlot)}</span>
+                        <span>카테고리: {getCategoryLabel(checklist.category)}</span>
                       </div>
                     </div>
                   </div>
@@ -147,7 +147,6 @@ export default function ChecklistList({
               .filter(checklist => checklist.isSubmitted)
               .map((checklist) => {
               const status = getChecklistStatus(checklist);
-              const statusInfo = getStatusInfo(status.status);
               
               return (
                 <div 
@@ -160,14 +159,15 @@ export default function ChecklistList({
                         <h3 className="font-semibold text-gray-900">
                           {checklist.name || checklist.content}
                         </h3>
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusInfo.color}`}>
-                          {statusInfo.icon} {statusInfo.label}
-                        </span>
+                        <StatusDisplay 
+                          status={status.status} 
+                          progress={status.progress}
+                        />
                       </div>
                       <div className="text-xs text-gray-400">
-                        <span className="mr-3">위치: {checklist.workplace}</span>
-                        <span className="mr-3">시간대: {checklist.timeSlot}</span>
-                        <span>카테고리: {checklist.category}</span>
+                        <span className="mr-3">위치: {getWorkplaceLabel(checklist.workplace)}</span>
+                        <span className="mr-3">시간대: {getTimeSlotLabel(checklist.timeSlot)}</span>
+                        <span>카테고리: {getCategoryLabel(checklist.category)}</span>
                       </div>
                     </div>
                   </div>

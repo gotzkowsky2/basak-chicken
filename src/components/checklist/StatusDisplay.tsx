@@ -9,29 +9,29 @@ interface StatusDisplayProps {
 export default function StatusDisplay({ status, progress, className = "" }: StatusDisplayProps) {
   const getStatusInfo = (status: string) => {
     switch (status) {
-      case '진행 중':
+      case '미시작':
+        return {
+          icon: '⭕',
+          label: '미시작',
+          color: 'bg-gray-100 text-gray-800'
+        };
+      case '진행중':
         return {
           icon: '🔄',
-          label: '진행 중',
-          color: 'bg-blue-100 text-blue-800'
+          label: '진행중',
+          color: 'bg-yellow-100 text-yellow-800'
         };
       case '완료':
         return {
           icon: '✅',
           label: '완료',
-          color: 'bg-green-100 text-green-800'
+          color: 'bg-blue-100 text-blue-800'
         };
       case '제출 완료':
         return {
           icon: '📤',
           label: '제출 완료',
-          color: 'bg-purple-100 text-purple-800'
-        };
-      case '대기 중':
-        return {
-          icon: '⏳',
-          label: '대기 중',
-          color: 'bg-gray-100 text-gray-800'
+          color: 'bg-green-100 text-green-800'
         };
       default:
         return {
