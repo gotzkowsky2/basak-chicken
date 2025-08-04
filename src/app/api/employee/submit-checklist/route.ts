@@ -106,7 +106,7 @@ function generateEmailContent(template: any, checklistItemsProgress: any[], conn
       }
       return itemDetails;
     })
-    .filter(Boolean);
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 
   const htmlContent = `
     <!DOCTYPE html>

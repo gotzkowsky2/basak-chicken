@@ -6,8 +6,9 @@ const prisma = new PrismaClient();
 // DELETE: 체크리스트 항목 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
+  const resolvedParams = await params;
   try {
     // 인증 확인
     const adminAuth = request.cookies.get("admin_auth")?.value;
@@ -15,8 +16,8 @@ export async function DELETE(
       return NextResponse.json({ error: "관리자 인증이 필요합니다." }, { status: 401 });
     }
 
-    const templateId = params.id;
-    const itemId = params.itemId;
+    const templateId = resolvedParams.id;
+    const itemId = resolvedParams.itemId;
 
     // 템플릿 존재 확인
     const template = await prisma.checklistTemplate.findUnique({

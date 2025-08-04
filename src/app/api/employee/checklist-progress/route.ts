@@ -459,7 +459,9 @@ export async function POST(request: NextRequest) {
         }
       } catch (emailError) {
         console.error('이메일 발송 오류:', emailError);
-        console.error('오류 스택:', emailError.stack);
+        if (emailError instanceof Error) {
+          console.error('오류 스택:', emailError.stack);
+        }
         // 이메일 발송 실패해도 체크리스트 저장은 성공으로 처리
       }
     } else {
@@ -656,7 +658,7 @@ async function generateEmailContent(template: any, checklistItemsProgress: any[]
           ${validConnectedItems.length > 0 ? `
             <div class="section">
               <h3>🔗 완료된 하위 항목 (${validConnectedItems.length}개)</h3>
-              ${validConnectedItems.map(item => `
+              ${validConnectedItems.filter(item => item !== null).map(item => `
                 <div class="item">
                   <div class="item-title">
                     ${item.title}

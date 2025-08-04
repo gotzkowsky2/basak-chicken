@@ -17,7 +17,8 @@ export async function GET(
       return NextResponse.json({ error: "관리자 인증이 필요합니다." }, { status: 401 });
     }
 
-    const templateId = params.id;
+    const resolvedParams = await params;
+    const templateId = resolvedParams.id;
 
     // 템플릿 존재 확인
     const template = await prisma.checklistTemplate.findUnique({
@@ -79,7 +80,7 @@ export async function GET(
               order: connection.order,
               connectedItem: connectedItem ? {
                 id: connectedItem.id,
-                name: connectedItem.name || connectedItem.title,
+                name: 'name' in connectedItem ? connectedItem.name : connectedItem.title,
                 type: connection.itemType,
                 tags: connectedItem.tags.map(tag => tag.name)
               } : null

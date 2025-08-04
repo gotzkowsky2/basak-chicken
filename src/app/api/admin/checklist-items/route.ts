@@ -70,41 +70,56 @@ export async function POST(req: NextRequest) {
         order: order || 0,
         isRequired: isRequired !== false, // 기본값 true
         isActive: true,
-        inventoryItemId: inventoryItemId || null,
       },
     });
 
+    // 재고 항목 연결
+    if (inventoryItemId) {
+      await prisma.checklistItemConnection.create({
+        data: {
+          checklistItemId: checklistItem.id,
+          itemType: "inventory",
+          itemId: inventoryItemId,
+          order: 0,
+        },
+      });
+    }
+
     // 주의사항 연결
     if (precautionIds && precautionIds.length > 0) {
-      await prisma.checklistItem.update({
-        where: { id: checklistItem.id },
-        data: {
-          precautions: {
-            connect: precautionIds.map((id: string) => ({ id }))
-          }
-        }
-      });
+      for (const precautionId of precautionIds) {
+        await prisma.checklistItemConnection.create({
+          data: {
+            checklistItemId: checklistItem.id,
+            itemType: "precaution",
+            itemId: precautionId,
+            order: 0,
+          },
+        });
+      }
     }
 
     // 메뉴얼 연결
     if (manualIds && manualIds.length > 0) {
-      await prisma.checklistItem.update({
-        where: { id: checklistItem.id },
-        data: {
-          manuals: {
-            connect: manualIds.map((id: string) => ({ id }))
-          }
-        }
-      });
+      for (const manualId of manualIds) {
+        await prisma.checklistItemConnection.create({
+          data: {
+            checklistItemId: checklistItem.id,
+            itemType: "manual",
+            itemId: manualId,
+            order: 0,
+          },
+        });
+      }
     }
 
     // 생성된 항목을 관계와 함께 조회
     const createdItem = await prisma.checklistItem.findUnique({
       where: { id: checklistItem.id },
       include: {
-        inventoryItem: true,
-        precautions: true,
-        manuals: true,
+        connectedItems: {
+          orderBy: { order: 'asc' }
+        },
       }
     });
 
@@ -159,9 +174,9 @@ export async function GET(req: NextRequest) {
     const checklistItems = await prisma.checklistItem.findMany({
       where,
       include: {
-        inventoryItem: true,
-        precautions: true,
-        manuals: true,
+        connectedItems: {
+          orderBy: { order: 'asc' }
+        },
         template: {
           select: {
             content: true,
@@ -251,56 +266,50 @@ export async function PUT(req: NextRequest) {
         instructions,
         order: order || 0,
         isRequired: isRequired !== false,
-        inventoryItemId: inventoryItemId || null,
       },
     });
 
-    // 주의사항 연결 업데이트
-    if (precautionIds !== undefined) {
-      // 기존 연결 해제
-      await prisma.checklistItem.update({
-        where: { id },
-        data: {
-          precautions: {
-            set: []
-          }
-        }
-      });
+    // 기존 연결 항목들 삭제
+    await prisma.checklistItemConnection.deleteMany({
+      where: { checklistItemId: id }
+    });
 
-      // 새로운 연결 설정
-      if (precautionIds.length > 0) {
-        await prisma.checklistItem.update({
-          where: { id },
+    // 재고 항목 연결
+    if (inventoryItemId) {
+      await prisma.checklistItemConnection.create({
+        data: {
+          checklistItemId: id,
+          itemType: "inventory",
+          itemId: inventoryItemId,
+          order: 0,
+        },
+      });
+    }
+
+    // 주의사항 연결
+    if (precautionIds && precautionIds.length > 0) {
+      for (const precautionId of precautionIds) {
+        await prisma.checklistItemConnection.create({
           data: {
-            precautions: {
-              connect: precautionIds.map((id: string) => ({ id }))
-            }
-          }
+            checklistItemId: id,
+            itemType: "precaution",
+            itemId: precautionId,
+            order: 0,
+          },
         });
       }
     }
 
-    // 메뉴얼 연결 업데이트
-    if (manualIds !== undefined) {
-      // 기존 연결 해제
-      await prisma.checklistItem.update({
-        where: { id },
-        data: {
-          manuals: {
-            set: []
-          }
-        }
-      });
-
-      // 새로운 연결 설정
-      if (manualIds.length > 0) {
-        await prisma.checklistItem.update({
-          where: { id },
+    // 메뉴얼 연결
+    if (manualIds && manualIds.length > 0) {
+      for (const manualId of manualIds) {
+        await prisma.checklistItemConnection.create({
           data: {
-            manuals: {
-              connect: manualIds.map((id: string) => ({ id }))
-            }
-          }
+            checklistItemId: id,
+            itemType: "manual",
+            itemId: manualId,
+            order: 0,
+          },
         });
       }
     }
@@ -309,9 +318,9 @@ export async function PUT(req: NextRequest) {
     const finalItem = await prisma.checklistItem.findUnique({
       where: { id },
       include: {
-        inventoryItem: true,
-        precautions: true,
-        manuals: true,
+        connectedItems: {
+          orderBy: { order: 'asc' }
+        },
       }
     });
 

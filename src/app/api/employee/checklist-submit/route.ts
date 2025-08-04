@@ -169,7 +169,7 @@ function generateEmailContent(template: any, checklistItemsProgress: any[], conn
           ${completedConnectedItems.length > 0 ? `
             <div class="section">
               <h3>🔗 완료된 하위 항목 (${completedConnectedItems.length}개)</h3>
-              ${completedConnectedItems.map(item => `
+              ${completedConnectedItems.filter(item => item !== null).map(item => `
                 <div class="item">
                   <div class="item-title">${item.parentItem} - 하위 항목</div>
                   <div class="item-details">

@@ -92,9 +92,9 @@ export async function GET(req: NextRequest) {
         items: {
           orderBy: { order: 'asc' },
           include: {
-            inventoryItem: true,
-            precautions: true,
-            manuals: true
+            connectedItems: {
+              orderBy: { order: 'asc' }
+            }
           }
         },
         tagRelations: {
