@@ -17,6 +17,10 @@ interface ChecklistItemProps {
   isReadOnly?: boolean;
   completedBy?: string;
   completedAt?: string;
+  showMemoInputs?: any;
+  toggleMemoInput?: (id: string) => void;
+  saveMemo?: (id: string) => void;
+  currentEmployee?: any;
 }
 
 export default function ChecklistItem({
@@ -32,7 +36,11 @@ export default function ChecklistItem({
   onNotesChange,
   isReadOnly = false,
   completedBy,
-  completedAt
+  completedAt,
+  showMemoInputs,
+  toggleMemoInput,
+  saveMemo,
+  currentEmployee
 }: ChecklistItemProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [localNotes, setLocalNotes] = useState(notes || "");

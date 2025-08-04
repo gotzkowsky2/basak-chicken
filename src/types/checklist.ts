@@ -10,6 +10,7 @@ export interface ChecklistTemplate {
   // 그룹화를 위한 추가 속성들
   groupInstances?: any[];
   isCompleted?: boolean;
+  isSubmitted?: boolean;
   notes?: string;
 }
 
