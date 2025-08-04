@@ -9,8 +9,8 @@ interface ChecklistItemProps {
   onCheckboxChange: (id: string) => void;
   connectedItemsStatus: any;
   connectedItemsDetails: any;
-  onConnectedItemCheckboxChange: (connectionId: string, parentItemId: string) => void;
-  expandedItems: Set<string>;
+  onConnectedItemCheckboxChange: (connectionId: string, parentItemId: string) => Promise<void>;
+  expandedItems: {[key: string]: boolean};
   onToggleExpansion: (itemId: string) => void;
   notes?: string;
   onNotesChange?: (id: string, notes: string) => void;
@@ -19,8 +19,9 @@ interface ChecklistItemProps {
   completedAt?: string;
   showMemoInputs?: any;
   toggleMemoInput?: (id: string) => void;
-  saveMemo?: (id: string) => void;
+  saveMemo?: (id: string) => Promise<void>;
   currentEmployee?: any;
+  onInventoryUpdate?: (itemId: string, currentStock: number, notes?: string) => Promise<void>;
 }
 
 export default function ChecklistItem({
@@ -40,7 +41,8 @@ export default function ChecklistItem({
   showMemoInputs,
   toggleMemoInput,
   saveMemo,
-  currentEmployee
+  currentEmployee,
+  onInventoryUpdate
 }: ChecklistItemProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [localNotes, setLocalNotes] = useState(notes || "");
@@ -59,7 +61,7 @@ export default function ChecklistItem({
   };
 
   const hasConnectedItems = item.connectedItems && item.connectedItems.length > 0;
-  const isExpanded = expandedItems.has(item.id);
+  const isExpanded = expandedItems[item.id] || false;
 
   const isDisabledByOther = completedBy && completedBy !== currentEmployee?.name;
 
@@ -167,7 +169,7 @@ export default function ChecklistItem({
               <div className="flex gap-2 mt-2">
                 {saveMemo && (
                   <button
-                    onClick={() => saveMemo(item.id)}
+                    onClick={async () => await saveMemo(item.id)}
                     className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
                   >
                     저장
@@ -203,7 +205,8 @@ export default function ChecklistItem({
           {item.connectedItems!
             .sort((a, b) => a.order - b.order)
             .map((connection) => {
-            const connectionDetails = connectedItemsDetails[connection.id];
+            const key = `${connection.itemType}_${connection.itemId}`;
+            const connectionDetails = connectedItemsDetails[key];
             const isConnectionCompleted = connectedItemsStatus[connection.id]?.isCompleted || false;
             
             return (
@@ -235,13 +238,96 @@ export default function ChecklistItem({
                             '로딩 중...'
                           )}
                         </h4>
+                        {connection.itemType === 'inventory' && connectionDetails && (
+                          <div className="flex items-center gap-2 ml-2">
+                            <span className="text-xs font-medium text-gray-700">수량:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              defaultValue={Math.round(connectionDetails.currentStock) || 0}
+                              disabled={isReadOnly}
+                              data-inventory-id={connectionDetails.id}
+                              className="w-16 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-900"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const newStock = parseInt(e.currentTarget.value) || 0;
+                                  console.log('재고 Enter 키 입력:', { 
+                                    itemId: connectionDetails.id, 
+                                    newStock, 
+                                    parentItemId: item.id,
+                                    inputValue: e.currentTarget.value 
+                                  });
+                                  if (onInventoryUpdate && connectionDetails) {
+                                    onInventoryUpdate(connectionDetails.id, newStock, item.id);
+                                  }
+                                }
+                              }}
+                              onFocus={(e) => {
+                                // 포커스 시 전체 선택
+                                e.target.select();
+                              }}
+                            />
+                            <span className="text-xs font-medium text-gray-700">{connectionDetails.unit}</span>
+                            <button
+                              onClick={async () => {
+                                const input = document.querySelector(`input[data-inventory-id="${connectionDetails.id}"]`) as HTMLInputElement;
+                                if (input && onInventoryUpdate && connectionDetails) {
+                                  const newStock = parseInt(input.value) || 0;
+                                  console.log('재고 입력 버튼 클릭:', { 
+                                    itemId: connectionDetails.id, 
+                                    newStock, 
+                                    parentItemId: item.id,
+                                    inputValue: input.value 
+                                  });
+                                  await onInventoryUpdate(connectionDetails.id, newStock, item.id);
+                                }
+                              }}
+                              disabled={isReadOnly}
+                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            >
+                              입력
+                            </button>
+                          </div>
+                        )}
                       </div>
                       
                       {connectionDetails && (
                         <div className="text-xs text-gray-600">
                           {connection.itemType === 'inventory' && (
                             <div>
-                              현재 재고: {connectionDetails.currentStock} {connectionDetails.unit}
+                              {/* 재고 변경 정보가 있으면 이전 재고를 취소선으로 표시하고 새 재고를 우측에 표시 */}
+                              {connectedItemsStatus[connection.id]?.previousStock !== undefined ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="line-through text-gray-500">
+                                    {connectedItemsStatus[connection.id].previousStock} {connectionDetails.unit}
+                                  </span>
+                                  <span className="text-green-600 font-semibold">
+                                    → {connectionDetails.currentStock} {connectionDetails.unit}
+                                  </span>
+                                  {connectedItemsStatus[connection.id].stockChange > 0 && (
+                                    <span className="text-green-600 font-semibold">
+                                      (+{connectedItemsStatus[connection.id].stockChange})
+                                    </span>
+                                  )}
+                                  {connectedItemsStatus[connection.id].stockChange < 0 && (
+                                    <span className="text-red-600 font-semibold">
+                                      ({connectedItemsStatus[connection.id].stockChange})
+                                    </span>
+                                  )}
+                                  {connectedItemsStatus[connection.id].stockChange === 0 && (
+                                    <span className="text-gray-600 font-semibold">
+                                      (변경 없음)
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div>
+                                  현재 재고: {connectionDetails.currentStock} {connectionDetails.unit}
+                                </div>
+                              )}
+                              
                               {connectionDetails.currentStock <= connectionDetails.minStock && (
                                 <span className="ml-2 text-red-600 font-semibold">구매 필요!</span>
                               )}
@@ -300,7 +386,7 @@ export default function ChecklistItem({
                         <div className="flex gap-2 mt-2">
                           {saveMemo && (
                             <button
-                              onClick={() => saveMemo(connection.id)}
+                              onClick={async () => await saveMemo(connection.id)}
                               className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
                             >
                               저장

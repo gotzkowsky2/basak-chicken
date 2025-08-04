@@ -24,6 +24,7 @@ interface ChecklistDetailViewProps {
   saveMemo: (id: string) => Promise<void>;
   saveProgress: (templateId: string) => Promise<void>;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
+  onInventoryUpdate?: (itemId: string, currentStock: number, parentItemId: string, notes?: string) => Promise<void>;
 }
 
 export default function ChecklistDetailView({
@@ -47,7 +48,8 @@ export default function ChecklistDetailView({
   toggleMemoInput,
   saveMemo,
   saveProgress,
-  handleSubmit
+  handleSubmit,
+  onInventoryUpdate
 }: ChecklistDetailViewProps) {
   return (
     <>
@@ -134,20 +136,22 @@ export default function ChecklistDetailView({
                     key={item.id}
                     item={item}
                     isCompleted={checklistItems[item.id]?.isCompleted || false}
-                    isDisabledByOther={checklistItems[item.id]?.completedBy && checklistItems[item.id]?.completedBy !== currentEmployee?.name}
-                    isReadOnly={selectedChecklist.isSubmitted}
-                    currentEmployee={currentEmployee}
-                    checklistItems={checklistItems}
-                    connectedItemsStatus={connectedItemsStatus}
-                    connectedItemDetails={connectedItemDetails}
-                    expandedItems={expandedItems}
-                    showMemoInputs={showMemoInputs}
                     onCheckboxChange={handleCheckboxChange}
+                    connectedItemsStatus={connectedItemsStatus}
+                    connectedItemsDetails={connectedItemDetails}
                     onConnectedItemCheckboxChange={handleConnectedItemCheckboxChange}
+                    expandedItems={expandedItems}
                     onToggleExpansion={toggleItemExpansion}
+                    notes={checklistItems[item.id]?.notes}
                     onNotesChange={handleNotesChange}
-                    onToggleMemoInput={toggleMemoInput}
-                    onSaveMemo={saveMemo}
+                    isReadOnly={selectedChecklist.isSubmitted}
+                    completedBy={checklistItems[item.id]?.completedBy}
+                    completedAt={checklistItems[item.id]?.completedAt}
+                    showMemoInputs={showMemoInputs}
+                    toggleMemoInput={toggleMemoInput}
+                    saveMemo={saveMemo}
+                    currentEmployee={currentEmployee}
+                    onInventoryUpdate={onInventoryUpdate}
                   />
                 ))
             ) : (

@@ -157,7 +157,48 @@ export async function GET(request: NextRequest) {
       return instance;
     }));
 
-    return NextResponse.json(instancesWithItems);
+    // 재고 확인 여부 체크 (오늘 날짜의 InventoryCheck 기록 확인)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayInventoryChecks = await prisma.inventoryCheck.findMany({
+      where: {
+        checkedAt: {
+          gte: today,
+          lt: tomorrow
+        }
+      },
+      select: {
+        itemId: true
+      }
+    });
+
+    const checkedInventoryIds = new Set(todayInventoryChecks.map(check => check.itemId));
+
+    // 각 인스턴스에 재고 확인 여부 추가
+    const instancesWithInventoryStatus = instancesWithItems.map(instance => {
+      const hasInventoryConnections = instance.template.items?.some(item => 
+        item.connectedItems?.some(connection => connection.itemType === 'inventory')
+      ) || false;
+
+      const hasTodayInventoryUpdate = hasInventoryConnections && 
+        instance.template.items?.some(item => 
+          item.connectedItems?.some(connection => 
+            connection.itemType === 'inventory' && 
+            checkedInventoryIds.has(connection.itemId)
+          )
+        );
+
+      return {
+        ...instance,
+        hasInventoryConnections,
+        hasTodayInventoryUpdate
+      };
+    });
+
+    return NextResponse.json(instancesWithInventoryStatus);
   } catch (error: any) {
     console.error('체크리스트 진행 상태 조회 오류:', error);
     return NextResponse.json(

@@ -93,13 +93,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT: 직원용 재고 수량 업데이트
+// PUT: 직원용 재고 수량 업데이트 (체크리스트용)
 export async function PUT(request: NextRequest) {
   try {
     const employee = await verifyEmployeeAuth();
     const body = await request.json();
     
-    const { itemId, currentStock } = body;
+    const { itemId, currentStock, notes, needsRestock } = body;
 
     if (!itemId || currentStock === undefined) {
       return NextResponse.json(
@@ -108,12 +108,19 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // 재고 아이템 존재 확인
-    const inventoryItem = await prisma.inventoryItem.findUnique({
-      where: { id: itemId }
+    // 재고 아이템 존재 확인 (활성화된 항목만)
+    const inventoryItem = await prisma.inventoryItem.findFirst({
+      where: { 
+        id: itemId,
+        isActive: true
+      }
     });
 
+    console.log('재고 업데이트 요청:', { itemId, currentStock, employeeId: employee.id });
+    console.log('기존 재고 아이템:', inventoryItem);
+
     if (!inventoryItem) {
+      console.error('재고 아이템을 찾을 수 없음:', itemId);
       return NextResponse.json(
         { error: '재고 아이템을 찾을 수 없습니다.' },
         { status: 404 }
@@ -130,6 +137,20 @@ export async function PUT(request: NextRequest) {
       }
     });
 
+    console.log('업데이트된 재고 아이템:', updatedItem);
+
+    // 재고 확인 기록 생성 (InventoryCheck)
+    const checkRecord = await prisma.inventoryCheck.create({
+      data: {
+        itemId: itemId,
+        checkedBy: employee.id,
+        checkedAt: new Date(),
+        currentStock: currentStock,
+        notes: notes || null,
+        needsRestock: needsRestock || (currentStock <= inventoryItem.minStock)
+      }
+    });
+
     return NextResponse.json({
       message: '재고 수량이 업데이트되었습니다.',
       item: {
@@ -138,6 +159,14 @@ export async function PUT(request: NextRequest) {
         currentStock: updatedItem.currentStock,
         minStock: updatedItem.minStock,
         unit: updatedItem.unit
+      },
+      previousStock: inventoryItem.currentStock,
+      stockChange: currentStock - inventoryItem.currentStock,
+      checkRecord: {
+        id: checkRecord.id,
+        checkedAt: checkRecord.checkedAt,
+        notes: checkRecord.notes,
+        needsRestock: checkRecord.needsRestock
       }
     });
 

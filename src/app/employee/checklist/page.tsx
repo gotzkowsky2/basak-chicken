@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   ChecklistTemplate, 
   ChecklistItem, 
@@ -22,8 +23,12 @@ import {
   ChecklistProgressBar,
   ChecklistActions
 } from "@/components/checklist";
+import Toast from "@/components/ui/Toast";
 
 export default function ChecklistPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [checklists, setChecklists] = useState<ChecklistTemplate[]>([]);
   const [selectedChecklist, setSelectedChecklist] = useState<ChecklistTemplate | null>(null);
   const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
@@ -58,6 +63,13 @@ export default function ChecklistPage() {
   const [itemWorkData, setItemWorkData] = useState<any>({});
   const [savedProgress, setSavedProgress] = useState<{[key: string]: any}>({});
 
+  // 토스트 알림 상태
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    show: boolean;
+  } | null>(null);
+
   // 연결된 항목의 실제 내용을 가져오는 함수
   const getConnectedItemDetails = async (itemType: string, itemId: string) => {
     try {
@@ -77,6 +89,41 @@ export default function ChecklistPage() {
 
   // 연결된 항목 상세 정보 상태
   const [connectedItemDetails, setConnectedItemDetails] = useState<{[key: string]: any}>({});
+
+  // 토스트 알림 표시 함수
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type, show: true });
+  };
+
+  // URL 상태 관리 함수들
+  const updateURL = (view: 'list' | 'detail', checklistId?: string) => {
+    const params = new URLSearchParams();
+    if (view === 'detail' && checklistId) {
+      params.set('view', 'detail');
+      params.set('checklist', checklistId);
+    }
+    const newURL = params.toString() ? `?${params.toString()}` : '';
+    router.replace(`/employee/checklist${newURL}`, { scroll: false });
+  };
+
+  const restoreFromURL = () => {
+    if (!searchParams) return;
+    
+    const view = searchParams.get('view');
+    const checklistId = searchParams.get('checklist');
+    
+    if (view === 'detail' && checklistId) {
+      setCurrentView('detail');
+      // 체크리스트 ID로 체크리스트 찾기
+      const checklist = checklists.find(c => c.id === checklistId);
+      if (checklist) {
+        setSelectedChecklist(checklist);
+      }
+    } else {
+      setCurrentView('list');
+      setSelectedChecklist(null);
+    }
+  };
 
   // 연결된 항목 상세 정보 로드
   const loadConnectedItemDetails = async (item: any) => {
@@ -151,6 +198,13 @@ export default function ChecklistPage() {
   useEffect(() => {
     fetchChecklists();
   }, []);
+
+  // 체크리스트 로드 후 URL에서 상태 복원
+  useEffect(() => {
+    if (checklists.length > 0) {
+      restoreFromURL();
+    }
+  }, [checklists, searchParams]);
 
   // 체크리스트 진행 상태 가져오기
   const fetchProgress = async () => {
@@ -571,6 +625,117 @@ export default function ChecklistPage() {
     }
   };
 
+  // 재고 업데이트 핸들러
+  const handleInventoryUpdate = async (itemId: string, currentStock: number, parentItemId: string, notes?: string) => {
+    // 정수로 변환
+    const stockValue = Math.round(currentStock);
+    console.log('재고 업데이트 시작:', { itemId, currentStock, stockValue, parentItemId, notes });
+    try {
+      const response = await fetch('/api/employee/inventory', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          itemId,
+          currentStock: stockValue,
+          notes,
+          needsRestock: false // 자동으로 계산됨
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('재고 업데이트 성공:', result);
+        
+        // 업데이트 성공 메시지 표시
+        const stockChange = result.stockChange;
+        const changeText = stockChange > 0 
+          ? `+${stockChange}` 
+          : stockChange < 0 
+            ? `${stockChange}` 
+            : '변경 없음';
+        
+        const message = `재고 업데이트: ${result.previousStock} → ${result.item.currentStock} (${changeText})`;
+        showToast(message, 'success');
+        
+        // 연결된 항목 상태를 완료로 설정 (재고 업데이트 시 자동 체크)
+        // 모든 연결된 항목에서 해당 재고 아이템을 찾아서 체크
+        const parentItem = selectedChecklist?.items?.find(item => item.id === parentItemId);
+        let newConnectedStatus = { ...connectedItemsStatus };
+        
+        if (parentItem && parentItem.connectedItems) {
+          const targetConnection = parentItem.connectedItems.find(
+            connection => connection.itemType === 'inventory' && connection.itemId === itemId
+          );
+          
+          if (targetConnection) {
+            newConnectedStatus = {
+              ...connectedItemsStatus,
+              [targetConnection.id]: {
+                ...connectedItemsStatus[targetConnection.id],
+                isCompleted: true,
+                completedBy: currentEmployee?.name,
+                completedAt: new Date().toISOString(),
+                notes: notes,
+                previousStock: result.previousStock,
+                stockChange: result.stockChange
+              }
+            };
+            
+            setConnectedItemsStatus(newConnectedStatus);
+            
+            // 상위 항목 상태 업데이트 (업데이트된 상태로)
+            setTimeout(() => {
+              const updatedParentItem = selectedChecklist?.items?.find(item => item.id === parentItemId);
+              if (updatedParentItem && updatedParentItem.connectedItems) {
+                const allConnectedCompleted = updatedParentItem.connectedItems.every(connection => 
+                  connection.id === targetConnection.id ? true : newConnectedStatus[connection.id]?.isCompleted === true
+                );
+                
+                if (allConnectedCompleted) {
+                  setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => ({
+                    ...prev,
+                    [parentItemId]: {
+                      ...prev[parentItemId],
+                      isCompleted: true,
+                      completedBy: currentEmployee?.name,
+                      completedAt: new Date().toISOString()
+                    }
+                  }));
+                }
+              }
+            }, 0);
+          }
+        }
+        
+        // 재고 상세 정보 새로고침 (API에서 최신 데이터 가져오기)
+        const key = `inventory_${itemId}`;
+        const detail = await getConnectedItemDetails('inventory', itemId);
+        if (detail) {
+          setConnectedItemDetails(prev => ({
+            ...prev,
+            [key]: detail
+          }));
+        }
+
+        // 상태를 즉시 저장
+        try {
+          await saveProgressWithState(selectedChecklist!.id, checklistItems, newConnectedStatus);
+          console.log('재고 업데이트 후 상태 저장 완료');
+        } catch (error) {
+          console.error('재고 업데이트 후 상태 저장 실패:', error);
+        }
+      } else {
+        console.error('재고 업데이트 실패:', response.status);
+        showToast('재고 업데이트에 실패했습니다.', 'error');
+      }
+    } catch (error) {
+      console.error('재고 업데이트 오류:', error);
+    }
+  };
+
   // 연결된 항목 체크박스 변경 핸들러
   const handleConnectedItemCheckboxChange = async (connectionId: string, parentItemId: string) => {
     const isCompleted = !connectedItemsStatus[connectionId]?.isCompleted;
@@ -975,18 +1140,32 @@ export default function ChecklistPage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        
+        // 업데이트 성공 메시지 표시
+        const stockChange = result.stockChange;
+        const changeText = stockChange > 0 
+          ? `+${stockChange}` 
+          : stockChange < 0 
+            ? `${stockChange}` 
+            : '변경 없음';
+        
+        const message = `재고 업데이트: ${result.previousStock} → ${result.item.currentStock} (${changeText})`;
+        showToast(message, 'success');
+        
         // 성공 시 현재 수량 업데이트
         setItemWorkData((prev: any) => ({
           ...prev,
-          currentStock: itemWorkData.updatedStock
+          currentStock: itemWorkData.updatedStock,
+          previousStock: result.previousStock,
+          stockChange: result.stockChange
         }));
-        alert('재고 수량이 업데이트되었습니다.');
       } else {
-        alert('재고 수량 업데이트에 실패했습니다.');
+        showToast('재고 수량 업데이트에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('재고 업데이트 오류:', error);
-      alert('재고 수량 업데이트 중 오류가 발생했습니다.');
+      showToast('재고 수량 업데이트 중 오류가 발생했습니다.', 'error');
     }
   };
 
@@ -1416,6 +1595,7 @@ export default function ChecklistPage() {
   const handleChecklistSelect = (checklist: ChecklistTemplate) => {
     setSelectedChecklist(checklist);
     setCurrentView('detail');
+    updateURL('detail', checklist.id);
     
     // 기존 진행 상태 로드
     const existingInstance = checklist.groupInstances?.[0];
@@ -1487,9 +1667,7 @@ export default function ChecklistPage() {
     setSelectedChecklist(null);
     setExpandedItems({});
     setShowMemoInputs({});
-    
-    // 새로고침으로 최신 데이터 로드
-    window.location.reload();
+    updateURL('list');
   };
 
   // 모든 항목이 체크되었는지 확인 (체크리스트 + 연결된 항목들)
@@ -1625,31 +1803,41 @@ export default function ChecklistPage() {
 
         {/* 상세 화면 */}
         {currentView === 'detail' && selectedChecklist && (
-          <ChecklistDetailView
-            selectedChecklist={selectedChecklist}
-            currentEmployee={currentEmployee}
-            checklistItems={checklistItems}
-            connectedItemsStatus={connectedItemsStatus}
-            connectedItemDetails={connectedItemDetails}
-            expandedItems={expandedItems}
-            showMemoInputs={showMemoInputs}
-            submitting={submitting}
-            getWorkplaceLabel={getWorkplaceLabel}
-            getTimeSlotLabel={getTimeSlotLabel}
-            handleBackToList={handleBackToList}
-            calculateProgress={calculateProgress}
-            isAllItemsCompleted={isAllItemsCompleted}
-            handleCheckboxChange={handleCheckboxChange}
-            handleConnectedItemCheckboxChange={handleConnectedItemCheckboxChange}
-            toggleItemExpansion={toggleItemExpansion}
-            handleNotesChange={handleNotesChange}
-            toggleMemoInput={toggleMemoInput}
-            saveMemo={saveMemo}
-            saveProgress={saveProgress}
-            handleSubmit={handleSubmit}
-          />
+                      <ChecklistDetailView
+              selectedChecklist={selectedChecklist}
+              currentEmployee={currentEmployee}
+              checklistItems={checklistItems}
+              connectedItemsStatus={connectedItemsStatus}
+              connectedItemDetails={connectedItemDetails}
+              expandedItems={expandedItems}
+              showMemoInputs={showMemoInputs}
+              submitting={submitting}
+              getWorkplaceLabel={getWorkplaceLabel}
+              getTimeSlotLabel={getTimeSlotLabel}
+              handleBackToList={handleBackToList}
+              calculateProgress={calculateProgress}
+              isAllItemsCompleted={isAllItemsCompleted}
+              handleCheckboxChange={handleCheckboxChange}
+              handleConnectedItemCheckboxChange={handleConnectedItemCheckboxChange}
+              toggleItemExpansion={toggleItemExpansion}
+              handleNotesChange={handleNotesChange}
+              toggleMemoInput={toggleMemoInput}
+              saveMemo={saveMemo}
+              saveProgress={saveProgress}
+              handleSubmit={handleSubmit}
+              onInventoryUpdate={handleInventoryUpdate}
+            />
         )}
       </div>
+
+      {/* 토스트 알림 */}
+      {toast && toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 } 

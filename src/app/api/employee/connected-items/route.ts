@@ -45,12 +45,32 @@ export async function GET(request: NextRequest) {
 
     switch (itemType) {
       case 'inventory':
-        result = await prisma.inventoryItem.findUnique({
-          where: { id: itemId },
-          include: {
-            tags: true
+        result = await prisma.inventoryItem.findFirst({
+          where: { 
+            id: itemId,
+            isActive: true
+          },
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            currentStock: true,
+            minStock: true,
+            unit: true,
+            supplier: true,
+            lastUpdated: true,
+            lastCheckedBy: true
           }
         });
+        
+        // 상태 정보 추가 (부대 용품 페이지와 동일하게)
+        if (result) {
+          result = {
+            ...result,
+            status: result.currentStock <= result.minStock ? 'low' : 'sufficient',
+            isLowStock: result.currentStock <= result.minStock
+          };
+        }
         break;
       case 'precaution':
         result = await prisma.precaution.findUnique({

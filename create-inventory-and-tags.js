@@ -90,6 +90,19 @@ async function createInventoryAndTags() {
     
     console.log('\n재고 아이템 생성 중...');
     for (const itemData of inventoryItems) {
+      // 기존에 같은 이름의 아이템이 있는지 확인
+      const existingItem = await prisma.inventoryItem.findFirst({
+        where: { 
+          name: itemData.name,
+          isActive: true
+        }
+      });
+      
+      if (existingItem) {
+        console.log(`⚠️ 이미 존재하는 재고 아이템: ${itemData.name} (ID: ${existingItem.id})`);
+        continue;
+      }
+      
       const item = await prisma.inventoryItem.create({
         data: {
           name: itemData.name,
