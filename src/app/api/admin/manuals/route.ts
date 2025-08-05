@@ -8,22 +8,23 @@ const prisma = new PrismaClient();
 async function verifyAdminAuth() {
   const cookieStore = await cookies();
   const adminAuth = cookieStore.get('admin_auth');
+  const employeeAuth = cookieStore.get('employee_auth');
   
-  if (!adminAuth) {
+  if (!adminAuth && !employeeAuth) {
     throw new Error('관리자 인증이 필요합니다.');
   }
 
-  const admin = await prisma.admin.findFirst({
-    where: {
-      id: adminAuth.value
-    }
+  const authId = adminAuth?.value || employeeAuth?.value;
+  const employee = await prisma.employee.findUnique({
+    where: { id: authId },
+    select: { isSuperAdmin: true }
   });
 
-  if (!admin) {
-    throw new Error('유효하지 않은 관리자 세션입니다.');
+  if (!employee || !employee.isSuperAdmin) {
+    throw new Error('관리자 권한이 필요합니다.');
   }
 
-  return admin;
+  return employee;
 }
 
 // POST: 새 메뉴얼 생성
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     await verifyAdminAuth();
 
     const body = await request.json();
-    const { title, content, workplace, timeSlot, category, version, mediaUrls } = body;
+    const { title, content, workplace, timeSlot, category, version, mediaUrls, tags } = body;
 
     // 필수 필드 검증
     if (!title || !content) {
@@ -55,6 +56,16 @@ export async function POST(request: NextRequest) {
         isActive: true
       }
     });
+
+    // 태그 연결
+    if (tags && tags.length > 0) {
+      await prisma.manualTagRelation.createMany({
+        data: tags.map((tagId: string) => ({
+          manualId: manual.id,
+          tagId: tagId,
+        })),
+      });
+    }
 
     return NextResponse.json(manual, { status: 201 });
   } catch (error: any) {
@@ -103,12 +114,29 @@ export async function GET(request: NextRequest) {
 
     const manuals = await prisma.manual.findMany({
       where,
+      include: {
+        tagRelations: {
+          include: {
+            tag: true
+          }
+        }
+      },
       orderBy: [
         { createdAt: 'desc' }
       ]
     });
 
-    return NextResponse.json(manuals);
+    // 태그 데이터 구조 변환
+    const formattedManuals = manuals.map(manual => ({
+      ...manual,
+      tags: manual.tagRelations.map(relation => ({
+        id: relation.tag.id,
+        name: relation.tag.name,
+        color: relation.tag.color
+      }))
+    }));
+
+    return NextResponse.json(formattedManuals);
   } catch (error: any) {
     console.error('메뉴얼 조회 오류:', error);
     return NextResponse.json(
@@ -124,7 +152,7 @@ export async function PUT(request: NextRequest) {
     await verifyAdminAuth();
 
     const body = await request.json();
-    const { id, title, content, workplace, timeSlot, category, version, mediaUrls } = body;
+    const { id, title, content, workplace, timeSlot, category, version, mediaUrls, tags } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -158,6 +186,21 @@ export async function PUT(request: NextRequest) {
         mediaUrls: mediaUrls !== undefined ? mediaUrls : existingManual.mediaUrls
       }
     });
+
+    // 기존 태그 관계 삭제
+    await prisma.manualTagRelation.deleteMany({
+      where: { manualId: id }
+    });
+
+    // 새로운 태그 관계 생성
+    if (tags && tags.length > 0) {
+      await prisma.manualTagRelation.createMany({
+        data: tags.map((tagId: string) => ({
+          manualId: id,
+          tagId: tagId,
+        })),
+      });
+    }
 
     return NextResponse.json(updatedManual);
   } catch (error: any) {

@@ -1,121 +1,170 @@
 "use client";
 import { useState, useEffect } from "react";
+import { 
+  MagnifyingGlassIcon,
+  DocumentTextIcon,
+  ClockIcon,
+  MapPinIcon
+} from '@heroicons/react/24/outline';
 
 interface Manual {
   id: string;
   title: string;
-  category: string;
   content: string;
-  lastUpdated: string;
-  author: string;
-  isImportant: boolean;
+  workplace: string;
+  timeSlot: string;
+  category: string;
+  version: string;
+  mediaUrls: string[];
+  createdAt: string;
+  updatedAt: string;
+  tags?: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export default function ManualClient() {
   const [manuals, setManuals] = useState<Manual[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [error, setError] = useState('');
   const [selectedManual, setSelectedManual] = useState<Manual | null>(null);
+  
+  // 필터 상태
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterWorkplace, setFilterWorkplace] = useState('ALL');
+  const [filterTimeSlot, setFilterTimeSlot] = useState('ALL');
+  const [filterCategory, setFilterCategory] = useState('ALL');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // 임시 데이터 (나중에 API로 교체)
+  const workplaceOptions = [
+    { value: 'ALL', label: '전체' },
+    { value: 'COMMON', label: '공통' },
+    { value: 'KITCHEN', label: '주방' },
+    { value: 'COUNTER', label: '카운터' },
+    { value: 'DELIVERY', label: '배달' }
+  ];
+
+  const timeSlotOptions = [
+    { value: 'ALL', label: '전체' },
+    { value: 'ALL_DAY', label: '전일' },
+    { value: 'MORNING', label: '오전' },
+    { value: 'AFTERNOON', label: '오후' },
+    { value: 'EVENING', label: '저녁' },
+    { value: 'NIGHT', label: '야간' }
+  ];
+
+  const categoryOptions = [
+    { value: 'ALL', label: '전체' },
+    { value: 'MANUAL', label: '메뉴얼' },
+    { value: 'PROCEDURE', label: '절차' },
+    { value: 'GUIDE', label: '가이드' },
+    { value: 'TRAINING', label: '교육' }
+  ];
+
   useEffect(() => {
-    const mockManuals: Manual[] = [
-      {
-        id: "1",
-        title: "치킨 튀김 기본 매뉴얼",
-        category: "조리법",
-        content: `1. 기름 온도 확인 (170-180도)
-2. 닭고기 해동 완료 확인
-3. 튀김가루를 골고루 묻히기
-4. 8-10분간 튀기기
-5. 기름이 완전히 빠질 때까지 건지기
-6. 소스 선택하여 제공
-
-주의사항:
-- 기름 온도는 반드시 확인
-- 과도한 튀김은 피하기
-- 위생장갑 착용 필수`,
-        lastUpdated: "2024-01-15",
-        author: "주방장",
-        isImportant: true
-      },
-      {
-        id: "2",
-        title: "고객 응대 매뉴얼",
-        category: "서비스",
-        content: `1. 고객 입장 시 "어서오세요" 인사
-2. 주문 확인 시 메뉴와 수량 정확히 확인
-3. 대기 시간 안내 (15-20분)
-4. 주문 완료 시 "잠시만 기다려주세요"
-5. 음식 제공 시 "맛있게 드세요"
-6. 계산 완료 시 "감사합니다, 또 오세요"
-
-주의사항:
-- 항상 친절한 미소 유지
-- 고객 질문에 정확히 답변
-- 불만 사항 발생 시 관리자 호출`,
-        lastUpdated: "2024-01-14",
-        author: "매니저",
-        isImportant: true
-      },
-      {
-        id: "3",
-        title: "위생 관리 매뉴얼",
-        category: "위생",
-        content: `1. 출근 시 위생복 착용
-2. 작업 전 손 씻기 (30초 이상)
-3. 장갑 착용 후 작업
-4. 작업대 정리정돈
-5. 폐기물 분리수거
-6. 퇴근 전 청소 완료
-
-주의사항:
-- 식품 취급 전 반드시 손 씻기
-- 장갑은 1회용 사용
-- 위생복은 매일 세탁`,
-        lastUpdated: "2024-01-13",
-        author: "위생관리자",
-        isImportant: true
-      },
-      {
-        id: "4",
-        title: "포스기 사용법",
-        category: "시스템",
-        content: `1. 출근 시 포스기 로그인
-2. 주문 입력 시 메뉴 선택
-3. 수량 입력 후 확인
-4. 결제 방법 선택
-5. 영수증 출력
-6. 퇴근 시 로그아웃
-
-주의사항:
-- 주문 입력 시 정확히 확인
-- 결제 오류 시 관리자 호출
-- 영수증은 반드시 제공`,
-        lastUpdated: "2024-01-12",
-        author: "시스템관리자",
-        isImportant: false
-      }
-    ];
-    
-    setTimeout(() => {
-      setManuals(mockManuals);
-      setLoading(false);
-    }, 500);
+    fetchTags();
   }, []);
 
-  const categories = ["all", "조리법", "서비스", "위생", "시스템"];
-  
-  const filteredManuals = selectedCategory === "all" 
-    ? manuals 
-    : manuals.filter(item => item.category === selectedCategory);
+  useEffect(() => {
+    fetchManuals();
+  }, []);
+
+  const fetchManuals = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/employee/manuals`, { 
+        credentials: "include" 
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setManuals(data.manuals || []);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || "메뉴얼 목록을 불러오는데 실패했습니다.");
+      }
+    } catch (error) {
+      setError("메뉴얼 목록을 불러오는데 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const response = await fetch("/api/admin/tags", { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setTags(data);
+      }
+    } catch (error) {
+      console.error("태그 목록을 불러오는데 실패했습니다:", error);
+    }
+  };
+
+  const handleTagFilterToggle = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  // 클라이언트 사이드 필터링
+  const filteredManuals = manuals.filter(manual => {
+    const matchesSearch = !searchTerm || 
+      manual.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      manual.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesWorkplace = filterWorkplace === 'ALL' || manual.workplace === filterWorkplace;
+    const matchesTimeSlot = filterTimeSlot === 'ALL' || manual.timeSlot === filterTimeSlot;
+    const matchesCategory = filterCategory === 'ALL' || manual.category === filterCategory;
+    const matchesTags = selectedTags.length === 0 || 
+      selectedTags.some(tagId => 
+        manual.tags?.some(tag => tag.id === tagId)
+      );
+    
+    return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesCategory && matchesTags;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterWorkplace('ALL');
+    setFilterTimeSlot('ALL');
+    setFilterCategory('ALL');
+    setSelectedTags([]);
+  };
+
+  const getWorkplaceLabel = (value: string) => {
+    const option = workplaceOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
+  };
+
+  const getTimeSlotLabel = (value: string) => {
+    const option = timeSlotOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
+  };
+
+  const getCategoryLabel = (value: string) => {
+    const option = categoryOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">로딩 중...</div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         </div>
       </div>
@@ -123,109 +172,223 @@ export default function ManualClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* 헤더 */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">업무 매뉴얼</h1>
-          <p className="text-gray-600">업무 수행에 필요한 매뉴얼을 확인하세요</p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">업무 매뉴얼</h1>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              필터 초기화
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              <svg 
+                className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              {showFilters ? "접기" : "필터"}
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 사이드바 - 매뉴얼 목록 */}
-          <div className="lg:col-span-1">
-            {/* 카테고리 필터 */}
-            <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">카테고리</h3>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                      selectedCategory === category
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {category === "all" ? "전체" : category}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
-            {/* 매뉴얼 목록 */}
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">매뉴얼 목록</h3>
-              <div className="space-y-2">
-                {filteredManuals.map((manual) => (
-                  <button
-                    key={manual.id}
-                    onClick={() => setSelectedManual(manual)}
-                    className={`w-full text-left p-3 rounded-lg transition ${
-                      selectedManual?.id === manual.id
-                        ? 'bg-indigo-50 border border-indigo-200'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
+        {/* 검색 */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="제목 또는 내용으로 검색..."
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+            />
+            <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          </div>
+        </div>
+
+        {/* 필터 */}
+        {showFilters && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div className="space-y-4">
+
+              {/* 필터 옵션들 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">근무처</label>
+                  <select
+                    value={filterWorkplace}
+                    onChange={(e) => setFilterWorkplace(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-800 text-sm">
-                          {manual.title}
-                          {manual.isImportant && (
-                            <span className="ml-2 text-red-500 text-xs">중요</span>
-                          )}
-                        </h4>
-                        <p className="text-xs text-gray-500 mt-1">{manual.category}</p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    {workplaceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">시간대</label>
+                  <select
+                    value={filterTimeSlot}
+                    onChange={(e) => setFilterTimeSlot(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                  >
+                    {timeSlotOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                  >
+                    {categoryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              {/* 태그 필터 */}
+              {tags.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">태그 필터</label>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => handleTagFilterToggle(tag.id)}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                          selectedTags.includes(tag.id)
+                            ? 'text-white shadow-md'
+                            : 'hover:shadow-md'
+                        }`}
+                        style={{
+                          backgroundColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}20`,
+                          color: selectedTags.includes(tag.id) ? 'white' : tag.color,
+                          border: selectedTags.includes(tag.id) ? `2px solid ${tag.color}` : `1px solid ${tag.color}40`
+                        }}
+                      >
+                        {tag.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        )}
 
-          {/* 메인 콘텐츠 - 매뉴얼 상세 */}
-          <div className="lg:col-span-2">
-            {selectedManual ? (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="mb-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-800 mb-2">
-                        {selectedManual.title}
-                        {selectedManual.isImportant && (
-                          <span className="ml-2 text-red-500 text-sm font-medium">중요</span>
-                        )}
-                      </h2>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>카테고리: {selectedManual.category}</span>
-                        <span>작성자: {selectedManual.author}</span>
-                        <span>최종 수정: {selectedManual.lastUpdated}</span>
-                      </div>
+        {/* 메뉴얼 목록 */}
+        {filteredManuals.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">메뉴얼이 없습니다</h3>
+            <p className="text-gray-500">현재 표시할 메뉴얼이 없습니다.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {filteredManuals.map((manual) => (
+              <div key={manual.id} className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-xl font-semibold text-gray-800">{manual.title}</h2>
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        v{manual.version}
+                      </span>
                     </div>
+                    
+                    {/* 태그 표시 */}
+                    {manual.tags && manual.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {manual.tags.map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="px-2 py-1 rounded-full text-xs font-medium text-white"
+                            style={{ backgroundColor: tag.color }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
+                </div>
+                
+                <div className="prose max-w-none mb-4">
+                  <p className="text-gray-700 whitespace-pre-wrap line-clamp-3">
+                    {manual.content}
+                  </p>
+                  {manual.content.length > 200 && (
+                    <button 
+                      className="text-blue-600 hover:text-blue-800 text-sm mt-2"
+                      onClick={() => setSelectedManual(selectedManual?.id === manual.id ? null : manual)}
+                    >
+                      {selectedManual?.id === manual.id ? '접기' : '전체 내용 보기'}
+                    </button>
+                  )}
                   
-                  <div className="prose max-w-none">
-                    <div className="whitespace-pre-line text-gray-700 leading-relaxed">
-                      {selectedManual.content}
+                  {selectedManual?.id === manual.id && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <p className="text-gray-700 whitespace-pre-wrap">
+                        {manual.content}
+                      </p>
                     </div>
-                  </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <MapPinIcon className="w-4 h-4" />
+                    {getWorkplaceLabel(manual.workplace)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ClockIcon className="w-4 h-4" />
+                    {getTimeSlotLabel(manual.timeSlot)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <DocumentTextIcon className="w-4 h-4" />
+                    {getCategoryLabel(manual.category)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {new Date(manual.createdAt).toLocaleDateString('ko-KR')}
+                  </span>
                 </div>
               </div>
-            ) : (
-              <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                <div className="text-gray-400 mb-4">
-                  <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-600 mb-2">매뉴얼을 선택하세요</h3>
-                <p className="text-gray-500">왼쪽 목록에서 확인하고 싶은 매뉴얼을 선택하세요.</p>
-              </div>
-            )}
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

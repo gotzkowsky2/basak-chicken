@@ -73,10 +73,15 @@ export default function NoticesPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchPrecautions();
       fetchTags();
     }
-  }, [isAuthenticated, searchTerm, filterWorkplace, filterTimeSlot, selectedTags]);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPrecautions();
+    }
+  }, [isAuthenticated]);
 
   const checkAuth = async () => {
     try {
@@ -96,28 +101,13 @@ export default function NoticesPage() {
   const fetchPrecautions = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-      if (filterWorkplace !== 'ALL') params.append('workplace', filterWorkplace);
-      if (filterTimeSlot !== 'ALL') params.append('timeSlot', filterTimeSlot);
-      
-      const response = await fetch(`/api/employee/precautions?${params}`, { 
+      const response = await fetch(`/api/employee/precautions`, { 
         credentials: "include" 
       });
       
       if (response.ok) {
         const data = await response.json();
-        let filteredPrecautions = data.precautions || [];
-        
-        // 태그 필터링 (클라이언트 사이드)
-        if (selectedTags.length > 0) {
-          filteredPrecautions = filteredPrecautions.filter((precaution: Precaution) => {
-            const precautionTagIds = precaution.tags?.map(tag => tag.id) || [];
-            return selectedTags.some(tagId => precautionTagIds.includes(tagId));
-          });
-        }
-        
-        setPrecautions(filteredPrecautions);
+        setPrecautions(data.precautions || []);
       } else {
         const errorData = await response.json();
         setError(errorData.error || "주의사항 목록을 불러오는데 실패했습니다.");
@@ -148,6 +138,21 @@ export default function NoticesPage() {
         : [...prev, tagId]
     );
   };
+
+  // 클라이언트 사이드 필터링
+  const filteredPrecautions = precautions.filter(precaution => {
+    const matchesSearch = !searchTerm || 
+      precaution.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      precaution.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesWorkplace = filterWorkplace === 'ALL' || precaution.workplace === filterWorkplace;
+    const matchesTimeSlot = filterTimeSlot === 'ALL' || precaution.timeSlot === filterTimeSlot;
+    const matchesTags = selectedTags.length === 0 || 
+      selectedTags.some(tagId => 
+        precaution.tags?.some(tag => tag.id === tagId)
+      );
+    
+    return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesTags;
+  });
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -225,24 +230,24 @@ export default function NoticesPage() {
           </div>
         )}
 
+        {/* 검색 */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="제목 또는 내용으로 검색..."
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+            />
+            <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          </div>
+        </div>
+
         {/* 필터 */}
         {showFilters && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <div className="space-y-4">
-              {/* 검색 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">검색</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="제목 또는 내용으로 검색..."
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
-                  />
-                  <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                </div>
-              </div>
 
               {/* 필터 옵션들 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -309,7 +314,7 @@ export default function NoticesPage() {
         )}
 
         {/* 주의사항 목록 */}
-        {precautions.length === 0 ? (
+        {filteredPrecautions.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">주의사항이 없습니다</h3>
@@ -317,7 +322,7 @@ export default function NoticesPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {precautions.map((precaution) => (
+            {filteredPrecautions.map((precaution) => (
               <div key={precaution.id} className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">

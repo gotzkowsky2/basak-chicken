@@ -22,6 +22,17 @@ interface Manual {
   mediaUrls: string[];
   createdAt: string;
   updatedAt: string;
+  tags?: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export default function ManualsPage() {
@@ -46,6 +57,13 @@ export default function ManualsPage() {
   // 삭제 확인 상태
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // 태그 관련 상태
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#3B82F6');
+
   // 폼 데이터
   const [formData, setFormData] = useState<{
     title: string;
@@ -55,6 +73,7 @@ export default function ManualsPage() {
     category: string;
     version: string;
     mediaUrls: string[];
+    tags: string[];
   }>({
     title: '',
     content: '',
@@ -62,7 +81,8 @@ export default function ManualsPage() {
     timeSlot: 'ALL_DAY',
     category: 'MANUAL',
     version: '1.0',
-    mediaUrls: []
+    mediaUrls: [],
+    tags: []
   });
 
   // 옵션 데이터
@@ -90,6 +110,72 @@ export default function ManualsPage() {
     { value: 'GUIDE', label: '가이드' },
     { value: 'TRAINING', label: '교육' }
   ];
+
+  // 태그 목록 조회
+  const fetchTags = async () => {
+    try {
+      const response = await fetch("/api/admin/tags", { credentials: "include" });
+      if (response.ok) {
+        const data = await response.json();
+        setTags(data);
+      }
+    } catch (error) {
+      console.error("태그 목록을 불러오는데 실패했습니다:", error);
+    }
+  };
+
+  // 태그 토글
+  const handleTagToggle = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  // 편집 태그 토글
+  const handleEditTagToggle = (tagId: string) => {
+    setFormData(prev => {
+      const currentTags = prev.tags || [];
+      const isSelected = currentTags.includes(tagId);
+      return {
+        ...prev,
+        tags: isSelected 
+          ? currentTags.filter(id => id !== tagId)
+          : [...currentTags, tagId]
+      };
+    });
+  };
+
+  // 태그 생성
+  const createTag = async () => {
+    if (!newTagName.trim()) return;
+    
+    try {
+      const response = await fetch('/api/admin/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: newTagName.trim(), color: newTagColor })
+      });
+      
+      if (response.ok) {
+        const newTag = await response.json();
+        setTags(prev => [...prev, newTag]);
+        setNewTagName('');
+        setNewTagColor('#3B82F6');
+        setShowTagModal(false);
+        setSuccess('태그가 성공적으로 생성되었습니다.');
+        await fetchTags();
+      } else {
+        const error = await response.json();
+        setError(error.error || '태그 생성 실패');
+      }
+    } catch (error) {
+      console.error('태그 생성 실패:', error);
+      setError('태그 생성 중 오류가 발생했습니다.');
+    }
+  };
 
   // 메뉴얼 목록 조회
   const fetchManuals = async () => {
@@ -144,7 +230,8 @@ export default function ManualsPage() {
         timeSlot: 'ALL_DAY',
         category: 'MANUAL',
         version: '1.0',
-        mediaUrls: []
+        mediaUrls: [],
+        tags: []
       });
       setEditingId(null);
       fetchManuals();
@@ -165,22 +252,24 @@ export default function ManualsPage() {
       timeSlot: manual.timeSlot,
       category: manual.category,
       version: manual.version,
-      mediaUrls: manual.mediaUrls || []
+      mediaUrls: manual.mediaUrls || [],
+      tags: manual.tags?.map(tag => tag.id) || []
     });
   };
 
   // 편집 취소
   const handleEditCancel = () => {
     setEditingId(null);
-    setFormData({
-      title: '',
-      content: '',
-      workplace: 'COMMON',
-      timeSlot: 'ALL_DAY',
-      category: 'MANUAL',
-      version: '1.0',
-      mediaUrls: []
-    });
+          setFormData({
+        title: '',
+        content: '',
+        workplace: 'COMMON',
+        timeSlot: 'ALL_DAY',
+        category: 'MANUAL',
+        version: '1.0',
+        mediaUrls: [],
+        tags: []
+      });
   };
 
   // 메뉴얼 삭제
@@ -244,6 +333,7 @@ export default function ManualsPage() {
 
   useEffect(() => {
     fetchManuals();
+    fetchTags();
   }, [filters]);
 
   useEffect(() => {
@@ -320,10 +410,14 @@ export default function ManualsPage() {
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
+                    rows={12}
+                    placeholder="메뉴얼 내용을 상세히 입력하세요..."
+                    className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 resize-y"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    긴 내용을 입력할 수 있습니다. Ctrl+Enter로 줄바꿈을 추가할 수 있습니다.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -394,16 +488,62 @@ export default function ManualsPage() {
                 </div>
 
                 <div>
-                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                     미디어 URL (선택사항)
-                   </label>
-                   <input
-                     type="url"
-                     placeholder="https://example.com/file.pdf"
-                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                     disabled
-                   />
-                   <p className="text-xs text-gray-500">미디어 URL 기능은 추후 구현 예정입니다.</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      태그
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowTagModal(true)}
+                      className="flex items-center space-x-1 px-2 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <span>태그 추가</span>
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg min-h-[60px]">
+                    {tags.length === 0 ? (
+                      <p className="text-gray-500 text-sm">등록된 태그가 없습니다.</p>
+                    ) : (
+                      tags.map((tag) => {
+                        const isSelected = (formData.tags || []).includes(tag.id);
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => handleEditTagToggle(tag.id)}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                              isSelected
+                                ? 'text-white shadow-md'
+                                : 'hover:shadow-md'
+                            }`}
+                            style={{
+                              backgroundColor: isSelected ? tag.color : `${tag.color}20`,
+                              color: isSelected ? 'white' : tag.color,
+                              border: isSelected ? `2px solid ${tag.color}` : `1px solid ${tag.color}40`
+                            }}
+                          >
+                            {tag.name}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    미디어 URL (선택사항)
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://example.com/file.pdf"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled
+                  />
+                  <p className="text-xs text-gray-500">미디어 URL 기능은 추후 구현 예정입니다.</p>
                 </div>
 
                 <div className="flex space-x-3">
@@ -522,9 +662,37 @@ export default function ManualsPage() {
                                )}
                             </div>
                             
-                            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                              {manual.content}
-                            </p>
+                            <div className="text-gray-600 text-sm mb-3">
+                              <p className="line-clamp-3 whitespace-pre-wrap">
+                                {manual.content}
+                              </p>
+                              {manual.content.length > 200 && (
+                                <button 
+                                  className="text-blue-600 hover:text-blue-800 text-xs mt-1"
+                                  onClick={() => {
+                                    // 전체 내용 보기 기능 (추후 구현)
+                                    alert('전체 내용 보기 기능은 추후 구현 예정입니다.');
+                                  }}
+                                >
+                                  전체 내용 보기
+                                </button>
+                              )}
+                            </div>
+                            
+                            {/* 태그 표시 */}
+                            {manual.tags && manual.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {manual.tags.map((tag) => (
+                                  <span
+                                    key={tag.id}
+                                    className="px-2 py-1 rounded-full text-xs font-medium text-white"
+                                    style={{ backgroundColor: tag.color }}
+                                  >
+                                    {tag.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             
                             <div className="flex items-center space-x-4 text-xs text-gray-500">
                               <span>{getWorkplaceLabel(manual.workplace)}</span>
@@ -581,6 +749,76 @@ export default function ManualsPage() {
               >
                 취소
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 태그 생성 모달 */}
+      {showTagModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">새 태그 생성</h3>
+              <button
+                onClick={() => setShowTagModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  태그 이름 *
+                </label>
+                <input
+                  type="text"
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                  placeholder="태그 이름을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  태그 색상
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={newTagColor}
+                    onChange={(e) => setNewTagColor(e.target.value)}
+                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={newTagColor}
+                    onChange={(e) => setNewTagColor(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                    placeholder="#3B82F6"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={createTag}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  생성
+                </button>
+                <button
+                  onClick={() => setShowTagModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                >
+                  취소
+                </button>
+              </div>
             </div>
           </div>
         </div>
