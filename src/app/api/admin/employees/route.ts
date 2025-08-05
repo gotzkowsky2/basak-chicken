@@ -1,28 +1,59 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// 직원 목록 조회 (GET)
-export async function GET() {
+// 관리자 인증 확인 함수
+async function verifyAdminAuth(request: NextRequest) {
+  const adminAuth = request.cookies.get('admin_auth')?.value;
+  const employeeAuth = request.cookies.get('employee_auth')?.value;
+  
+  if (!adminAuth && !employeeAuth) {
+    throw new Error('관리자 인증이 필요합니다.');
+  }
+
+  const authId = adminAuth || employeeAuth;
+  const employee = await prisma.employee.findUnique({ 
+    where: { id: authId },
+    select: { name: true, isSuperAdmin: true }
+  });
+
+  if (!employee || !employee.isSuperAdmin) {
+    throw new Error('관리자 권한이 필요합니다.');
+  }
+
+  return employee;
+}
+
+// GET: 직원 목록 조회
+export async function GET(request: NextRequest) {
   try {
+    await verifyAdminAuth(request);
+
     const employees = await prisma.employee.findMany({
-      orderBy: { createdAt: "desc" },
+      where: {
+        isActive: true
+      },
       select: {
         id: true,
-        employeeId: true,
         name: true,
         email: true,
-        phone: true,
         department: true,
-        position: true,
-        isActive: true,
-        createdAt: true,
+        isSuperAdmin: true,
+        createdAt: true
       },
+      orderBy: [
+        { name: 'asc' }
+      ]
     });
-    return NextResponse.json({ employees });
-  } catch (error) {
-    return NextResponse.json({ error: "직원 목록 조회 실패" }, { status: 500 });
+
+    return NextResponse.json(employees);
+  } catch (error: any) {
+    console.error('직원 목록 조회 오류:', error);
+    return NextResponse.json(
+      { error: error.message || '직원 목록 조회 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
   }
 }
 

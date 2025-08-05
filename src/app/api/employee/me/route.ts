@@ -1,37 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const runtime = "nodejs";
-
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const employeeAuth = req.cookies.get("employee_auth")?.value;
-    if (!employeeAuth) {
-      return NextResponse.json({ error: "인증 정보가 없습니다." }, { status: 401 });
+    const employeeAuth = request.cookies.get('employee_auth')?.value;
+    const adminAuth = request.cookies.get('admin_auth')?.value;
+    
+    if (!employeeAuth && !adminAuth) {
+      return NextResponse.json(
+        { error: '인증이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
-    const employee = await prisma.employee.findUnique({ 
-      where: { id: employeeAuth },
+    const authId = employeeAuth || adminAuth;
+    const employee = await prisma.employee.findUnique({
+      where: { id: authId },
       select: {
         id: true,
-        employeeId: true,
         name: true,
         email: true,
-        department: true,
-        position: true,
         isSuperAdmin: true
       }
     });
 
     if (!employee) {
-      return NextResponse.json({ error: "직원 정보를 찾을 수 없습니다." }, { status: 404 });
+      return NextResponse.json(
+        { error: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(employee);
-  } catch (error) {
-    console.error("직원 정보 조회 오류:", error);
-    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  } catch (error: any) {
+    console.error('사용자 정보 조회 오류:', error);
+    return NextResponse.json(
+      { error: '사용자 정보 조회 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
   }
 } 
