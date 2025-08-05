@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 // 주의사항 생성
 export async function POST(req: NextRequest) {
   try {
-    const { title, content, workplace, timeSlot, priority } = await req.json();
+    const { title, content, workplace, timeSlot, priority, tags } = await req.json();
     
     // 필수 필드 검증
     if (!title || !content || !workplace || !timeSlot) {
@@ -66,6 +66,16 @@ export async function POST(req: NextRequest) {
         isActive: true,
       },
     });
+
+    // 태그 연결
+    if (tags && tags.length > 0) {
+      await prisma.precautionTagRelation.createMany({
+        data: tags.map((tagId: string) => ({
+          precautionId: precaution.id,
+          tagId: tagId,
+        })),
+      });
+    }
 
     return NextResponse.json({ 
       success: true, 
@@ -125,13 +135,30 @@ export async function GET(req: NextRequest) {
     // 주의사항 목록 조회
     const precautions = await prisma.precaution.findMany({
       where,
+      include: {
+        tagRelations: {
+          include: {
+            tag: true
+          }
+        }
+      },
       orderBy: [
         { priority: 'asc' },
         { createdAt: 'desc' }
       ],
     });
 
-    return NextResponse.json({ precautions });
+    // 태그 정보 변환
+    const precautionsWithTags = precautions.map(precaution => ({
+      ...precaution,
+      tags: precaution.tagRelations.map(relation => ({
+        id: relation.tag.id,
+        name: relation.tag.name,
+        color: relation.tag.color
+      }))
+    }));
+
+    return NextResponse.json({ precautions: precautionsWithTags });
 
   } catch (error) {
     console.error("주의사항 목록 조회 오류:", error);
@@ -144,7 +171,7 @@ export async function GET(req: NextRequest) {
 // 주의사항 수정
 export async function PUT(req: NextRequest) {
   try {
-    const { id, title, content, workplace, timeSlot, priority } = await req.json();
+    const { id, title, content, workplace, timeSlot, priority, tags } = await req.json();
     
     // 필수 필드 검증
     if (!id || !title || !content || !workplace || !timeSlot) {
@@ -186,6 +213,11 @@ export async function PUT(req: NextRequest) {
       }, { status: 404 });
     }
 
+    // 기존 태그 연결 삭제
+    await prisma.precautionTagRelation.deleteMany({
+      where: { precautionId: id }
+    });
+
     // 주의사항 수정
     const updatedPrecaution = await prisma.precaution.update({
       where: { id },
@@ -197,6 +229,16 @@ export async function PUT(req: NextRequest) {
         priority: priority || 1,
       },
     });
+
+    // 새로운 태그 연결
+    if (tags && tags.length > 0) {
+      await prisma.precautionTagRelation.createMany({
+        data: tags.map((tagId: string) => ({
+          precautionId: id,
+          tagId: tagId,
+        })),
+      });
+    }
 
     return NextResponse.json({ 
       success: true, 
@@ -255,6 +297,11 @@ export async function DELETE(req: NextRequest) {
         error: "존재하지 않는 주의사항입니다." 
       }, { status: 404 });
     }
+
+    // 태그 연결 삭제
+    await prisma.precautionTagRelation.deleteMany({
+      where: { precautionId: id }
+    });
 
     // 주의사항 삭제 (소프트 삭제)
     await prisma.precaution.update({
