@@ -266,68 +266,90 @@ export async function GET(request: NextRequest) {
 
     // 응답 데이터 변환
     const submissions = await Promise.all(instances.map(async (instance) => {
-      const mainItems = instance.checklistItemProgresses || [];
+      // 템플릿의 모든 항목을 가져오기
+      const templateItems = await prisma.checklistItem.findMany({
+        where: { templateId: instance.templateId },
+        orderBy: { order: 'asc' }
+      });
+      
+      // 진행 상황이 있는 항목들
+      const progressItems = instance.checklistItemProgresses || [];
       const connectedItems = instance.connectedItemsProgress || [];
       
-      // 연결된 항목들의 실제 정보와 관계 가져오기
-      const connectedItemsWithDetails = await Promise.all(connectedItems.map(async (item) => {
-        let type = 'inventory';
-        let title = '알 수 없는 항목';
-        let parentItemId = null;
-        
-        if (item.connectionId) {
-          // ChecklistItemConnection을 통해 연결된 항목 정보 조회
-          const connection = await prisma.checklistItemConnection.findUnique({
-            where: { id: item.connectionId },
-            include: {
-              checklistItem: {
-                select: { 
-                  id: true,
-                  content: true,
-                  order: true
-                }
-              }
-            }
-          });
-          
-          if (connection) {
-            type = connection.itemType;
-            parentItemId = connection.checklistItemId;
-            
-            // itemType에 따라 실제 항목 정보 조회
-            if (connection.itemType === 'inventory') {
-              const inventoryItem = await prisma.inventoryItem.findUnique({
-                where: { id: connection.itemId },
-                select: { name: true, unit: true }
-              });
-              title = inventoryItem ? `${inventoryItem.name} (${inventoryItem.unit})` : '알 수 없는 재고';
-            } else if (connection.itemType === 'precaution') {
-              const precaution = await prisma.precaution.findUnique({
-                where: { id: connection.itemId },
-                select: { title: true }
-              });
-              title = precaution ? precaution.title : '알 수 없는 주의사항';
-            } else if (connection.itemType === 'manual') {
-              const manual = await prisma.manual.findUnique({
-                where: { id: connection.itemId },
-                select: { title: true }
-              });
-              title = manual ? manual.title : '알 수 없는 메뉴얼';
+      // 모든 항목을 진행 상황과 매칭
+      const mainItems = templateItems.map(templateItem => {
+        const progressItem = progressItems.find(p => p.itemId === templateItem.id);
+        return {
+          itemId: templateItem.id,
+          content: templateItem.content,
+          order: templateItem.order,
+          isCompleted: progressItem?.isCompleted || false,
+          completedAt: progressItem?.completedAt?.toISOString() || null,
+          notes: progressItem?.notes || '',
+          completedBy: progressItem?.completedBy || null
+        };
+      });
+      
+      // 템플릿의 모든 연결된 항목들을 가져오기
+      const allConnections = await prisma.checklistItemConnection.findMany({
+        where: { 
+          checklistItem: { templateId: instance.templateId }
+        },
+        include: {
+          checklistItem: {
+            select: { 
+              id: true,
+              content: true,
+              order: true
             }
           }
+        },
+        orderBy: {
+          checklistItem: { order: 'asc' }
+        }
+      });
+
+      // 연결된 항목들의 실제 정보와 관계 가져오기
+      const connectedItemsWithDetails = await Promise.all(allConnections.map(async (connection) => {
+        let type = connection.itemType;
+        let title = '알 수 없는 항목';
+        let parentItemId = connection.checklistItemId;
+        
+        // itemType에 따라 실제 항목 정보 조회
+        if (connection.itemType === 'inventory') {
+          const inventoryItem = await prisma.inventoryItem.findUnique({
+            where: { id: connection.itemId },
+            select: { name: true, unit: true }
+          });
+          title = inventoryItem ? `${inventoryItem.name} (${inventoryItem.unit})` : '알 수 없는 재고';
+        } else if (connection.itemType === 'precaution') {
+          const precaution = await prisma.precaution.findUnique({
+            where: { id: connection.itemId },
+            select: { title: true }
+          });
+          title = precaution ? precaution.title : '알 수 없는 주의사항';
+        } else if (connection.itemType === 'manual') {
+          const manual = await prisma.manual.findUnique({
+            where: { id: connection.itemId },
+            select: { title: true }
+          });
+          title = manual ? manual.title : '알 수 없는 메뉴얼';
         }
         
+        // 진행 상황이 있는지 확인
+        const progressItem = connectedItems.find(item => item.connectionId === connection.id);
+        
         return {
-          id: item.connectionId || item.id,
+          id: connection.id,
           parentItemId: parentItemId,
           type: type,
           title: title,
-          isCompleted: item.isCompleted,
-          completedAt: item.completedAt?.toISOString() || null,
-          notes: item.notes || '',
-          previousStock: item.currentStock,
-          updatedStock: item.updatedStock,
-          completedBy: item.completedBy
+          isCompleted: progressItem?.isCompleted || false,
+          completedAt: progressItem?.completedAt?.toISOString() || null,
+          notes: progressItem?.notes || '',
+          previousStock: progressItem?.currentStock,
+          updatedStock: progressItem?.updatedStock,
+          completedBy: progressItem?.completedBy || null
         };
       }));
       
@@ -386,10 +408,10 @@ export async function GET(request: NextRequest) {
         details: {
           mainItems: mainItems.map(item => ({
             id: item.itemId,
-            content: item.item?.content || '알 수 없는 항목',
+            content: item.content,
             isCompleted: item.isCompleted,
-            completedAt: item.completedAt?.toISOString() || null,
-            notes: item.notes || '',
+            completedAt: item.completedAt,
+            notes: item.notes,
             completedBy: item.completedBy
           })),
           connectedItems: connectedItemsWithDetails
