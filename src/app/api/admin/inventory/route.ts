@@ -41,6 +41,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 중복 이름 체크
+    const existingItem = await prisma.inventoryItem.findFirst({
+      where: {
+        name: name.trim(),
+        isActive: true
+      }
+    });
+
+    if (existingItem) {
+      return NextResponse.json(
+        { error: `"${name}" 이름의 재고 항목이 이미 존재합니다.` },
+        { status: 409 }
+      );
+    }
+
     // 재고 아이템 생성
     const inventoryItem = await prisma.inventoryItem.create({
       data: {
@@ -83,6 +98,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const lowStock = searchParams.get('lowStock');
+    const tags = searchParams.getAll('tags');
 
     // 필터 조건 구성
     const where: any = {
@@ -106,6 +122,17 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // 태그 필터링
+    if (tags && tags.length > 0) {
+      where.tagRelations = {
+        some: {
+          tagId: {
+            in: tags
+          }
+        }
+      };
+    }
+
     const inventoryItems = await prisma.inventoryItem.findMany({
       where,
       orderBy: [
@@ -114,7 +141,14 @@ export async function GET(request: NextRequest) {
       include: {
         checks: {
           orderBy: { checkedAt: 'desc' },
-          take: 1
+          take: 3,
+          include: {
+            employee: {
+              select: {
+                name: true
+              }
+            }
+          }
         },
         tagRelations: {
           include: {
@@ -159,6 +193,24 @@ export async function PUT(request: NextRequest) {
         { error: '존재하지 않는 재고 아이템입니다.' },
         { status: 404 }
       );
+    }
+
+    // 중복 이름 체크 (자신을 제외하고)
+    if (name && name !== existingItem.name) {
+      const duplicateItem = await prisma.inventoryItem.findFirst({
+        where: {
+          name: name.trim(),
+          isActive: true,
+          id: { not: id }
+        }
+      });
+
+      if (duplicateItem) {
+        return NextResponse.json(
+          { error: `"${name}" 이름의 재고 항목이 이미 존재합니다.` },
+          { status: 409 }
+        );
+      }
     }
 
     // 재고 아이템 업데이트

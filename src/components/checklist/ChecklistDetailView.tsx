@@ -97,7 +97,7 @@ export default function ChecklistDetailView({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
-                onClick={handleBackToList}
+                onClick={() => window.location.href = '/employee/checklist'}
                 className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm flex-shrink-0"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,7 +254,14 @@ export default function ChecklistDetailView({
                 {submitting ? '저장 중...' : '저장'}
               </button>
               <button
-                onClick={handleSubmit}
+                onClick={async (e) => {
+                  try {
+                    await handleSubmit(e);
+                    window.location.href = '/employee/checklist';
+                  } catch (error) {
+                    console.error('제출 실패:', error);
+                  }
+                }}
                 disabled={submitting || !isAllItemsCompleted()}
                 className={`px-3 py-1.5 rounded text-xs transition-colors font-medium ${
                   isAllItemsCompleted() 

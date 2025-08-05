@@ -560,7 +560,10 @@ async function generateEmailContent(template: any, checklistItemsProgress: any[]
                 connectedItemDetails = {
                   title: inventoryItem?.name || '알 수 없는 재고',
                   type: '재고',
-                  content: `${inventoryItem?.name || '알 수 없는 재고'} (${inventoryItem?.currentStock || 0}${inventoryItem?.unit || '개'})`
+                  content: `${inventoryItem?.name || '알 수 없는 재고'}`,
+                  previousStock: progress.currentStock || 0,
+                  updatedStock: progress.updatedStock || 0,
+                  unit: inventoryItem?.unit || '개'
                 };
               } else if (connectedItem.itemType === 'precaution') {
                 const precaution = await prisma.precaution.findUnique({
@@ -592,6 +595,9 @@ async function generateEmailContent(template: any, checklistItemsProgress: any[]
               title: connectedItemDetails?.title || '알 수 없는 항목',
               type: connectedItemDetails?.type || '알 수 없는 유형',
               content: connectedItemDetails?.content || '알 수 없는 내용',
+              previousStock: connectedItemDetails?.previousStock,
+              updatedStock: connectedItemDetails?.updatedStock,
+              unit: connectedItemDetails?.unit,
               completedBy: progress.completedBy,
               completedAt: progress.completedAt,
               notes: progress.notes
@@ -699,22 +705,113 @@ async function generateEmailContent(template: any, checklistItemsProgress: any[]
           ${validConnectedItems.length > 0 ? `
             <div class="section">
               <h3>🔗 완료된 하위 항목 (${validConnectedItems.length}개)</h3>
-              ${validConnectedItems.filter(item => item !== null).map(item => `
-                <div class="item">
-                  <div class="item-title">
-                    ${item.title}
-                    <span class="type-badge type-${item.itemType}">${item.type}</span>
-                  </div>
-                  <div class="item-details">
-                    <span class="completed-by">완료자: ${item.completedBy}</span> | 
-                    완료시간: ${new Date(item.completedAt).toLocaleString('ko-KR')}
-                  </div>
-                  <div class="item-content" style="margin-top: 8px; font-size: 14px; color: #555;">
-                    ${item.content}
-                  </div>
-                  ${item.notes ? `<div class="notes">📝 메모: ${item.notes}</div>` : ''}
-                </div>
-              `).join('')}
+              
+              <!-- 재고 항목 -->
+              ${(() => {
+                const inventoryItems = validConnectedItems.filter(item => item && item.itemType === 'inventory');
+                if (inventoryItems.length > 0) {
+                  return `
+                    <div class="subsection">
+                      <h4 style="color: #92400e; margin: 15px 0 10px 0; font-size: 16px; font-weight: bold;">
+                        📦 재고 항목 (${inventoryItems.length}개)
+                      </h4>
+                      ${inventoryItems.map(item => item ? `
+                        <div class="item" style="border-left-color: #f59e0b;">
+                          <div class="item-title">
+                            ${item.title}
+                            <span class="type-badge type-inventory">재고</span>
+                          </div>
+                          <div class="item-details">
+                            <span class="completed-by">완료자: ${item.completedBy}</span> | 
+                            완료시간: ${new Date(item.completedAt).toLocaleString('ko-KR')}
+                          </div>
+                          <div class="item-content" style="margin-top: 8px; font-size: 14px; color: #555;">
+                            <strong>소속 체크리스트:</strong> ${item.parentItem}
+                          </div>
+                          ${item.previousStock !== undefined && item.updatedStock !== undefined ? `
+                            <div class="stock-update" style="margin-top: 8px; padding: 8px; background: #fef3c7; border-radius: 4px; font-size: 14px;">
+                              <strong>재고 업데이트:</strong> 
+                              <span style="text-decoration: line-through; color: #666;">${item.previousStock}${item.unit}</span> 
+                              → 
+                              <span style="color: #059669; font-weight: bold;">${item.updatedStock}${item.unit}</span>
+                            </div>
+                          ` : ''}
+                          ${item.notes ? `<div class="notes">📝 메모: ${item.notes}</div>` : ''}
+                        </div>
+                      ` : '').join('')}
+                    </div>
+                  `;
+                }
+                return '';
+              })()}
+              
+              <!-- 주의사항 항목 -->
+              ${(() => {
+                const precautionItems = validConnectedItems.filter(item => item && item.itemType === 'precaution');
+                if (precautionItems.length > 0) {
+                  return `
+                    <div class="subsection">
+                      <h4 style="color: #991b1b; margin: 15px 0 10px 0; font-size: 16px; font-weight: bold;">
+                        ⚠️ 주의사항 (${precautionItems.length}개)
+                      </h4>
+                      ${precautionItems.map(item => item ? `
+                        <div class="item" style="border-left-color: #ef4444;">
+                          <div class="item-title">
+                            ${item.title}
+                            <span class="type-badge type-precaution">주의사항</span>
+                          </div>
+                          <div class="item-details">
+                            <span class="completed-by">완료자: ${item.completedBy}</span> | 
+                            완료시간: ${new Date(item.completedAt).toLocaleString('ko-KR')}
+                          </div>
+                          <div class="item-content" style="margin-top: 8px; font-size: 14px; color: #555;">
+                            <strong>소속 체크리스트:</strong> ${item.parentItem}
+                          </div>
+                          <div class="item-content" style="margin-top: 8px; font-size: 14px; color: #555;">
+                            ${item.content}
+                          </div>
+                          ${item.notes ? `<div class="notes">📝 메모: ${item.notes}</div>` : ''}
+                        </div>
+                      ` : '').join('')}
+                    </div>
+                  `;
+                }
+                return '';
+              })()}
+              
+              <!-- 메뉴얼 항목 -->
+              ${(() => {
+                const manualItems = validConnectedItems.filter(item => item && item.itemType === 'manual');
+                if (manualItems.length > 0) {
+                  return `
+                    <div class="subsection">
+                      <h4 style="color: #1e40af; margin: 15px 0 10px 0; font-size: 16px; font-weight: bold;">
+                        📖 메뉴얼 (${manualItems.length}개)
+                      </h4>
+                      ${manualItems.map(item => item ? `
+                        <div class="item" style="border-left-color: #3b82f6;">
+                          <div class="item-title">
+                            ${item.title}
+                            <span class="type-badge type-manual">메뉴얼</span>
+                          </div>
+                          <div class="item-details">
+                            <span class="completed-by">완료자: ${item.completedBy}</span> | 
+                            완료시간: ${new Date(item.completedAt).toLocaleString('ko-KR')}
+                          </div>
+                          <div class="item-content" style="margin-top: 8px; font-size: 14px; color: #555;">
+                            <strong>소속 체크리스트:</strong> ${item.parentItem}
+                          </div>
+                          <div class="item-content" style="margin-top: 8px; font-size: 14px; color: #555;">
+                            ${item.content}
+                          </div>
+                          ${item.notes ? `<div class="notes">📝 메모: ${item.notes}</div>` : ''}
+                        </div>
+                      ` : '').join('')}
+                    </div>
+                  `;
+                }
+                return '';
+              })()}
             </div>
           ` : ''}
 
@@ -722,6 +819,16 @@ async function generateEmailContent(template: any, checklistItemsProgress: any[]
             <h3>📊 요약</h3>
             <p>• 총 완료된 메인 항목: ${completedMainItems.length}개</p>
             <p>• 총 완료된 하위 항목: ${validConnectedItems.length}개</p>
+            ${(() => {
+              const inventoryCount = validConnectedItems.filter(item => item && item.itemType === 'inventory').length;
+              const precautionCount = validConnectedItems.filter(item => item && item.itemType === 'precaution').length;
+              const manualCount = validConnectedItems.filter(item => item && item.itemType === 'manual').length;
+              return `
+                <p>• 재고 항목: ${inventoryCount}개</p>
+                <p>• 주의사항: ${precautionCount}개</p>
+                <p>• 메뉴얼: ${manualCount}개</p>
+              `;
+            })()}
             <p>• 제출 시간: ${new Date().toLocaleString('ko-KR')}</p>
           </div>
         </div>

@@ -69,13 +69,23 @@ export default function InventoryPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [isCheckingName, setIsCheckingName] = useState(false);
+  const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   
   // 필터 상태
   const [inventoryFilters, setInventoryFilters] = useState({
     category: 'ALL',
     search: '',
-    lowStock: false
+    lowStock: false,
+    selectedTags: [] as string[]
   });
+  
+  // 태그 필터 접기/펼치기 상태
+  const [isTagFilterCollapsed, setIsTagFilterCollapsed] = useState(true);
+  
+  // 재고 히스토리 접기/펼치기 상태 (아이템별)
+  const [expandedHistoryItems, setExpandedHistoryItems] = useState<Set<string>>(new Set());
 
   const [purchaseFilters, setPurchaseFilters] = useState({
     status: 'ALL',
@@ -145,6 +155,9 @@ export default function InventoryPage() {
       if (inventoryFilters.category !== 'ALL') params.append('category', inventoryFilters.category);
       if (inventoryFilters.search) params.append('search', inventoryFilters.search);
       if (inventoryFilters.lowStock) params.append('lowStock', 'true');
+      if (inventoryFilters.selectedTags.length > 0) {
+        inventoryFilters.selectedTags.forEach(tagId => params.append('tags', tagId));
+      }
 
       const response = await fetch(`/api/admin/inventory?${params}`, { credentials: 'include' });
       if (!response.ok) throw new Error('재고 조회에 실패했습니다.');
@@ -188,6 +201,39 @@ export default function InventoryPage() {
     }
   };
 
+  // 중복 이름 체크
+  const checkDuplicateName = async (name: string) => {
+    if (!name.trim()) {
+      setNameError('');
+      return;
+    }
+
+    setIsCheckingName(true);
+    try {
+      const response = await fetch(`/api/admin/inventory?search=${encodeURIComponent(name.trim())}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const items = await response.json();
+        const duplicateItem = items.find((item: InventoryItem) => 
+          item.name.toLowerCase() === name.trim().toLowerCase() && 
+          (!editingId || item.id !== editingId)
+        );
+        
+        if (duplicateItem) {
+          setNameError(`"${name}" 이름의 재고 항목이 이미 존재합니다.`);
+        } else {
+          setNameError('');
+        }
+      }
+    } catch (error) {
+      console.error('이름 중복 체크 오류:', error);
+    } finally {
+      setIsCheckingName(false);
+    }
+  };
+
   // 새 태그 생성
   const createTag = async () => {
     if (!newTagName.trim()) return;
@@ -222,6 +268,13 @@ export default function InventoryPage() {
   // 재고 아이템 생성/수정
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 중복 이름 체크
+    if (nameError) {
+      setError('중복된 이름이 있습니다. 다른 이름을 사용해주세요.');
+      return;
+    }
+    
     try {
       setSubmitting(true);
       setError('');
@@ -253,6 +306,9 @@ export default function InventoryPage() {
         selectedTags: []
       });
       setEditingId(null);
+      setNameError('');
+      // 모바일에서 저장 완료 후 폼 접기
+      setIsFormCollapsed(true);
       fetchInventoryItems();
     } catch (error: any) {
       setError(error.message);
@@ -273,6 +329,8 @@ export default function InventoryPage() {
       supplier: item.supplier || '',
       selectedTags: item.tagRelations?.map(tagRelation => tagRelation.tag.id) || []
     });
+    // 모바일에서 편집 모드일 때 폼 펼치기
+    setIsFormCollapsed(false);
   };
 
   // 편집 취소
@@ -287,6 +345,9 @@ export default function InventoryPage() {
       supplier: '',
       selectedTags: []
     });
+    setNameError('');
+    // 모바일에서 편집 취소 시 폼 접기
+    setIsFormCollapsed(true);
   };
 
   // 재고 아이템 삭제
@@ -377,6 +438,37 @@ export default function InventoryPage() {
     return item.currentStock <= item.minStock;
   };
 
+  // 태그 필터 토글
+  const handleTagFilterToggle = (tagId: string) => {
+    setInventoryFilters(prev => ({
+      ...prev,
+      selectedTags: prev.selectedTags.includes(tagId)
+        ? prev.selectedTags.filter(id => id !== tagId)
+        : [...prev.selectedTags, tagId]
+    }));
+  };
+
+  // 태그 필터 초기화
+  const clearTagFilters = () => {
+    setInventoryFilters(prev => ({
+      ...prev,
+      selectedTags: []
+    }));
+  };
+
+  // 재고 히스토리 토글
+  const toggleHistoryExpansion = (itemId: string) => {
+    setExpandedHistoryItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -439,13 +531,40 @@ export default function InventoryPage() {
           </div>
         )}
 
+        {/* 모바일: 세로 배치, 데스크톱: 가로 배치 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 재고 아이템 생성/수정 폼 */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900">
-                {editingId ? '재고 아이템 수정' : '새 재고 아이템 생성'}
-              </h2>
+          <div className="lg:col-span-1 order-1 lg:order-1">
+            <div className="bg-white rounded-lg shadow">
+              {/* 모바일에서 접기/펼치기 헤더 */}
+              <div className="lg:hidden p-4 border-b border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setIsFormCollapsed(!isFormCollapsed)}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {editingId ? '재고 아이템 수정' : '새 재고 아이템 생성'}
+                  </h2>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${
+                      isFormCollapsed ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* 폼 내용 */}
+              <div className={`${isFormCollapsed ? 'hidden lg:block' : ''} p-6`}>
+                {/* 데스크톱 헤더 */}
+                <h2 className="hidden lg:block text-xl font-semibold mb-4 text-gray-900">
+                  {editingId ? '재고 아이템 수정' : '새 재고 아이템 생성'}
+                </h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -455,10 +574,28 @@ export default function InventoryPage() {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, name: e.target.value }));
+                      // 실시간 중복 체크 (디바운스 적용)
+                      const timeoutId = setTimeout(() => {
+                        checkDuplicateName(e.target.value);
+                      }, 500);
+                      return () => clearTimeout(timeoutId);
+                    }}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 ${
+                      nameError ? 'border-red-500 focus:ring-red-500' : 'border-gray-400'
+                    }`}
                     required
                   />
+                  {isCheckingName && (
+                    <p className="text-sm text-blue-600 mt-1">이름 중복 확인 중...</p>
+                  )}
+                  {nameError && (
+                    <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                      <ExclamationTriangleIcon className="w-4 h-4" />
+                      {nameError}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -643,11 +780,12 @@ export default function InventoryPage() {
                   )}
                 </div>
               </form>
+              </div>
             </div>
           </div>
 
           {/* 재고 목록 및 구매 요청 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 order-2 lg:order-2">
             {/* 재고 목록 */}
             <div className="bg-white rounded-lg shadow">
               <div className="p-6 border-b border-gray-200">
@@ -697,6 +835,74 @@ export default function InventoryPage() {
                   </div>
                 </div>
 
+                {/* 태그 필터 */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsTagFilterCollapsed(!isTagFilterCollapsed)}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-transform ${isTagFilterCollapsed ? 'rotate-90' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      태그 필터
+                      {inventoryFilters.selectedTags.length > 0 && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                          {inventoryFilters.selectedTags.length}개 선택
+                        </span>
+                      )}
+                    </button>
+                    {inventoryFilters.selectedTags.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={clearTagFilters}
+                        className="text-xs text-gray-500 hover:text-gray-700"
+                      >
+                        초기화
+                      </button>
+                    )}
+                  </div>
+                  
+                  {!isTagFilterCollapsed && (
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      {tags.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {tags.map((tag) => (
+                            <button
+                              key={tag.id}
+                              type="button"
+                              onClick={() => handleTagFilterToggle(tag.id)}
+                              className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                                inventoryFilters.selectedTags.includes(tag.id)
+                                  ? 'ring-2 ring-blue-500'
+                                  : 'hover:bg-gray-200'
+                              }`}
+                              style={{ 
+                                backgroundColor: inventoryFilters.selectedTags.includes(tag.id) 
+                                  ? tag.color 
+                                  : `${tag.color}20`,
+                                color: inventoryFilters.selectedTags.includes(tag.id) 
+                                  ? 'white' 
+                                  : tag.color
+                              }}
+                            >
+                              {tag.name}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">등록된 태그가 없습니다.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* 재고 목록 */}
                 <div className="space-y-3">
                   {inventoryItems.length === 0 ? (
@@ -741,6 +947,76 @@ export default function InventoryPage() {
                               <span className="text-gray-400"> / 최소 {item.minStock} {item.unit}</span>
                               {item.supplier && <span className="ml-2">• {item.supplier}</span>}
                             </div>
+                            
+                            {/* 업데이트 히스토리 */}
+                            {item.checks && item.checks.length > 0 && (
+                              <div className="mt-2">
+                                {/* 현재 수량 - 강조 표시 */}
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm text-gray-600">현재:</span>
+                                  <span className="text-lg font-bold text-blue-600">
+                                    {item.checks[0]?.currentStock || 0} {item.unit}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    ({item.checks[0]?.employee?.name || '알 수 없음'} • {new Date(item.lastUpdated).toLocaleDateString('ko-KR')})
+                                  </span>
+                                </div>
+                                
+                                {/* 이전 기록 - 접기/펼치기 */}
+                                {item.checks.length > 1 && (
+                                  <div>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleHistoryExpansion(item.id)}
+                                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                                    >
+                                      <svg
+                                        className={`w-3 h-3 transition-transform ${expandedHistoryItems.has(item.id) ? 'rotate-90' : ''}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                      </svg>
+                                      이전 기록 보기 ({item.checks.length - 1}개)
+                                    </button>
+                                    
+                                    {expandedHistoryItems.has(item.id) && (
+                                      <div className="mt-2 space-y-1">
+                                        {item.checks.slice(1, 4).map((check, index) => {
+                                          const nextCheck = item.checks[index + 2]; // +2 because we're starting from index 1
+                                          const previousStock = nextCheck ? nextCheck.currentStock : 0;
+                                          const hasChange = nextCheck && check.currentStock !== nextCheck.currentStock;
+                                          
+                                          return (
+                                            <div key={index} className="text-xs text-gray-400 pl-4">
+                                              {check.currentStock || 0} {item.unit}
+                                              {hasChange && (
+                                                <span className="text-gray-500">
+                                                  {' '}({previousStock} → {check.currentStock})
+                                                </span>
+                                              )}
+                                              {check.employee?.name && ` (${check.employee.name})`}
+                                              {check.checkedAt && ` • ${new Date(check.checkedAt).toLocaleDateString('ko-KR')}`}
+                                            </div>
+                                          );
+                                        })}
+                                        
+                                        {/* 더보기 버튼 */}
+                                        {item.checks.length > 4 && (
+                                          <button
+                                            type="button"
+                                            className="text-xs text-blue-500 hover:text-blue-700 pl-4"
+                                          >
+                                            더보기 ({item.checks.length - 4}개 더)
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                           
                           <div className="flex space-x-2">

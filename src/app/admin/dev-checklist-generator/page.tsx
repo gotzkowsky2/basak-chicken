@@ -510,26 +510,26 @@ export default function DevChecklistGeneratorPage() {
                                 </span>
                               </div>
                               
-                              {/* 템플릿 ID 표시 (디버깅용) */}
-                              <div className="text-xs text-gray-400 ml-6 mb-2">
+                              {/* 템플릿 이름 표시 */}
+                              <div className="text-xs text-gray-600 ml-6 mb-2">
                                 {group.templates.map((template, index) => (
-                                  <div key={template.id} className="text-gray-400">
-                                    {template.content}
+                                  <div key={template.id} className="text-gray-700 font-medium">
+                                    {template.name}
                                     {template.isActive ? ' (활성)' : ' (비활성)'}
                                   </div>
                                 ))}
                               </div>
                               
-                              {/* 포함된 항목들 미리보기 (최대 3개) */}
+                              {/* 포함된 템플릿들 미리보기 (최대 3개) */}
                               <div className="text-sm text-gray-600 ml-6 mb-2">
                                 {group.templates.slice(0, 3).map((template, index) => (
                                   <div key={template.id} className="text-gray-500">
-                                    • {template.content}
+                                    • {template.name}
                                   </div>
                                 ))}
                                 {group.templates.length > 3 && (
                                   <div className="text-gray-400 text-xs">
-                                    ... 외 {group.templates.length - 3}개 항목
+                                    ... 외 {group.templates.length - 3}개 템플릿
                                   </div>
                                 )}
                               </div>
