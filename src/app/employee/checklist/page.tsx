@@ -1743,8 +1743,8 @@ export default function ChecklistPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">체크리스트</h1>
-        <p className="text-lg text-gray-600 mb-8">{formattedDate}</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1 md:mb-2">체크리스트</h1>
+        <p className="text-sm md:text-lg text-gray-600 mb-6 md:mb-8">{formattedDate}</p>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">

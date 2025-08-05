@@ -30,10 +30,15 @@ body {
   /* 모바일에서 터치 영역 확대 (홈 아이콘 제외) */
   button:not([class*="home-icon"]), 
   a:not([class*="home-icon"]), 
-  input[type="checkbox"], 
   input[type="radio"] {
     min-height: 44px;
     min-width: 44px;
+  }
+  
+  /* 체크박스는 적절한 크기 유지 */
+  input[type="checkbox"] {
+    min-height: auto;
+    min-width: auto;
   }
   
   /* 홈 아이콘은 적절한 크기 유지 */

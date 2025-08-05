@@ -78,16 +78,19 @@ export default function ConnectedItem({
       case 'inventory':
         const inventory = itemDetails as InventoryItem;
         return (
-          <div className="space-y-2">
-            <div className="font-medium">{inventory.name}</div>
+          <div className="space-y-3">
+            <div className="font-medium text-base break-words">{inventory.name}</div>
             <div className="text-sm text-gray-600">
               현재 재고: {inventory.currentStock} {inventory.unit}
               {inventory.currentStock <= inventory.minStock && (
-                <span className="ml-2 text-red-600 font-semibold">구매 필요!</span>
+                <div className="mt-1 text-red-600 font-semibold">구매 필요!</div>
               )}
             </div>
-            <div className="text-xs text-gray-500">
-              최소 재고: {inventory.minStock} {inventory.unit} | 카테고리: {inventory.category}
+            <div className="text-xs text-gray-500 break-words">
+              최소 재고: {inventory.minStock} {inventory.unit}
+            </div>
+            <div className="text-xs text-gray-500 break-words">
+              카테고리: {inventory.category}
             </div>
           </div>
         );
@@ -95,11 +98,14 @@ export default function ConnectedItem({
       case 'precaution':
         const precaution = itemDetails as Precaution;
         return (
-          <div className="space-y-2">
-            <div className="font-medium">{precaution.title}</div>
-            <div className="text-sm text-gray-600">{precaution.content}</div>
-            <div className="text-xs text-gray-500">
-              우선순위: {precaution.priority} | 위치: {precaution.workplace}
+          <div className="space-y-3">
+            <div className="font-medium text-base break-words">{precaution.title}</div>
+            <div className="text-sm text-gray-600 break-words leading-relaxed">{precaution.content}</div>
+            <div className="text-xs text-gray-500 break-words">
+              우선순위: {precaution.priority}
+            </div>
+            <div className="text-xs text-gray-500 break-words">
+              위치: {precaution.workplace}
             </div>
           </div>
         );
@@ -107,11 +113,14 @@ export default function ConnectedItem({
       case 'manual':
         const manual = itemDetails as Manual;
         return (
-          <div className="space-y-2">
-            <div className="font-medium">{manual.title}</div>
-            <div className="text-sm text-gray-600">{manual.content}</div>
-            <div className="text-xs text-gray-500">
-              버전: {manual.version} | 카테고리: {manual.category}
+          <div className="space-y-3">
+            <div className="font-medium text-base break-words">{manual.title}</div>
+            <div className="text-sm text-gray-600 break-words leading-relaxed">{manual.content}</div>
+            <div className="text-xs text-gray-500 break-words">
+              버전: {manual.version}
+            </div>
+            <div className="text-xs text-gray-500 break-words">
+              카테고리: {manual.category}
             </div>
             {manual.mediaUrls && manual.mediaUrls.length > 0 && (
               <div className="text-xs text-blue-600">
@@ -127,41 +136,45 @@ export default function ConnectedItem({
   };
 
   return (
-    <div className={`ml-6 border-l-2 border-gray-200 pl-4 ${isCompleted ? 'opacity-60' : ''}`}>
-      <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+    <div className={`ml-4 md:ml-6 border-l-2 border-gray-200 pl-3 md:pl-4 ${isCompleted ? 'opacity-60' : ''}`}>
+      <div className="flex items-start gap-2 md:gap-3 p-2 md:p-3 bg-gray-50 rounded-lg">
         {/* 체크박스 */}
         <input
           type="checkbox"
           checked={isCompleted}
           onChange={handleCheckboxChange}
           disabled={isReadOnly}
-          className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+          className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
         />
 
         {/* 아이템 내용 */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+          {/* 헤더: 체크박스 옆에 아이콘과 라벨만 */}
+          <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">{getItemIcon(connection.itemType)}</span>
             <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
               {getItemTypeLabel(connection.itemType)}
             </span>
             <button
               onClick={onToggleExpansion}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 ml-auto"
             >
               {isExpanded ? '▼' : '▶'}
             </button>
           </div>
 
           {isExpanded && (
-            <div className="space-y-3">
-              {renderItemContent()}
+            <div className="space-y-4">
+              {/* 제목과 내용 - 세로 배치 */}
+              <div className="space-y-2">
+                {renderItemContent()}
+              </div>
 
               {/* 메모 섹션 */}
               {!isReadOnly && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {showNotes ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <textarea
                         value={localNotes}
                         onChange={(e) => setLocalNotes(e.target.value)}
@@ -188,7 +201,7 @@ export default function ConnectedItem({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between">
+                    <div className="space-y-2">
                       <button
                         onClick={() => setShowNotes(true)}
                         className="text-xs text-blue-600 hover:text-blue-800"
@@ -196,7 +209,7 @@ export default function ConnectedItem({
                         📝 메모 {notes ? '수정' : '추가'}
                       </button>
                       {notes && (
-                        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded">
+                        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded break-words">
                           {notes}
                         </div>
                       )}
