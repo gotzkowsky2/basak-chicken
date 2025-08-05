@@ -89,6 +89,61 @@ export default function ChecklistItem({
                   {item.instructions}
                 </p>
               )}
+              
+              {/* 하위항목 종류별 정보 - 모바일 친화적 */}
+              {hasConnectedItems && (
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {(() => {
+                    const counts = {
+                      inventory: 0,
+                      precaution: 0,
+                      manual: 0
+                    };
+                    
+                    item.connectedItems?.forEach((connection) => {
+                      if (connection.itemType === 'inventory') {
+                        counts.inventory++;
+                      } else if (connection.itemType === 'precaution') {
+                        counts.precaution++;
+                      } else if (connection.itemType === 'manual') {
+                        counts.manual++;
+                      }
+                    });
+                    
+                    return (
+                      <>
+                        {counts.inventory > 0 && (
+                          <span className="flex items-center gap-1 bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            <span className="hidden sm:inline">재고</span>
+                            <span>{counts.inventory}</span>
+                          </span>
+                        )}
+                        {counts.precaution > 0 && (
+                          <span className="flex items-center gap-1 bg-orange-100 text-orange-700 rounded-full px-2 py-0.5 text-xs">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <span className="hidden sm:inline">주의</span>
+                            <span>{counts.precaution}</span>
+                          </span>
+                        )}
+                        {counts.manual > 0 && (
+                          <span className="flex items-center gap-1 bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            <span className="hidden sm:inline">매뉴얼</span>
+                            <span>{counts.manual}</span>
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           </div>
           
@@ -217,13 +272,36 @@ export default function ChecklistItem({
                       type="checkbox"
                       checked={isConnectionCompleted}
                       onChange={async () => await onConnectedItemCheckboxChange(connection.id, item.id)}
-                      disabled={isReadOnly}
-                      className="mt-1 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      disabled={isReadOnly || connection.itemType === 'inventory'}
+                      className={`mt-1 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${
+                        connection.itemType === 'inventory' ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      title={connection.itemType === 'inventory' ? '재고 항목은 수량 업데이트를 통해 완료됩니다' : ''}
                     />
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
+                          connection.itemType === 'inventory' ? 'bg-blue-100 text-blue-700' : 
+                          connection.itemType === 'precaution' ? 'bg-orange-100 text-orange-700' : 
+                          connection.itemType === 'manual' ? 'bg-green-100 text-green-700' : 
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {connection.itemType === 'inventory' && (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                          )}
+                          {connection.itemType === 'precaution' && (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                          )}
+                          {connection.itemType === 'manual' && (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                          )}
                           {connection.itemType === 'inventory' ? '재고' : 
                            connection.itemType === 'precaution' ? '주의사항' : 
                            connection.itemType === 'manual' ? '메뉴얼' : '연결된 항목'}
@@ -289,6 +367,15 @@ export default function ChecklistItem({
                             >
                               입력
                             </button>
+                          </div>
+                        )}
+                        
+                        {/* 재고 항목 안내 메시지 */}
+                        {connection.itemType === 'inventory' && (
+                          <div className="mt-1">
+                            <p className="text-xs text-orange-600">
+                              ⚠️ 재고 항목은 수량 업데이트를 통해 완료됩니다
+                            </p>
                           </div>
                         )}
                       </div>

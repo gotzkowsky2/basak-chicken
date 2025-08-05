@@ -39,6 +39,7 @@ export default function ChecklistList({
               .filter(checklist => !checklist.isSubmitted)
               .map((checklist) => {
               const status = getChecklistStatus(checklist);
+              console.log('체크리스트 상태:', checklist.name, status);
               
               return (
                 <div 
@@ -59,15 +60,49 @@ export default function ChecklistList({
                       {/* 메인 제목과 상태 */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                                                          <div className="flex items-center gap-2 mb-2">
-                                  <h3 className="font-semibold text-gray-900">
-                                    {checklist.name || checklist.content}
-                                  </h3>
-                                  <StatusDisplay 
-                                    status={status.status} 
-                                    progress={status.progress}
-                                  />
-                                </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-gray-900">
+                              {checklist.name || checklist.content}
+                            </h3>
+                            <StatusDisplay 
+                              status={status.status} 
+                              progress={status.progress}
+                            />
+                          </div>
+                          
+                          {/* 하위항목 종류별 정보 - 모바일 친화적 */}
+                          {/* 하위항목 종류별 정보 - 모바일 친화적 */}
+                          {status.connectedItems && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {status.connectedItems.inventory > 0 && (
+                                <span className="flex items-center gap-1 bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                  </svg>
+                                  <span className="hidden sm:inline">재고</span>
+                                  <span>{status.connectedItems.inventory}</span>
+                                </span>
+                              )}
+                              {status.connectedItems.precaution > 0 && (
+                                <span className="flex items-center gap-1 bg-orange-100 text-orange-700 rounded-full px-2 py-0.5 text-xs">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                  </svg>
+                                  <span className="hidden sm:inline">주의</span>
+                                  <span>{status.connectedItems.precaution}</span>
+                                </span>
+                              )}
+                              {status.connectedItems.manual > 0 && (
+                                <span className="flex items-center gap-1 bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                  </svg>
+                                  <span className="hidden sm:inline">매뉴얼</span>
+                                  <span>{status.connectedItems.manual}</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -94,41 +129,10 @@ export default function ChecklistList({
                               return `${completedItems}/${totalItems}개`;
                             })()}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                            </svg>
-                            연결 항목: {(() => {
-                              const totalConnections = checklist.items?.reduce((total, item) => {
-                                const itemConnections = item.connectedItems?.length || 0;
-                                const childConnections = item.children?.reduce((childTotal, child) => 
-                                  childTotal + (child.connectedItems?.length || 0), 0) || 0;
-                                return total + itemConnections + childConnections;
-                              }, 0) || 0;
-                              
-                              const completedConnections = checklist.items?.reduce((total, item) => {
-                                const itemConnections = item.connectedItems?.filter(connection => 
-                                  connectedItemsStatus[connection.id]?.isCompleted
-                                ).length || 0;
-                                const childConnections = item.children?.reduce((childTotal, child) => 
-                                  childTotal + (child.connectedItems?.filter(connection => 
-                                    connectedItemsStatus[connection.id]?.isCompleted
-                                  ).length || 0), 0) || 0;
-                                return total + itemConnections + childConnections;
-                              }, 0) || 0;
-                              
-                              return `${completedConnections}/${totalConnections}개`;
-                            })()}
-                          </span>
                         </div>
                       </div>
 
-                      {/* 템플릿 정보 */}
-                      <div className="mt-2 text-xs text-gray-400">
-                        <span className="mr-3">위치: {getWorkplaceLabel(checklist.workplace)}</span>
-                        <span className="mr-3">시간대: {getTimeSlotLabel(checklist.timeSlot)}</span>
-                        <span>카테고리: {getCategoryLabel(checklist.category)}</span>
-                      </div>
+
                     </div>
                   </div>
                 </div>
@@ -164,11 +168,7 @@ export default function ChecklistList({
                           progress={status.progress}
                         />
                       </div>
-                      <div className="text-xs text-gray-400">
-                        <span className="mr-3">위치: {getWorkplaceLabel(checklist.workplace)}</span>
-                        <span className="mr-3">시간대: {getTimeSlotLabel(checklist.timeSlot)}</span>
-                        <span>카테고리: {getCategoryLabel(checklist.category)}</span>
-                      </div>
+
                     </div>
                   </div>
                 </div>

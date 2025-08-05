@@ -51,6 +51,33 @@ export default function ChecklistDetailView({
   handleSubmit,
   onInventoryUpdate
 }: ChecklistDetailViewProps) {
+  
+  // 하위항목 종류별 개수 계산
+  const getConnectedItemsCount = () => {
+    const counts = {
+      inventory: 0,
+      precaution: 0,
+      manual: 0
+    };
+    
+    selectedChecklist.items?.forEach((item) => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        item.connectedItems.forEach((connection) => {
+          if (connection.itemType === 'inventory') {
+            counts.inventory++;
+          } else if (connection.itemType === 'precaution') {
+            counts.precaution++;
+          } else if (connection.itemType === 'manual') {
+            counts.manual++;
+          }
+        });
+      }
+    });
+    
+    return counts;
+  };
+  
+  const connectedItemsCount = getConnectedItemsCount();
   return (
     <>
       {/* 제출 완료된 체크리스트인 경우 알림 */}
@@ -68,31 +95,64 @@ export default function ChecklistDetailView({
         {/* 헤더 */}
         <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
                 onClick={handleBackToList}
-                className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm"
+                className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm flex-shrink-0"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                뒤로
+                <span className="hidden sm:inline">뒤로</span>
               </button>
-              <div className="h-4 w-px bg-white/30"></div>
-              <h2 className="text-lg font-bold">
-                {selectedChecklist.name || selectedChecklist.content}
-              </h2>
+              <div className="h-4 w-px bg-white/30 flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold truncate">
+                  {selectedChecklist.name || selectedChecklist.content}
+                </h2>
+                
+                {/* 하위항목 정보 - 모바일 친화적 */}
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {connectedItemsCount.inventory > 0 && (
+                    <span className="flex items-center gap-1 bg-white/20 text-white rounded-full px-2 py-0.5 text-xs">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      <span className="hidden sm:inline">재고</span>
+                      <span>{connectedItemsCount.inventory}</span>
+                    </span>
+                  )}
+                  {connectedItemsCount.precaution > 0 && (
+                    <span className="flex items-center gap-1 bg-white/20 text-white rounded-full px-2 py-0.5 text-xs">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <span className="hidden sm:inline">주의</span>
+                      <span>{connectedItemsCount.precaution}</span>
+                    </span>
+                  )}
+                  {connectedItemsCount.manual > 0 && (
+                    <span className="flex items-center gap-1 bg-white/20 text-white rounded-full px-2 py-0.5 text-xs">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      <span className="hidden sm:inline">매뉴얼</span>
+                      <span>{connectedItemsCount.manual}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="text-sm text-white/90">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="text-sm text-white/90 hidden sm:block">
                 {currentEmployee?.name || '직원'}
               </div>
               <div className="flex gap-1">
-                <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium">
+                <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium hidden sm:inline">
                   {getWorkplaceLabel(selectedChecklist.workplace)}
                 </span>
-                <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium">
+                <span className="px-2 py-1 bg-white/20 text-white rounded-full text-xs font-medium hidden sm:inline">
                   {getTimeSlotLabel(selectedChecklist.timeSlot)}
                 </span>
               </div>

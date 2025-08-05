@@ -1521,15 +1521,15 @@ export default function ChecklistPage() {
   // 체크리스트 상태 계산 함수
   const getChecklistStatus = (checklist: any) => {
     const instance = checklist.groupInstances?.[0];
-    if (!instance) return { status: '미시작', color: 'gray', progress: null };
+    if (!instance) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
     
     if (instance.isSubmitted) {
-      return { status: '제출 완료', color: 'green', progress: null };
+      return { status: '제출 완료', color: 'green', progress: null, connectedItems: null };
     }
     
     // 진행상황 계산 - 실제 체크 상태 기반
     const totalItems = checklist.items?.length || 0;
-    if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null };
+    if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
     
     const completedItems = checklist.items?.filter((item: any) => {
       if (item.connectedItems && item.connectedItems.length > 0) {
@@ -1543,15 +1543,50 @@ export default function ChecklistPage() {
       }
     }).length || 0;
     
+    // 연결된 항목 종류별 개수 계산
+    const connectedItemsCount = {
+      inventory: 0,
+      precaution: 0,
+      manual: 0
+    };
+    
+    checklist.items?.forEach((item: any) => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        item.connectedItems.forEach((connection: any) => {
+          if (connection.itemType === 'inventory') {
+            connectedItemsCount.inventory++;
+          } else if (connection.itemType === 'precaution') {
+            connectedItemsCount.precaution++;
+          } else if (connection.itemType === 'manual') {
+            connectedItemsCount.manual++;
+          }
+        });
+      }
+    });
+    
+    // 퍼센트 계산
+    const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    
     if (completedItems === 0) {
-      return { status: '미시작', color: 'gray', progress: null };
+      return { 
+        status: '미시작', 
+        color: 'gray', 
+        progress: `${progressPercent}%`, 
+        connectedItems: connectedItemsCount
+      };
     } else if (completedItems === totalItems) {
-      return { status: '완료', color: 'blue', progress: null };
+      return { 
+        status: '완료', 
+        color: 'blue', 
+        progress: `${progressPercent}%`, 
+        connectedItems: connectedItemsCount
+      };
     } else {
       return { 
         status: '진행중', 
         color: 'yellow', 
-        progress: `${completedItems}/${totalItems}`
+        progress: `${progressPercent}%`, 
+        connectedItems: connectedItemsCount
       };
     }
   };

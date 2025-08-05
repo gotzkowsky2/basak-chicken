@@ -1,0 +1,15 @@
+[33mcommit a8ceec62d0094fd66ecf823941c009eec29a137e[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: JKlassik <jklassik@jklassik.com>
+Date:   Tue Aug 5 07:47:36 2025 +0000
+
+    8월 5일 작업 완료: 중복 재고 아이템 정리, 체크리스트 연결 수정, 재고 항목 체크박스 제한 기능 구현
+
+TODO.md
+logs/combined-0.log
+logs/combined-0__2025-08-05_00-00-00.log.gz
+logs/out-0.log
+logs/out-0__2025-08-05_00-00-00.log.gz
+src/app/admin/inventory/page.tsx
+src/app/api/admin/inventory/route.ts
+src/app/employee/checklist/page.tsx
+src/components/checklist/ChecklistItem.tsx
