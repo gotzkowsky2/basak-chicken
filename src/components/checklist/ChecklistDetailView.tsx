@@ -24,7 +24,7 @@ interface ChecklistDetailViewProps {
   saveMemo: (id: string) => Promise<void>;
   saveProgress: (templateId: string) => Promise<void>;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
-  onInventoryUpdate?: (itemId: string, currentStock: number, parentItemId: string, notes?: string) => Promise<void>;
+  onInventoryUpdate?: (itemId: string, currentStock: number, notes?: string) => Promise<void>;
 }
 
 export default function ChecklistDetailView({

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { 
   ChecklistTemplate, 
   ChecklistItem, 
@@ -25,9 +25,23 @@ import {
 } from "@/components/checklist";
 import Toast from "@/components/ui/Toast";
 
+// 동적 렌더링 강제 설정 - prerendering 완전 비활성화
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+export const runtime = 'nodejs';
+
 export default function ChecklistPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  
+  // searchParams를 안전하게 사용
+  const [urlParams, setUrlParams] = useState<URLSearchParams | null>(null);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUrlParams(new URLSearchParams(window.location.search));
+    }
+  }, []);
   
   const [checklists, setChecklists] = useState<ChecklistTemplate[]>([]);
   const [selectedChecklist, setSelectedChecklist] = useState<ChecklistTemplate | null>(null);
@@ -107,10 +121,10 @@ export default function ChecklistPage() {
   };
 
   const restoreFromURL = () => {
-    if (!searchParams) return;
+    if (!urlParams) return;
     
-    const view = searchParams.get('view');
-    const checklistId = searchParams.get('checklist');
+    const view = urlParams.get('view');
+    const checklistId = urlParams.get('checklist');
     
     if (view === 'detail' && checklistId) {
       setCurrentView('detail');
@@ -201,10 +215,10 @@ export default function ChecklistPage() {
 
   // 체크리스트 로드 후 URL에서 상태 복원
   useEffect(() => {
-    if (checklists.length > 0) {
+    if (checklists.length > 0 && urlParams) {
       restoreFromURL();
     }
-  }, [checklists, searchParams]);
+  }, [checklists, urlParams]);
 
   // 체크리스트 진행 상태 가져오기
   const fetchProgress = async () => {
@@ -626,10 +640,19 @@ export default function ChecklistPage() {
   };
 
   // 재고 업데이트 핸들러
-  const handleInventoryUpdate = async (itemId: string, currentStock: number, parentItemId: string, notes?: string) => {
+  const handleInventoryUpdate = async (itemId: string, currentStock: number, notes?: string) => {
     // 정수로 변환
     const stockValue = Math.round(currentStock);
-    console.log('재고 업데이트 시작:', { itemId, currentStock, stockValue, parentItemId, notes });
+    console.log('재고 업데이트 시작:', { itemId, currentStock, stockValue, notes });
+    
+    // parentItemId 찾기
+    let parentItemId: string | null = null;
+    for (const item of selectedChecklist?.items || []) {
+      if (item.connectedItems?.some(conn => conn.itemType === 'inventory' && conn.itemId === itemId)) {
+        parentItemId = item.id;
+        break;
+      }
+    }
     try {
       const response = await fetch('/api/employee/inventory', {
         method: 'PUT',
@@ -662,7 +685,7 @@ export default function ChecklistPage() {
         
         // 연결된 항목 상태를 완료로 설정 (재고 업데이트 시 자동 체크)
         // 모든 연결된 항목에서 해당 재고 아이템을 찾아서 체크
-        const parentItem = selectedChecklist?.items?.find(item => item.id === parentItemId);
+        const parentItem = parentItemId ? selectedChecklist?.items?.find(item => item.id === parentItemId) : null;
         let newConnectedStatus = { ...connectedItemsStatus };
         
         if (parentItem && parentItem.connectedItems) {
@@ -688,13 +711,13 @@ export default function ChecklistPage() {
             
             // 상위 항목 상태 업데이트 (업데이트된 상태로)
             setTimeout(() => {
-              const updatedParentItem = selectedChecklist?.items?.find(item => item.id === parentItemId);
+              const updatedParentItem = parentItemId ? selectedChecklist?.items?.find(item => item.id === parentItemId) : null;
               if (updatedParentItem && updatedParentItem.connectedItems) {
                 const allConnectedCompleted = updatedParentItem.connectedItems.every(connection => 
                   connection.id === targetConnection.id ? true : newConnectedStatus[connection.id]?.isCompleted === true
                 );
                 
-                if (allConnectedCompleted) {
+                if (allConnectedCompleted && parentItemId) {
                   setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => ({
                     ...prev,
                     [parentItemId]: {

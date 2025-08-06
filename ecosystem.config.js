@@ -2,12 +2,12 @@ module.exports = {
   apps: [{
     name: 'basak-chicken-app',
     script: 'node_modules/.bin/next',
-    args: 'dev -H 0.0.0.0 -p 3001',
+    args: 'start -H 0.0.0.0 -p 3001',
     cwd: '/root/basak-chicken-app',
     instances: 1,
     exec_mode: 'cluster',
     env: {
-      NODE_ENV: 'development',
+      NODE_ENV: 'production',
       PORT: 3001
     },
     // 메모리 및 성능 설정

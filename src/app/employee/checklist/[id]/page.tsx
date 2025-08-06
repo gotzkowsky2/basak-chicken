@@ -453,11 +453,20 @@ export default function ChecklistDetailPage() {
   };
 
   // 재고 업데이트 핸들러
-  const handleInventoryUpdate = async (itemId: string, currentStock: number, parentItemId: string, notes?: string) => {
+  const handleInventoryUpdate = async (itemId: string, currentStock: number, notes?: string) => {
     try {
       // 기존 재고 정보 가져오기
       const existingItem = connectedItemDetails[itemId];
       const previousStock = existingItem?.currentStock || 0;
+      
+      // parentItemId 찾기
+      let parentItemId: string | null = null;
+      for (const item of checklist?.items || []) {
+        if (item.connectedItems?.some(conn => conn.id === itemId)) {
+          parentItemId = item.id;
+          break;
+        }
+      }
       
       // 재고 업데이트 API 호출
       const response = await fetch('/api/employee/inventory', {

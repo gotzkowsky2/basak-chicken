@@ -375,7 +375,7 @@ export async function GET(request: NextRequest) {
       
       // 실제로 작업한 직원이 있는 경우에만 메인 작성자 포함
       // (미시작인 경우에는 메인 작성자만 표시하지 않음)
-      if (allEmployees.size > 0) {
+      if (allEmployees.size > 0 && instance.employee) {
         allEmployees.add(instance.employee.name);
         employeeCounts.set(instance.employee.name, (employeeCounts.get(instance.employee.name) || 0) + 1);
       }
@@ -387,8 +387,8 @@ export async function GET(request: NextRequest) {
 
       return {
         id: instance.id,
-        employeeId: instance.employee.id,
-        employeeName: instance.employee.name,
+        employeeId: instance.employee?.id || 0,
+        employeeName: instance.employee?.name || '알 수 없는 직원',
         templateId: instance.template.id,
         templateName: instance.template.name,
         workplace: instance.workplace,
