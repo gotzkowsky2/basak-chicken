@@ -14,7 +14,7 @@ module.exports = {
     node_args: '--max-old-space-size=1024', // 메모리 제한을 1GB로 증가
     max_memory_restart: '800M', // 800MB 도달 시 자동 재시작
     
-    // 로그 설정
+    // 로그 설정 개선
     log_file: './logs/combined.log',
     out_file: './logs/out.log',
     error_file: './logs/error.log',
