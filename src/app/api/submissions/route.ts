@@ -347,7 +347,7 @@ export async function GET(request: NextRequest) {
           isCompleted: progressItem?.isCompleted || false,
           completedAt: progressItem?.completedAt?.toISOString() || null,
           notes: progressItem?.notes || '',
-          previousStock: progressItem?.currentStock, // 임시로 currentStock 사용
+          previousStock: progressItem?.currentStock, // currentStock이 실제로는 이전 재고를 저장
           updatedStock: progressItem?.updatedStock,
           completedBy: progressItem?.completedBy || null
         };

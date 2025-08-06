@@ -78,14 +78,14 @@ export default function ChecklistList({
                                 </span>
                               )}
                               {status.connectedItems.precaution > 0 && (
-                                <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 rounded-full px-2 py-1 text-xs">
+                                <span className="flex items-center gap-1 bg-red-100 text-red-700 rounded-full px-2 py-1 text-xs">
                                   <span className="hidden sm:inline">⚠️</span>
                                   <span className="hidden md:inline">주의</span>
                                   <span>{status.connectedItems.precaution}</span>
                                 </span>
                               )}
                               {status.connectedItems.manual > 0 && (
-                                <span className="flex items-center gap-1 bg-indigo-100 text-indigo-700 rounded-full px-2 py-1 text-xs">
+                                <span className="flex items-center gap-1 bg-purple-100 text-purple-700 rounded-full px-2 py-1 text-xs">
                                   <span className="hidden sm:inline">📖</span>
                                   <span className="hidden md:inline">매뉴얼</span>
                                   <span>{status.connectedItems.manual}</span>

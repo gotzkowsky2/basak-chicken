@@ -670,9 +670,28 @@ export default function ChecklistPage() {
       if (response.ok) {
         const result = await response.json();
         console.log('재고 업데이트 성공:', result);
+        console.log('재고 업데이트 상세 정보:', {
+          itemId,
+          requestedStock: stockValue,
+          resultPreviousStock: result.previousStock,
+          resultCurrentStock: result.item.currentStock,
+          stockChange: result.stockChange,
+          response: result
+        });
         
         // 업데이트 성공 메시지 표시
         const stockChange = result.stockChange;
+        console.log('재고 변경량 계산 (handleInventoryUpdate):', {
+          stockChange,
+          type: typeof stockChange,
+          isPositive: stockChange > 0,
+          isNegative: stockChange < 0,
+          isZero: stockChange === 0,
+          previousStock: result.previousStock,
+          currentStock: result.item.currentStock,
+          calculatedChange: result.item.currentStock - result.previousStock
+        });
+        
         const changeText = stockChange > 0 
           ? `+${stockChange}` 
           : stockChange < 0 
@@ -709,27 +728,25 @@ export default function ChecklistPage() {
             
             setConnectedItemsStatus(newConnectedStatus);
             
-            // 상위 항목 상태 업데이트 (업데이트된 상태로)
-            setTimeout(() => {
-              const updatedParentItem = parentItemId ? selectedChecklist?.items?.find(item => item.id === parentItemId) : null;
-              if (updatedParentItem && updatedParentItem.connectedItems) {
-                const allConnectedCompleted = updatedParentItem.connectedItems.every(connection => 
-                  connection.id === targetConnection.id ? true : newConnectedStatus[connection.id]?.isCompleted === true
-                );
-                
-                if (allConnectedCompleted && parentItemId) {
-                  setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => ({
-                    ...prev,
-                    [parentItemId]: {
-                      ...prev[parentItemId],
-                      isCompleted: true,
-                      completedBy: currentEmployee?.name,
-                      completedAt: new Date().toISOString()
-                    }
-                  }));
-                }
+            // 상위 항목 상태 즉시 업데이트
+            const updatedParentItem = parentItemId ? selectedChecklist?.items?.find(item => item.id === parentItemId) : null;
+            if (updatedParentItem && updatedParentItem.connectedItems) {
+              const allConnectedCompleted = updatedParentItem.connectedItems.every(connection => 
+                connection.id === targetConnection.id ? true : newConnectedStatus[connection.id]?.isCompleted === true
+              );
+              
+              if (allConnectedCompleted && parentItemId) {
+                setChecklistItems((prev: {[key: string]: ChecklistItemResponse}) => ({
+                  ...prev,
+                  [parentItemId]: {
+                    ...prev[parentItemId],
+                    isCompleted: true,
+                    completedBy: currentEmployee?.name,
+                    completedAt: new Date().toISOString()
+                  }
+                }));
               }
-            }, 0);
+            }
           }
         }
         
@@ -1167,6 +1184,17 @@ export default function ChecklistPage() {
         
         // 업데이트 성공 메시지 표시
         const stockChange = result.stockChange;
+        console.log('재고 변경량 계산 (updateStock):', {
+          stockChange,
+          type: typeof stockChange,
+          isPositive: stockChange > 0,
+          isNegative: stockChange < 0,
+          isZero: stockChange === 0,
+          previousStock: result.previousStock,
+          currentStock: result.item.currentStock,
+          calculatedChange: result.item.currentStock - result.previousStock
+        });
+        
         const changeText = stockChange > 0 
           ? `+${stockChange}` 
           : stockChange < 0 

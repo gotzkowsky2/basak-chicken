@@ -93,7 +93,7 @@ export default function ChecklistDetailView({
       
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         {/* 헤더 */}
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 text-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
