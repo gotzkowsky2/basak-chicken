@@ -212,10 +212,12 @@ export default function SubmissionDetailView({ submission, onBack }: SubmissionD
                               
                               {/* 재고 업데이트 정보 */}
                               {connectedItem.type === 'inventory' && 
-                               connectedItem.previousStock !== undefined && 
-                               connectedItem.updatedStock !== undefined && (
-                                <div className="text-sm text-blue-600 mb-1">
-                                  재고 변경: <span className="line-through">{connectedItem.previousStock}</span> → <span className="font-bold">{connectedItem.updatedStock}</span>
+                               (connectedItem.previousStock !== undefined || connectedItem.updatedStock !== undefined) && (
+                                <div className="text-sm text-blue-600 mb-1 p-2 bg-blue-50 rounded border border-blue-200">
+                                  📦 <span className="font-medium">재고 변경:</span> 
+                                  <span className="line-through text-gray-500 ml-1">{connectedItem.previousStock || 0}</span> 
+                                  <span className="mx-1">→</span> 
+                                  <span className="font-bold text-blue-700">{connectedItem.updatedStock || 0}</span>
                                 </div>
                               )}
                               

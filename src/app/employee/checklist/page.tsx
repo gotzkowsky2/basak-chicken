@@ -702,6 +702,7 @@ export default function ChecklistPage() {
                 completedAt: new Date().toISOString(),
                 notes: notes,
                 previousStock: result.previousStock,
+                updatedStock: result.item.currentStock,
                 stockChange: result.stockChange
               }
             };
@@ -1282,8 +1283,8 @@ export default function ChecklistPage() {
             const result = {
               connectionId: connection.id,
               itemId: status?.itemId || connection.itemId,
-              currentStock: status?.currentStock,
-              updatedStock: status?.updatedStock,
+              currentStock: status?.previousStock, // 이전 재고
+              updatedStock: status?.updatedStock, // 업데이트된 재고
               isCompleted: status ? status.isCompleted : false, // status가 있으면 그 값을, 없으면 false
               notes: status?.notes || "",
               completedBy: status?.completedBy,
