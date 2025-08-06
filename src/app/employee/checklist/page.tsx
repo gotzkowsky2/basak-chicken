@@ -27,7 +27,6 @@ import Toast from "@/components/ui/Toast";
 
 // 동적 렌더링 강제 설정 - prerendering 완전 비활성화
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 export const runtime = 'nodejs';
 

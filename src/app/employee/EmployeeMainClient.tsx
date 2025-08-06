@@ -21,13 +21,9 @@ export default function EmployeeMainClient() {
             <span className="text-lg font-semibold text-yellow-700">주의사항</span>
             <span className="text-sm text-gray-500 mt-2">업무 전 꼭 확인!</span>
           </Link>
-          <Link href="/employee/ingredients" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-orange-50 active:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
-            <span className="text-lg font-semibold text-orange-700">식자재</span>
-            <span className="text-sm text-gray-500 mt-2">재료 관리 및 확인</span>
-          </Link>
-          <Link href="/employee/supplies" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-purple-50 active:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
-            <span className="text-lg font-semibold text-purple-700">부대용품</span>
-            <span className="text-sm text-gray-500 mt-2">용품 재고 및 관리</span>
+          <Link href="/employee/inventory" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-orange-50 active:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
+            <span className="text-lg font-semibold text-orange-700">재고관리</span>
+            <span className="text-sm text-gray-500 mt-2">식자재 및 부대용품 관리</span>
           </Link>
           <Link href="/employee/manual" className="flex flex-col items-center justify-center p-6 rounded-lg shadow border hover:bg-indigo-50 active:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-150 min-h-[120px]">
             <span className="text-lg font-semibold text-indigo-700">메뉴얼</span>
