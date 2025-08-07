@@ -348,7 +348,7 @@ export async function GET(request: NextRequest) {
           completedAt: progressItem?.completedAt?.toISOString() || null,
           notes: progressItem?.notes || '',
           previousStock: progressItem?.currentStock, // currentStock이 실제로는 이전 재고를 저장
-          updatedStock: progressItem?.updatedStock,
+          updatedStock: progressItem?.updatedStock, // updatedStock이 실제로는 업데이트된 재고를 저장
           completedBy: progressItem?.completedBy || null
         };
       }));

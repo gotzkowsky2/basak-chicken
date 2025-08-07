@@ -54,6 +54,19 @@ export async function GET(req: NextRequest) {
           include: {
             tag: true
           }
+        },
+        precautionRelations: {
+          include: {
+            precaution: {
+              include: {
+                tagRelations: {
+                  include: {
+                    tag: true
+                  }
+                }
+              }
+            }
+          }
         }
       },
       orderBy: [
@@ -61,13 +74,26 @@ export async function GET(req: NextRequest) {
       ]
     });
 
-    // 태그 데이터 구조 변환
+    // 태그와 주의사항 데이터 구조 변환
     const formattedManuals = manuals.map(manual => ({
       ...manual,
       tags: manual.tagRelations.map(relation => ({
         id: relation.tag.id,
         name: relation.tag.name,
         color: relation.tag.color
+      })),
+      precautions: manual.precautionRelations.map(relation => ({
+        id: relation.precaution.id,
+        title: relation.precaution.title,
+        content: relation.precaution.content,
+        workplace: relation.precaution.workplace,
+        timeSlot: relation.precaution.timeSlot,
+        priority: relation.precaution.priority,
+        tags: relation.precaution.tagRelations.map(tagRel => ({
+          id: tagRel.tag.id,
+          name: tagRel.tag.name,
+          color: tagRel.tag.color
+        }))
       }))
     }));
 

@@ -33,7 +33,20 @@ export async function POST(request: NextRequest) {
     await verifyAdminAuth();
 
     const body = await request.json();
-    const { title, content, workplace, timeSlot, category, version, mediaUrls, tags } = body;
+    console.log('받은 데이터:', JSON.stringify(body, null, 2));
+    
+    const { title, content, workplace, timeSlot, category, version, mediaUrls, tags, precautions, selectedPrecautions } = body;
+
+    // precautions 배열에서 필요한 필드만 추출
+    const cleanPrecautions = precautions && Array.isArray(precautions) ? precautions.map(p => ({
+      title: p.title,
+      content: p.content,
+      workplace: p.workplace || 'COMMON',
+      timeSlot: p.timeSlot || 'COMMON',
+      priority: p.priority || 1
+    })) : [];
+    
+    console.log('정리된 precautions:', JSON.stringify(cleanPrecautions, null, 2));
 
     // 필수 필드 검증
     if (!title || !content) {
@@ -49,7 +62,7 @@ export async function POST(request: NextRequest) {
         title,
         content,
         workplace: workplace || 'COMMON',
-        timeSlot: timeSlot || 'ALL_DAY',
+        timeSlot: timeSlot || 'COMMON',
         category: category || 'MANUAL',
         version: version || '1.0',
         mediaUrls: mediaUrls || [],
@@ -58,13 +71,64 @@ export async function POST(request: NextRequest) {
     });
 
     // 태그 연결
-    if (tags && tags.length > 0) {
-      await prisma.manualTagRelation.createMany({
-        data: tags.map((tagId: string) => ({
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      const tagData = tags
+        .filter((tagId: string) => tagId && typeof tagId === 'string')
+        .map((tagId: string) => ({
           manualId: manual.id,
           tagId: tagId,
-        })),
-      });
+        }));
+      
+      if (tagData.length > 0) {
+        await prisma.manualTagRelation.createMany({
+          data: tagData,
+        });
+      }
+    }
+
+        // 새로운 주의사항 생성 및 연결
+    if (cleanPrecautions && cleanPrecautions.length > 0) {
+      for (let i = 0; i < cleanPrecautions.length; i++) {
+        const precaution = cleanPrecautions[i];
+        if (precaution && precaution.title && precaution.content) {
+          const newPrecaution = await prisma.precaution.create({
+            data: {
+              title: precaution.title,
+              content: precaution.content,
+              workplace: precaution.workplace,
+              timeSlot: precaution.timeSlot,
+              priority: precaution.priority,
+              isActive: true
+            }
+          });
+
+          // 메뉴얼과 주의사항 연결
+          await prisma.manualPrecautionRelation.create({
+            data: {
+              manualId: manual.id,
+              precautionId: newPrecaution.id,
+              order: i
+            }
+          });
+        }
+      }
+    }
+
+    // 기존 주의사항 연결
+    if (selectedPrecautions && Array.isArray(selectedPrecautions) && selectedPrecautions.length > 0) {
+      const relationData = selectedPrecautions
+        .filter((precautionId: string) => precautionId && typeof precautionId === 'string')
+        .map((precautionId: string, index: number) => ({
+          manualId: manual.id,
+          precautionId: precautionId,
+          order: (cleanPrecautions?.length || 0) + index
+        }));
+      
+      if (relationData.length > 0) {
+        await prisma.manualPrecautionRelation.createMany({
+          data: relationData,
+        });
+      }
     }
 
     return NextResponse.json(manual, { status: 201 });
@@ -119,6 +183,19 @@ export async function GET(request: NextRequest) {
           include: {
             tag: true
           }
+        },
+        precautionRelations: {
+          include: {
+            precaution: {
+              include: {
+                tagRelations: {
+                  include: {
+                    tag: true
+                  }
+                }
+              }
+            }
+          }
         }
       },
       orderBy: [
@@ -126,13 +203,27 @@ export async function GET(request: NextRequest) {
       ]
     });
 
-    // 태그 데이터 구조 변환
+    // 태그와 주의사항 데이터 구조 변환
     const formattedManuals = manuals.map(manual => ({
       ...manual,
       tags: manual.tagRelations.map(relation => ({
         id: relation.tag.id,
         name: relation.tag.name,
         color: relation.tag.color
+      })),
+      precautions: manual.precautionRelations.map(relation => ({
+        id: relation.precaution.id,
+        title: relation.precaution.title,
+        content: relation.precaution.content,
+        workplace: relation.precaution.workplace,
+        timeSlot: relation.precaution.timeSlot,
+        priority: relation.precaution.priority,
+        order: relation.order,
+        tags: relation.precaution.tagRelations.map(tagRel => ({
+          id: tagRel.tag.id,
+          name: tagRel.tag.name,
+          color: tagRel.tag.color
+        }))
       }))
     }));
 
@@ -152,7 +243,16 @@ export async function PUT(request: NextRequest) {
     await verifyAdminAuth();
 
     const body = await request.json();
-    const { id, title, content, workplace, timeSlot, category, version, mediaUrls, tags } = body;
+    const { id, title, content, workplace, timeSlot, category, version, mediaUrls, tags, precautions, selectedPrecautions } = body;
+
+    // precautions 배열에서 필요한 필드만 추출
+    const cleanPrecautions = precautions && Array.isArray(precautions) ? precautions.map(p => ({
+      title: p.title,
+      content: p.content,
+      workplace: p.workplace || 'COMMON',
+      timeSlot: p.timeSlot || 'COMMON',
+      priority: p.priority || 1
+    })) : [];
 
     if (!id) {
       return NextResponse.json(
@@ -193,13 +293,69 @@ export async function PUT(request: NextRequest) {
     });
 
     // 새로운 태그 관계 생성
-    if (tags && tags.length > 0) {
-      await prisma.manualTagRelation.createMany({
-        data: tags.map((tagId: string) => ({
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      const tagData = tags
+        .filter((tagId: string) => tagId && typeof tagId === 'string')
+        .map((tagId: string) => ({
           manualId: id,
           tagId: tagId,
-        })),
-      });
+        }));
+      
+      if (tagData.length > 0) {
+        await prisma.manualTagRelation.createMany({
+          data: tagData,
+        });
+      }
+    }
+
+    // 기존 주의사항 관계 삭제
+    await prisma.manualPrecautionRelation.deleteMany({
+      where: { manualId: id }
+    });
+
+    // 새로운 주의사항 생성 및 연결
+    if (cleanPrecautions && cleanPrecautions.length > 0) {
+      for (let i = 0; i < cleanPrecautions.length; i++) {
+        const precaution = cleanPrecautions[i];
+        if (precaution && precaution.title && precaution.content) {
+          const newPrecaution = await prisma.precaution.create({
+            data: {
+              title: precaution.title,
+              content: precaution.content,
+              workplace: precaution.workplace,
+              timeSlot: precaution.timeSlot,
+              priority: precaution.priority,
+              isActive: true
+            }
+          });
+
+          // 메뉴얼과 주의사항 연결
+          await prisma.manualPrecautionRelation.create({
+            data: {
+              manualId: id,
+              precautionId: newPrecaution.id,
+              order: i
+            }
+          });
+        }
+      }
+    }
+
+    // 기존 주의사항 연결
+    if (selectedPrecautions && Array.isArray(selectedPrecautions) && selectedPrecautions.length > 0) {
+      const relationData = selectedPrecautions
+        .filter((precautionId: string) => precautionId && typeof precautionId === 'string')
+        .map((precautionId: string, index: number) => ({
+          manualId: id,
+          precautionId: precautionId,
+          order: (cleanPrecautions?.length || 0) + index
+        }));
+      
+      if (relationData.length > 0) {
+        await prisma.manualPrecautionRelation.createMany({
+          data: relationData,
+        });
+      }
     }
 
     return NextResponse.json(updatedManual);

@@ -5,7 +5,9 @@ import {
   MagnifyingGlassIcon,
   ExclamationTriangleIcon,
   ClockIcon,
-  MapPinIcon
+  MapPinIcon,
+  XMarkIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 
 interface Precaution {
@@ -44,6 +46,10 @@ export default function NoticesPage() {
   const [filterTimeSlot, setFilterTimeSlot] = useState('ALL');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // 팝업 상태
+  const [selectedPrecaution, setSelectedPrecaution] = useState<Precaution | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const workplaceOptions = [
     { value: 'ALL', label: '전체' },
@@ -137,6 +143,26 @@ export default function NoticesPage() {
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
+  };
+
+  // 미리보기 텍스트 생성 (150자 제한)
+  const getPreviewText = (content: string) => {
+    if (content.length <= 150) {
+      return content;
+    }
+    return content.substring(0, 150) + '...';
+  };
+
+  // 팝업 열기
+  const openModal = (precaution: Precaution) => {
+    setSelectedPrecaution(precaution);
+    setIsModalOpen(true);
+  };
+
+  // 팝업 닫기
+  const closeModal = () => {
+    setSelectedPrecaution(null);
+    setIsModalOpen(false);
   };
 
   // 클라이언트 사이드 필터링
@@ -350,8 +376,28 @@ export default function NoticesPage() {
                   </div>
                 </div>
                 
-                <div className="prose max-w-none mb-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{precaution.content}</p>
+                {/* 내용 미리보기 */}
+                <div className="mb-4">
+                  <p className="text-gray-700 whitespace-pre-wrap">{getPreviewText(precaution.content)}</p>
+                  
+                  {/* 전체 보기 버튼 (내용이 길 때만 표시) */}
+                  {precaution.content.length > 150 ? (
+                    <button
+                      onClick={() => openModal(precaution)}
+                      className="mt-2 flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                      전체 내용 보기
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => openModal(precaution)}
+                      className="mt-2 flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                      상세 보기
+                    </button>
+                  )}
                 </div>
                 
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
@@ -375,6 +421,86 @@ export default function NoticesPage() {
           </div>
         )}
       </div>
+
+      {/* 주의사항 상세 팝업 */}
+      {isModalOpen && selectedPrecaution && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* 배경 오버레이 */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={closeModal}
+          ></div>
+
+          {/* 모달 컨테이너 */}
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <ExclamationTriangleIcon className="w-6 h-6 text-orange-500" />
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                    {selectedPrecaution.title}
+                  </h2>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(selectedPrecaution.priority)}`}>
+                    {getPriorityLabel(selectedPrecaution.priority)}
+                  </span>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* 모달 내용 */}
+              <div className="p-4 sm:p-6">
+                {/* 태그 표시 */}
+                {selectedPrecaution.tags && selectedPrecaution.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {selectedPrecaution.tags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="px-2 py-1 rounded-full text-xs font-medium text-white"
+                        style={{ backgroundColor: tag.color }}
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {/* 전체 내용 */}
+                <div className="prose max-w-none mb-6">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {selectedPrecaution.content}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* 메타 정보 */}
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600 border-t border-gray-200 pt-4">
+                  <span className="flex items-center gap-1">
+                    <MapPinIcon className="w-4 h-4" />
+                    {getWorkplaceLabel(selectedPrecaution.workplace)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ClockIcon className="w-4 h-4" />
+                    {getTimeSlotLabel(selectedPrecaution.timeSlot)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {new Date(selectedPrecaution.createdAt).toLocaleDateString('ko-KR')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

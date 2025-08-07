@@ -8,16 +8,343 @@ datasource db {
 }
 
 model Admin {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  email     String   @unique
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // 재오픈한 체크리스트들
+  id                 String              @id @default(cuid())
+  username           String              @unique
+  password           String
+  email              String              @unique
+  name               String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   reopenedChecklists ChecklistInstance[]
+}
+
+model Tag {
+  id                         String                         @id @default(cuid())
+  name                       String                         @unique
+  color                      String?
+  createdAt                  DateTime                       @default(now())
+  checklistTemplateRelations ChecklistTemplateTagRelation[]
+  inventoryItemRelations     InventoryItemTagRelation[]
+  manualRelations            ManualTagRelation[]
+  precautionRelations        PrecautionTagRelation[]
+  checklistTemplates         ChecklistTemplate[]            @relation("ChecklistTemplateTags")
+  inventoryItems             InventoryItem[]                @relation("InventoryItemTags")
+  manuals                    Manual[]                       @relation("ManualTags")
+  precautions                Precaution[]                   @relation("PrecautionTags")
+}
+
+model ChecklistTemplateTagRelation {
+  id         String            @id @default(cuid())
+  templateId String
+  tagId      String
+  createdAt  DateTime          @default(now())
+  tag        Tag               @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  template   ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, tagId])
+}
+
+model InventoryItemTagRelation {
+  id        String        @id @default(cuid())
+  itemId    String
+  tagId     String
+  createdAt DateTime      @default(now())
+  item      InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag       Tag           @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, tagId])
+}
+
+model PrecautionTagRelation {
+  id           String     @id @default(cuid())
+  precautionId String
+  tagId        String
+  createdAt    DateTime   @default(now())
+  precaution   Precaution @relation(fields: [precautionId], references: [id], onDelete: Cascade)
+  tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([precautionId, tagId])
+}
+
+model ManualTagRelation {
+  id        String   @id @default(cuid())
+  manualId  String
+  tagId     String
+  createdAt DateTime @default(now())
+  manual    Manual   @relation(fields: [manualId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([manualId, tagId])
+}
+
+// 메뉴얼-주의사항 관계
+model ManualPrecautionRelation {
+  id          String @id @default(cuid())
+  manualId    String
+  precautionId String
+  order       Int    @default(0)
+  createdAt   DateTime @default(now())
+  
+  // 관계
+  manual      Manual @relation(fields: [manualId], references: [id], onDelete: Cascade)
+  precaution  Precaution @relation(fields: [precautionId], references: [id], onDelete: Cascade)
+  
+  @@unique([manualId, precautionId])
+}
+
+model Employee {
+  id                 String                    @id @default(cuid())
+  employeeId         String                    @unique
+  password           String
+  name               String
+  email              String?
+  phone              String?
+  department         String
+  position           String
+  isActive           Boolean                   @default(true)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  isSuperAdmin       Boolean                   @default(false)
+  isTempPassword     Boolean                   @default(false)
+  address            String?
+  checklistInstances ChecklistInstance[]
+  inventoryChecks    InventoryCheck[]
+  purchaseRequests   PurchaseRequest[]
+  purchasedItems     PurchaseRequestItem[]
+  lockedTimeSlots    TimeSlotChecklistStatus[]
+}
+
+model ChecklistTemplate {
+  id           String                         @id @default(cuid())
+  content      String
+  inputter     String
+  inputDate    DateTime                       @default(now())
+  workplace    Workplace
+  category     Category
+  timeSlot     TimeSlot
+  isActive     Boolean                        @default(true)
+  createdAt    DateTime                       @default(now())
+  updatedAt    DateTime                       @updatedAt
+  name         String                         @default("")
+  instances    ChecklistInstance[]
+  items        ChecklistItem[]
+  tagRelations ChecklistTemplateTagRelation[]
+  tags         Tag[]                          @relation("ChecklistTemplateTags")
+}
+
+model ChecklistInstance {
+  id                      String                  @id @default(cuid())
+  employeeId              String?
+  templateId              String
+  date                    DateTime
+  workplace               Workplace
+  timeSlot                TimeSlot
+  isCompleted             Boolean                 @default(false)
+  isSubmitted             Boolean                 @default(false)
+  submittedAt             DateTime?
+  isReopened              Boolean                 @default(false)
+  reopenedAt              DateTime?
+  reopenedBy              String?
+  reopenReason            String?
+  notes                   String?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  completedAt             DateTime?
+  completedBy             String?
+  itemProgress            Json?
+  employee                Employee?               @relation(fields: [employeeId], references: [id])
+  reopenedByAdmin         Admin?                  @relation(fields: [reopenedBy], references: [id])
+  template                ChecklistTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  checklistItemProgresses ChecklistItemProgress[] @relation("ChecklistInstanceProgress")
+  connectedItemsProgress  ConnectedItemProgress[]
+
+  @@unique([workplace, timeSlot, date])
+}
+
+model ConnectedItemProgress {
+  id           String            @id @default(cuid())
+  instanceId   String
+  itemId       String
+  currentStock Int?
+  updatedStock Int?
+  isCompleted  Boolean           @default(false)
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  completedAt  DateTime?
+  completedBy  String?
+  connectionId String?
+  instance     ChecklistInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+}
+
+model ChecklistItemProgress {
+  id          String            @id @default(cuid())
+  instanceId  String
+  itemId      String
+  isCompleted Boolean           @default(false)
+  completedBy String?
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  instance    ChecklistInstance @relation("ChecklistInstanceProgress", fields: [instanceId], references: [id], onDelete: Cascade)
+  item        ChecklistItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([instanceId, itemId])
+}
+
+model Precaution {
+  id           String                  @id @default(cuid())
+  title        String
+  content      String
+  workplace    Workplace
+  timeSlot     TimeSlot
+  priority     Int                     @default(1)
+  isActive     Boolean                 @default(true)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  tagRelations PrecautionTagRelation[]
+  tags         Tag[]                   @relation("PrecautionTags")
+  manualRelations ManualPrecautionRelation[]
+  manuals      Manual[]                @relation("ManualPrecautions")
+}
+
+model Manual {
+  id           String              @id @default(cuid())
+  title        String
+  content      String
+  mediaUrls    String[]
+  workplace    Workplace
+  timeSlot     TimeSlot
+  category     Category
+  version      String              @default("1.0")
+  isActive     Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  tagRelations ManualTagRelation[]
+  tags         Tag[]               @relation("ManualTags")
+  precautionRelations ManualPrecautionRelation[]
+  precautions  Precaution[]        @relation("ManualPrecautions")
+}
+
+model InventoryItem {
+  id            String                     @id @default(cuid())
+  name          String
+  category      Category
+  currentStock  Float
+  minStock      Float
+  unit          String
+  supplier      String?
+  lastUpdated   DateTime                   @default(now())
+  lastCheckedBy String?
+  isActive      Boolean                    @default(true)
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+  checks        InventoryCheck[]
+  tagRelations  InventoryItemTagRelation[]
+  purchaseItems PurchaseRequestItem[]
+  tags          Tag[]                      @relation("InventoryItemTags")
+}
+
+model InventoryCheck {
+  id                   String        @id @default(cuid())
+  itemId               String
+  checkedBy            String
+  checkedAt            DateTime      @default(now())
+  currentStock         Float
+  notes                String?
+  needsRestock         Boolean       @default(false)
+  estimatedRestockDate DateTime?
+  employee             Employee      @relation(fields: [checkedBy], references: [id])
+  item                 InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model PurchaseRequest {
+  id            String                @id @default(cuid())
+  requestedBy   String
+  requestedAt   DateTime              @default(now())
+  status        PurchaseStatus        @default(PENDING)
+  priority      PurchasePriority      @default(MEDIUM)
+  estimatedCost Float?
+  notes         String?
+  approvedBy    String?
+  approvedAt    DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  employee      Employee              @relation(fields: [requestedBy], references: [id])
+  items         PurchaseRequestItem[]
+}
+
+model PurchaseRequestItem {
+  id                String          @id @default(cuid())
+  purchaseRequestId String
+  itemId            String
+  quantity          Float
+  unitPrice         Float?
+  notes             String?
+  purchasedBy       String?
+  purchasedAt       DateTime?
+  receivedAt        DateTime?
+  item              InventoryItem   @relation(fields: [itemId], references: [id])
+  request           PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  employee          Employee?       @relation(fields: [purchasedBy], references: [id])
+}
+
+model ChecklistItem {
+  id             String                    @id @default(cuid())
+  templateId     String
+  parentId       String?
+  type           String
+  content        String
+  instructions   String?
+  order          Int                       @default(0)
+  isRequired     Boolean                   @default(true)
+  isActive       Boolean                   @default(true)
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  parent         ChecklistItem?            @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children       ChecklistItem[]           @relation("ParentChild")
+  template       ChecklistTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  connectedItems ChecklistItemConnection[]
+  progress       ChecklistItemProgress[]
+}
+
+model ChecklistItemConnection {
+  id              String        @id @default(cuid())
+  checklistItemId String
+  itemType        String
+  itemId          String
+  order           Int           @default(0)
+  createdAt       DateTime      @default(now())
+  checklistItem   ChecklistItem @relation(fields: [checklistItemId], references: [id], onDelete: Cascade)
+
+  @@unique([checklistItemId, itemType, itemId])
+}
+
+model TimeSlotChecklistStatus {
+  id        String    @id @default(cuid())
+  date      DateTime  @db.Date
+  workplace Workplace
+  timeSlot  TimeSlot
+  lockedBy  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  status    String
+  employee  Employee? @relation(fields: [lockedBy], references: [id])
+
+  @@unique([date, timeSlot, workplace])
+}
+
+model PosReport {
+  id               String   @id @default(cuid())
+  filename         String
+  originalFilename String
+  recordCount      Int
+  uploadDate       DateTime @default(now())
+  uploadedBy       String
+  data             Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 enum Workplace {
@@ -36,74 +363,6 @@ enum Category {
   MANUAL
 }
 
-// 통합 태그 시스템
-model Tag {
-  id        String   @id @default(cuid())
-  name      String   @unique // 태그 이름 (예: "떡볶이", "닭고기", "소스", "청소용품", "조리법")
-  color     String?  // 태그 색상 (선택사항)
-  createdAt DateTime @default(now())
-  
-  // 모든 모델과의 관계
-  checklistTemplates ChecklistTemplate[] @relation("ChecklistTemplateTags")
-  inventoryItems    InventoryItem[] @relation("InventoryItemTags")
-  precautions       Precaution[] @relation("PrecautionTags")
-  manuals           Manual[] @relation("ManualTags")
-  
-  // 관계 테이블들과의 관계
-  checklistTemplateRelations ChecklistTemplateTagRelation[]
-  inventoryItemRelations    InventoryItemTagRelation[]
-  precautionRelations       PrecautionTagRelation[]
-  manualRelations           ManualTagRelation[]
-}
-
-// 체크리스트 템플릿과 태그의 다대다 관계
-model ChecklistTemplateTagRelation {
-  id        String   @id @default(cuid())
-  templateId String
-  tagId     String
-  template  ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  tag       Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([templateId, tagId])
-}
-
-// 재고 아이템과 태그의 다대다 관계
-model InventoryItemTagRelation {
-  id        String   @id @default(cuid())
-  itemId    String
-  tagId     String
-  item      InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  tag       Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([itemId, tagId])
-}
-
-// 주의사항과 태그의 다대다 관계
-model PrecautionTagRelation {
-  id        String   @id @default(cuid())
-  precautionId String
-  tagId     String
-  precaution Precaution @relation(fields: [precautionId], references: [id], onDelete: Cascade)
-  tag       Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([precautionId, tagId])
-}
-
-// 메뉴얼과 태그의 다대다 관계
-model ManualTagRelation {
-  id        String   @id @default(cuid())
-  manualId  String
-  tagId     String
-  manual    Manual @relation(fields: [manualId], references: [id], onDelete: Cascade)
-  tag       Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([manualId, tagId])
-}
-
 enum TimeSlot {
   PREPARATION
   IN_PROGRESS
@@ -111,198 +370,6 @@ enum TimeSlot {
   COMMON
 }
 
-model Employee {
-  id             String                @id @default(cuid())
-  employeeId     String                @unique
-  password       String
-  name           String
-  email          String?
-  phone          String?
-  department     String
-  position       String
-  isActive       Boolean               @default(true)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  isSuperAdmin   Boolean               @default(false)
-  isTempPassword Boolean               @default(false)
-  address        String?
-  inventoryChecks InventoryCheck[]
-  purchaseRequests PurchaseRequest[]
-  purchasedItems PurchaseRequestItem[]
-  checklistInstances ChecklistInstance[]
-  lockedTimeSlots TimeSlotChecklistStatus[]
-}
-
-model ChecklistTemplate {
-  id        String   @id @default(cuid())
-  name      String   @default("") // 기본값 설정
-  content   String
-  workplace Workplace
-  category  Category
-  timeSlot  TimeSlot
-  isActive  Boolean  @default(true)
-  inputter  String
-  inputDate DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // 관계
-  items     ChecklistItem[]
-  instances ChecklistInstance[]
-  tagRelations ChecklistTemplateTagRelation[]
-  tags      Tag[] @relation("ChecklistTemplateTags")
-}
-
-// 체크리스트 인스턴스 (통합 모델) - 모든 체크리스트 관련 기능 통합
-model ChecklistInstance {
-  id            String   @id @default(cuid())
-  employeeId    String?  // 선택적으로 변경
-  templateId    String
-  date          DateTime // 날짜 (시간은 제외)
-  workplace     Workplace
-  timeSlot      TimeSlot
-  
-  // 상태 관리
-  isCompleted   Boolean  @default(false)
-  completedBy   String?  // 완료한 직원 이름
-  completedAt   DateTime? // 완료 시간
-  isSubmitted   Boolean  @default(false)
-  submittedAt   DateTime?
-  isReopened    Boolean  @default(false)
-  reopenedAt    DateTime?
-  reopenedBy    String?
-  reopenReason  String?
-  
-  // 메타데이터
-  notes         String?
-  itemProgress  Json?    // 개별 항목 진행 상태를 JSON으로 저장
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // 관계
-  employee      Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  template      ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  reopenedByAdmin Admin? @relation(fields: [reopenedBy], references: [id])
-  
-  // 연결된 항목들의 진행 상태
-  connectedItemsProgress ConnectedItemProgress[]
-  checklistItemProgresses ChecklistItemProgress[] @relation("ChecklistInstanceProgress")
-
-  @@unique([workplace, timeSlot, date]) // 하루에 하나의 위치/시간대 조합만 존재
-}
-
-// 연결된 항목들의 진행 상태 저장 모델
-model ConnectedItemProgress {
-  id        String   @id @default(cuid())
-  instanceId String
-  itemId    String
-  connectionId String? // 연결된 항목의 ID (ChecklistItemConnection.id)
-  currentStock Int?
-  updatedStock Int?
-  isCompleted Boolean @default(false)
-  completedBy String? // 완료한 직원 이름
-  completedAt DateTime? // 완료 시간
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  instance  ChecklistInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-}
-
-// 개별 체크리스트 항목의 진행 상태 저장 모델
-model ChecklistItemProgress {
-  id        String   @id @default(cuid())
-  instanceId String
-  itemId    String
-  isCompleted Boolean @default(false)
-  completedBy String? // 완료한 직원 이름
-  completedAt DateTime? // 완료 시간
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  instance  ChecklistInstance @relation("ChecklistInstanceProgress", fields: [instanceId], references: [id], onDelete: Cascade)
-  item      ChecklistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@unique([instanceId, itemId]) // 한 인스턴스에서 같은 항목은 하나만 존재
-}
-
-// 새로운 모델들
-
-// 1. 주의사항 관리
-model Precaution {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  workplace Workplace
-  timeSlot  TimeSlot
-  priority  Int      @default(1) // 1: 높음, 2: 보통, 3: 낮음
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // 태그 관계
-  tagRelations PrecautionTagRelation[]
-  tags         Tag[] @relation("PrecautionTags")
-}
-
-// 2. 메뉴얼 관리
-model Manual {
-  id         String   @id @default(cuid())
-  title      String
-  content    String
-  mediaUrls  String[] // 이미지/동영상 URL 배열
-  workplace  Workplace
-  timeSlot   TimeSlot
-  category   Category
-  version    String   @default("1.0")
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  // 태그 관계
-  tagRelations ManualTagRelation[]
-  tags         Tag[] @relation("ManualTags")
-}
-
-// 3. 재고 관리
-model InventoryItem {
-  id           String   @id @default(cuid())
-  name         String
-  category     Category
-  currentStock Float
-  minStock     Float
-  unit         String   // kg, L, 개, etc.
-  supplier     String?
-  lastUpdated  DateTime @default(now())
-  lastCheckedBy String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  // 관계
-  checks       InventoryCheck[]
-  purchaseItems PurchaseRequestItem[]
-  tagRelations InventoryItemTagRelation[]
-  tags         Tag[] @relation("InventoryItemTags")
-}
-
-model InventoryCheck {
-  id                 String   @id @default(cuid())
-  itemId             String
-  checkedBy          String
-  checkedAt          DateTime @default(now())
-  currentStock       Float
-  notes              String?
-  needsRestock       Boolean  @default(false)
-  estimatedRestockDate DateTime?
-  
-  // 관계
-  item               InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  employee           Employee @relation(fields: [checkedBy], references: [id])
-}
-
-// 4. 구매 관리
 enum PurchaseStatus {
   PENDING
   APPROVED
@@ -317,111 +384,3 @@ enum PurchasePriority {
   HIGH
   URGENT
 }
-
-model PurchaseRequest {
-  id             String          @id @default(cuid())
-  requestedBy    String
-  requestedAt    DateTime        @default(now())
-  status         PurchaseStatus  @default(PENDING)
-  priority       PurchasePriority @default(MEDIUM)
-  estimatedCost  Float?
-  notes          String?
-  approvedBy     String?
-  approvedAt     DateTime?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  
-  // 관계
-  employee       Employee @relation(fields: [requestedBy], references: [id])
-  items          PurchaseRequestItem[]
-}
-
-model PurchaseRequestItem {
-  id           String   @id @default(cuid())
-  purchaseRequestId String
-  itemId       String
-  quantity     Float
-  unitPrice    Float?
-  notes        String?
-  purchasedBy  String?
-  purchasedAt  DateTime?
-  receivedAt   DateTime?
-  
-  // 관계
-  request      PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
-  item         InventoryItem @relation(fields: [itemId], references: [id])
-  employee     Employee? @relation(fields: [purchasedBy], references: [id])
-}
-
-// 5. 체크리스트 항목 확장
-model ChecklistItem {
-  id              String   @id @default(cuid())
-  templateId      String
-  parentId        String?  // 상위 항목 ID (하위 항목 구조 지원)
-  type            String   // "check", "category" - 체크리스트 항목 자체
-  content         String   // 체크리스트 항목 내용 (예: "재료체크", "청소체크")
-  instructions    String?
-  order           Int      @default(0)
-  isRequired      Boolean  @default(true)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // 관계
-  template        ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  parent          ChecklistItem? @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
-  children        ChecklistItem[] @relation("ParentChild")
-  
-  // 연결된 항목들 (새로운 관계 테이블 사용)
-  connectedItems  ChecklistItemConnection[]
-  
-  // 진행 상태
-  progress        ChecklistItemProgress[]
-}
-
-// 체크리스트 항목과 연결된 항목들의 관계 테이블
-model ChecklistItemConnection {
-  id              String   @id @default(cuid())
-  checklistItemId String
-  itemType        String   // "inventory", "precaution", "manual"
-  itemId          String   // 연결된 항목의 ID
-  order           Int      @default(0)
-  createdAt       DateTime @default(now())
-  
-  // 관계
-  checklistItem   ChecklistItem @relation(fields: [checklistItemId], references: [id], onDelete: Cascade)
-  
-  @@unique([checklistItemId, itemType, itemId])
-}
-
-// 6. 시간대별 체크리스트 상태 관리
-model TimeSlotChecklistStatus {
-  id        String   @id @default(cuid())
-  date      DateTime @db.Date
-  timeSlot  TimeSlot
-  workplace Workplace
-  status    String   // "locked", "unlocked", "completed"
-  lockedBy  String?  // Employee ID
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // 관계
-  employee  Employee? @relation(fields: [lockedBy], references: [id])
-
-  @@unique([date, timeSlot, workplace])
-}
-
-// POS 보고서 모델
-model PosReport {
-  id               String   @id @default(cuid())
-  filename         String   // 저장된 파일명
-  originalFilename String   // 원본 파일명
-  recordCount      Int      // 레코드 수
-  uploadDate       DateTime @default(now())
-  uploadedBy       String   // 업로드한 사용자
-  data             Json     // CSV 데이터 (JSON 형태로 저장)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-}
-
-

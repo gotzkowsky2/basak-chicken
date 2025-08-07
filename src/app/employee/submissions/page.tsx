@@ -129,7 +129,7 @@ export default function EmployeeSubmissionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -145,69 +145,69 @@ export default function EmployeeSubmissionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">📋 내 제출내역</h1>
-          <p className="text-gray-600">내가 제출한 체크리스트 내역을 확인할 수 있습니다.</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">📋 내 제출내역</h1>
+          <p className="text-sm sm:text-base text-gray-600">내가 제출한 체크리스트 내역을 확인할 수 있습니다.</p>
         </div>
 
         {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <ChartBarIcon className="w-6 h-6 text-blue-600" />
+                <ChartBarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">전체 제출</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}개</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">전체 제출</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.total}개</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">완료율</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completionRate}%</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">완료율</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.completionRate}%</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-yellow-100 rounded-lg">
-                <CalendarIcon className="w-6 h-6 text-yellow-600" />
+                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">오늘 제출</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.today}개</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">오늘 제출</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.today}개</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <UserIcon className="w-6 h-6 text-purple-600" />
+                <UserIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">완료된 항목</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completed}개</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">완료된 항목</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.completed}개</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* 필터 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">필터</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">필터</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold text-gray-800 mb-2">시작 날짜</label>
               <input
@@ -231,12 +231,12 @@ export default function EmployeeSubmissionsPage() {
 
         {/* 제출내역 목록 */}
         <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">제출내역</h2>
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">제출내역</h2>
           </div>
 
           {error && (
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-red-800">{error}</p>
               </div>
@@ -245,7 +245,7 @@ export default function EmployeeSubmissionsPage() {
 
           <div className="divide-y divide-gray-200">
             {submissions.length === 0 ? (
-              <div className="p-6 text-center">
+              <div className="p-4 sm:p-6 text-center">
                 <p className="text-gray-500">제출내역이 없습니다.</p>
               </div>
             ) : (
@@ -257,104 +257,107 @@ export default function EmployeeSubmissionsPage() {
                   : 0;
 
                 return (
-                  <div key={submission.id} className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        {/* 날짜 - 가장 눈에 띄게 */}
-                        <div className="mb-3">
-                          {(() => {
-                            const today = new Date().toISOString().split('T')[0];
-                            const isToday = submission.date === today;
-                            const isPast = submission.date < today;
-                            
-                            return (
-                              <div className={`text-2xl font-bold ${
-                                isToday ? 'text-blue-600' : 
-                                isPast ? 'text-gray-500' : 'text-gray-700'
-                              }`}>
-                                {new Date(submission.date).toLocaleDateString('ko-KR', { 
-                                  year: 'numeric', 
-                                  month: 'long', 
-                                  day: 'numeric',
-                                  weekday: 'long'
-                                })}
-                              </div>
-                            );
-                          })()}
+                  <div key={submission.id} className="p-4 sm:p-6">
+                    {/* 모바일 최적화된 레이아웃 */}
+                    <div className="space-y-4">
+                      {/* 날짜 - 가장 눈에 띄게 */}
+                      <div>
+                        {(() => {
+                          const today = new Date().toISOString().split('T')[0];
+                          const isToday = submission.date === today;
+                          const isPast = submission.date < today;
+                          
+                          return (
+                            <div className={`text-xl sm:text-2xl font-bold ${
+                              isToday ? 'text-blue-600' : 
+                              isPast ? 'text-gray-500' : 'text-gray-700'
+                            }`}>
+                              {new Date(submission.date).toLocaleDateString('ko-KR', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                weekday: 'long'
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* 템플릿 정보 */}
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-lg ${statusInfo.bgColor} flex-shrink-0`}>
+                          <StatusIcon className={`w-5 h-5 ${statusInfo.color}`} />
                         </div>
-
-                        {/* 템플릿 정보 */}
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={`p-2 rounded-lg ${statusInfo.bgColor}`}>
-                            <StatusIcon className={`w-5 h-5 ${statusInfo.color}`} />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {submission.templateName}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              📍 {getWorkplaceLabel(submission.workplace)} • ⏰ {getTimeSlotLabel(submission.timeSlot)}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* 제출 시간 */}
-                        <div className="mb-3">
-                          {submission.submittedAt ? (
-                            <div className="text-sm text-gray-600">
-                              <span className="font-medium">제출 시간:</span> {new Date(submission.submittedAt).toLocaleString('ko-KR')}
-                            </div>
-                          ) : (
-                            <div className="text-sm text-gray-500">
-                              아직 제출하지 않음
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 함께 작업한 직원들 */}
-                        {submission.collaboratingEmployees.length > 0 && (
-                          <div className="mb-3">
-                            <div className="text-sm text-gray-600">
-                              <span className="font-medium">참여 직원:</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {submission.collaboratingEmployees.map((emp, index) => (
-                                <span 
-                                  key={index}
-                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full"
-                                >
-                                  <UserIcon className="w-3 h-3" />
-                                  {emp.name} ({emp.count}개)
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="mt-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium text-gray-700">진행률:</span>
-                            <span className="text-sm text-gray-600">
-                              {submission.progress.mainItems}/{submission.progress.totalMainItems} 항목 완료
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${progressRate}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-xs text-gray-500 mt-1">{progressRate}%</span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">
+                            {submission.templateName}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            📍 {getWorkplaceLabel(submission.workplace)} • ⏰ {getTimeSlotLabel(submission.timeSlot)}
+                          </p>
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => viewAsChecklist(submission)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <EyeIcon className="w-4 h-4" />
-                        체크리스트 보기
-                      </button>
+                      {/* 제출 시간 */}
+                      <div>
+                        {submission.submittedAt ? (
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">제출 시간:</span> {new Date(submission.submittedAt).toLocaleString('ko-KR')}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500">
+                            아직 제출하지 않음
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 함께 작업한 직원들 */}
+                      {submission.collaboratingEmployees.length > 0 && (
+                        <div>
+                          <div className="text-sm text-gray-600 mb-2">
+                            <span className="font-medium">참여 직원:</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {submission.collaboratingEmployees.map((emp, index) => (
+                              <span 
+                                key={index}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full"
+                              >
+                                <UserIcon className="w-3 h-3" />
+                                {emp.name} ({emp.count}개)
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 진행률 */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-700">진행률:</span>
+                          <span className="text-sm text-gray-600">
+                            {submission.progress.mainItems}/{submission.progress.totalMainItems} 항목 완료
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${progressRate}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-gray-500 mt-1">{progressRate}%</span>
+                      </div>
+
+                      {/* 체크리스트 보기 버튼 - 모바일에서는 아래로 */}
+                      <div className="pt-2">
+                        <button
+                          onClick={() => viewAsChecklist(submission)}
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                          체크리스트 보기
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

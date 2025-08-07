@@ -2,17 +2,17 @@ module.exports = {
   apps: [{
     name: 'basak-chicken-app',
     script: 'node_modules/.bin/next',
-              args: 'dev -H 0.0.0.0 -p 3001',
-          cwd: '/root/basak-chicken-app',
-          instances: 1,
-          exec_mode: 'cluster',
-          env: {
-            NODE_ENV: 'development',
+    args: 'start -H 0.0.0.0 -p 3001', // dev → start로 변경 (프로덕션 모드)
+    cwd: '/root/basak-chicken-app',
+    instances: 1,
+    exec_mode: 'cluster',
+    env: {
+      NODE_ENV: 'production', // development → production으로 변경
       PORT: 3001
     },
     // 메모리 및 성능 설정
-    node_args: '--max-old-space-size=1024', // 메모리 제한을 1GB로 증가
-    max_memory_restart: '800M', // 800MB 도달 시 자동 재시작
+    node_args: '--max-old-space-size=2048', // 메모리 제한을 2GB로 증가
+    max_memory_restart: '1536M', // 1.5GB 도달 시 자동 재시작 (올바른 형식)
     
     // 로그 설정 개선
     log_file: './logs/combined.log',

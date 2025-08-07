@@ -747,6 +747,17 @@ export default function ChecklistPage() {
                 }));
               }
             }
+            
+            // 재고 업데이트 후 즉시 상태 저장
+            if (selectedChecklist?.id) {
+              try {
+                console.log('재고 업데이트 후 상태 저장 시작');
+                await saveProgress(selectedChecklist.id);
+                console.log('재고 업데이트 후 상태 저장 완료');
+              } catch (error) {
+                console.error('재고 업데이트 후 상태 저장 실패:', error);
+              }
+            }
           }
         }
         
