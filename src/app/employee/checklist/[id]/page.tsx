@@ -266,11 +266,9 @@ export default function ChecklistDetailPage() {
       
       for (const connection of item.connectedItems) {
         const key = `${connection.itemType}_${connection.itemId}`;
-        if (!connectedItemDetails[key]) {
-          const detail = await getConnectedItemDetails(connection.itemType, connection.itemId);
-          if (detail) {
-            details[key] = detail;
-          }
+        const detail = await getConnectedItemDetails(connection.itemType, connection.itemId);
+        if (detail) {
+          details[key] = detail;
         }
       }
       
@@ -279,6 +277,8 @@ export default function ChecklistDetailPage() {
       }
     }
   };
+
+
 
   // 체크박스 변경 핸들러
   const handleCheckboxChange = async (id: string) => {
@@ -783,6 +783,7 @@ export default function ChecklistDetailPage() {
           toggleMemoInput={toggleMemoInput}
           saveMemo={saveMemo}
           onInventoryUpdate={handleInventoryUpdate}
+
           saveProgress={async (templateId: string) => {
             const actualTemplateId = (checklist as any)?.templateId || checklist?.id || templateId;
             await saveProgressWithState(actualTemplateId, checklistItems, connectedItemsStatus);

@@ -266,48 +266,43 @@ export default function EmployeeInventoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">재고 정보를 불러오는 중...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      {/* 모바일 최적화된 컨테이너 */}
+      <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 sm:py-6">
         {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">📦 재고/구매관리</h1>
-          <p className="text-gray-600">현재 재고 현황을 확인하고 업데이트할 수 있습니다.</p>
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">📦 재고/구매관리</h1>
+          <p className="text-gray-600 text-sm sm:text-base">현재 재고 현황을 확인하고 업데이트할 수 있습니다.</p>
         </div>
 
         {/* 알림 */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">{error}</p>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg shadow-lg animate-pulse">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg shadow-lg animate-pulse">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-              <p className="text-green-800 font-semibold">{success}</p>
+              <p className="text-green-800 font-semibold text-sm">{success}</p>
             </div>
           </div>
         )}
 
         {/* 필터 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <FunnelIcon className="w-5 h-5" />
@@ -315,16 +310,16 @@ export default function EmployeeInventoryPage() {
             </h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* 검색 */}
-            <div className="relative">
+            <div className="relative sm:col-span-2 lg:col-span-1">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="재고명 검색..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-bold text-gray-900 placeholder-gray-500"
+                className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-bold text-gray-900 placeholder-gray-500 text-sm sm:text-base"
               />
             </div>
 
@@ -332,7 +327,7 @@ export default function EmployeeInventoryPage() {
             <select
               value={filters.category}
               onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-bold text-gray-900"
+              className="px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-bold text-gray-900 text-sm sm:text-base"
             >
               <option value="ALL">전체 카테고리</option>
               <option value="INGREDIENTS">식자재</option>
@@ -360,20 +355,20 @@ export default function EmployeeInventoryPage() {
           <div className="mt-4">
             <button
               onClick={() => setShowTagFilter(!showTagFilter)}
-              className="flex items-center gap-2 text-sm font-bold text-gray-800 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-2 text-sm font-bold text-gray-800 hover:text-blue-600 transition-colors active:scale-95"
             >
               <span>태그로 필터링</span>
-              <ChevronDownIcon className={`w-4 h-4 transition-transform ${showTagFilter ? 'rotate-180' : ''}`} />
+              <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${showTagFilter ? 'rotate-180' : ''}`} />
             </button>
             
-            {showTagFilter && (
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showTagFilter ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="mt-3 p-4 bg-gray-50 rounded-lg">
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                   {tags.map((tag) => (
                     <button
                       key={tag.id}
                       onClick={() => toggleTag(tag.id)}
-                      className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                      className={`px-3 py-1.5 text-sm rounded-full border transition-colors active:scale-95 ${
                         filters.selectedTags.includes(tag.id)
                           ? 'border-2'
                           : 'border hover:bg-gray-50'
@@ -400,20 +395,20 @@ export default function EmployeeInventoryPage() {
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
         {/* 재고 목록 */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">재고 현황 ({inventoryItems.length}개)</h2>
           </div>
 
           {error && (
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800">{error}</p>
+                <p className="text-red-800 text-sm">{error}</p>
               </div>
             </div>
           )}
@@ -421,36 +416,38 @@ export default function EmployeeInventoryPage() {
           <div className="divide-y divide-gray-200">
             {inventoryItems.length === 0 ? (
               <div className="p-6 text-center">
-                <p className="text-gray-500">재고 항목이 없습니다.</p>
+                <p className="text-gray-500 text-sm">재고 항목이 없습니다.</p>
               </div>
             ) : (
               inventoryItems.map((item) => {
                 const stockStatus = getStockStatus(item.currentStock, item.minStock);
                 
                 return (
-                  <div key={item.id} className={`p-6 transition-all duration-500 ${
+                  <div key={item.id} className={`p-4 sm:p-6 transition-all duration-500 ${
                     stockStatus.status === 'low' ? 'bg-red-50 border-l-4 border-red-300' : ''
                   } ${
                     updatedItems.has(item.id) ? 'bg-green-50 border-l-4 border-green-300 shadow-lg' : ''
                   }`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-start gap-2 mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex-1 min-w-0 leading-tight">
                             {item.name}
                           </h3>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${stockStatus.bgColor} ${stockStatus.color} ${stockStatus.status === 'low' ? 'animate-pulse' : ''}`}>
-                            {stockStatus.label}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {getCategoryLabel(item.category)}
-                          </span>
-                          {stockStatus.status === 'low' && (
-                            <span className="text-red-600 text-lg">⚠️</span>
-                          )}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${stockStatus.bgColor} ${stockStatus.color} ${stockStatus.status === 'low' ? 'animate-pulse' : ''}`}>
+                              {stockStatus.label}
+                            </span>
+                            <span className="text-xs sm:text-sm text-gray-500">
+                              {getCategoryLabel(item.category)}
+                            </span>
+                            {stockStatus.status === 'low' && (
+                              <span className="text-red-600 text-base sm:text-lg">⚠️</span>
+                            )}
+                          </div>
                         </div>
 
-                        <div className={`flex items-center gap-4 text-sm mb-3 ${stockStatus.status === 'low' ? 'text-red-700' : 'text-gray-600'}`}>
+                        <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm mb-3 ${stockStatus.status === 'low' ? 'text-red-700' : 'text-gray-600'}`}>
                           <span>현재: <span className={`font-semibold ${
                             stockStatus.status === 'low' ? 'text-red-800' : 
                             updatedItems.has(item.id) ? 'text-green-800' : ''
@@ -464,7 +461,7 @@ export default function EmployeeInventoryPage() {
 
                         {/* 태그 */}
                         {item.tags && item.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-3">
+                          <div className="flex flex-wrap gap-1.5 mb-3">
                             <span className={`text-xs font-medium ${stockStatus.status === 'low' ? 'text-red-600' : 'text-gray-500'}`}>태그:</span>
                             {item.tags.map((tag) => (
                               <span 
@@ -483,7 +480,7 @@ export default function EmployeeInventoryPage() {
                         )}
 
                         {/* 마지막 업데이트 정보 */}
-                        <div className={`text-xs flex items-center justify-between ${isUpdateOverdue(item.lastUpdated) ? 'text-red-600 font-bold' : stockStatus.status === 'low' ? 'text-red-600' : 'text-gray-500'}`}>
+                        <div className={`text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 ${isUpdateOverdue(item.lastUpdated) ? 'text-red-600 font-bold' : stockStatus.status === 'low' ? 'text-red-600' : 'text-gray-500'}`}>
                           <span>
                             마지막 업데이트: {new Date(item.lastUpdated).toLocaleString('ko-KR')}
                           </span>
@@ -495,10 +492,10 @@ export default function EmployeeInventoryPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ml-2">
                         <button
                           onClick={() => toggleExpansion(item.id)}
-                          className="p-2 text-gray-400 hover:text-gray-600"
+                          className="p-2 text-gray-400 hover:text-gray-600 active:scale-95 transition-all"
                         >
                           {expandedItems.has(item.id) ? (
                             <MinusIcon className="w-5 h-5" />
@@ -509,61 +506,61 @@ export default function EmployeeInventoryPage() {
                       </div>
                     </div>
 
-                                         {/* 상세 내용 (재고 업데이트) */}
-                     {expandedItems.has(item.id) && (
-                       <div className="mt-4 pl-8 border-l-2 border-gray-200 transition-all duration-500 ease-in-out">
+                    {/* 상세 내용 (재고 업데이트) */}
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedItems.has(item.id) ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="mt-4 pl-4 sm:pl-8 border-l-2 border-gray-200">
                         <div className="space-y-4">
                           <div>
                             <h4 className="text-sm font-semibold text-gray-800 mb-2">재고 업데이트</h4>
-                            <div className="flex items-center gap-4">
-                                                             <div className="flex items-center gap-2">
-                                 <label className="text-sm font-bold text-gray-800">새로운 수량:</label>
-                                 <input
-                                   type="number"
-                                   min="0"
-                                   step="1"
-                                   defaultValue={item.currentStock}
-                                   className="w-20 px-2 py-1 border border-gray-300 rounded text-sm font-bold text-gray-900"
-                                   id={`stock-${item.id}`}
-                                 />
-                                 <span className="text-sm font-bold text-gray-800">{item.unit}</span>
-                               </div>
-                                                               <button
-                                   onClick={() => {
-                                     const input = document.getElementById(`stock-${item.id}`) as HTMLInputElement;
-                                     const newStock = parseInt(input.value);
-                                     if (!isNaN(newStock) && newStock >= 0) {
-                                       updateStock(item.id, newStock);
-                                     }
-                                   }}
-                                   className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                                 >
-                                   업데이트
-                                 </button>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                              <div className="flex items-center gap-2">
+                                <label className="text-sm font-bold text-gray-800">새로운 수량:</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  defaultValue={item.currentStock}
+                                  className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm font-bold text-gray-900"
+                                  id={`stock-${item.id}`}
+                                />
+                                <span className="text-sm font-bold text-gray-800">{item.unit}</span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const input = document.getElementById(`stock-${item.id}`) as HTMLInputElement;
+                                  const newStock = parseInt(input.value);
+                                  if (!isNaN(newStock) && newStock >= 0) {
+                                    updateStock(item.id, newStock);
+                                  }
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors active:scale-95 font-medium"
+                              >
+                                업데이트
+                              </button>
                             </div>
                           </div>
 
                           {/* 경고 메시지 */}
                           {stockStatus.status === 'out' && (
                             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                              <ExclamationTriangleIcon className="w-5 h-5 text-red-600" />
+                              <ExclamationTriangleIcon className="w-5 h-5 text-red-600 flex-shrink-0" />
                               <span className="text-sm text-red-800 font-medium">
                                 재고가 없습니다. 구매 요청이 필요합니다.
                               </span>
                             </div>
                           )}
                           
-                                                     {stockStatus.status === 'low' && (
-                             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                               <ExclamationTriangleIcon className="w-5 h-5 text-red-600" />
-                               <span className="text-sm text-red-800 font-bold">
-                                 재고가 부족합니다.
-                               </span>
-                             </div>
-                           )}
+                          {stockStatus.status === 'low' && (
+                            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                              <ExclamationTriangleIcon className="w-5 h-5 text-red-600 flex-shrink-0" />
+                              <span className="text-sm text-red-800 font-bold">
+                                재고가 부족합니다.
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })

@@ -84,9 +84,27 @@ export async function GET(request: NextRequest) {
         result = await prisma.manual.findUnique({
           where: { id: itemId },
           include: {
-            tags: true
+            tags: true,
+            precautionRelations: {
+              include: {
+                precaution: {
+                  include: {
+                    tags: true
+                  }
+                }
+              },
+              orderBy: {
+                order: 'asc'
+              }
+            }
           }
         });
+        
+        // precautions 배열로 변환
+        if (result && result.precautionRelations) {
+          result.precautions = result.precautionRelations.map((relation: any) => relation.precaution);
+          delete result.precautionRelations;
+        }
         break;
       default:
         return NextResponse.json(
@@ -102,7 +120,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (error: any) {
     console.error('연결된 항목 조회 오류:', error);
     return NextResponse.json(
