@@ -252,7 +252,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE: 재고 아이템 삭제 (소프트 삭제)
+// DELETE: 재고 아이템 삭제 (실제 삭제)
 export async function DELETE(request: NextRequest) {
   try {
     await verifyAdminAuth(request);
@@ -279,13 +279,29 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 소프트 삭제 (isActive를 false로 설정)
-    await prisma.inventoryItem.update({
-      where: { id },
-      data: { isActive: false }
+    // 관련 데이터 먼저 삭제
+    await prisma.inventoryItemTagRelation.deleteMany({
+      where: { inventoryItemId: id }
     });
 
-    return NextResponse.json({ message: '재고 아이템이 삭제되었습니다.' });
+    await prisma.inventoryCheck.deleteMany({
+      where: { inventoryItemId: id }
+    });
+
+    // 체크리스트 연결에서도 제거
+    await prisma.checklistItemConnection.deleteMany({
+      where: { 
+        itemType: 'inventory',
+        itemId: id 
+      }
+    });
+
+    // 실제 삭제
+    await prisma.inventoryItem.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ message: '재고 아이템이 완전히 삭제되었습니다.' });
   } catch (error: any) {
     console.error('재고 아이템 삭제 오류:', error);
     return NextResponse.json(

@@ -337,7 +337,7 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// 체크리스트 항목 삭제
+// 체크리스트 항목 삭제 (실제 삭제)
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -382,15 +382,19 @@ export async function DELETE(req: NextRequest) {
       }, { status: 404 });
     }
 
-    // 체크리스트 항목 삭제 (소프트 삭제)
-    await prisma.checklistItem.update({
-      where: { id },
-      data: { isActive: false }
+    // 연결된 항목 관계 삭제
+    await prisma.checklistItemConnection.deleteMany({
+      where: { itemId: id }
+    });
+
+    // 체크리스트 항목 실제 삭제
+    await prisma.checklistItem.delete({
+      where: { id }
     });
 
     return NextResponse.json({ 
       success: true, 
-      message: "체크리스트 항목이 삭제되었습니다." 
+      message: "체크리스트 항목이 완전히 삭제되었습니다." 
     });
 
   } catch (error) {

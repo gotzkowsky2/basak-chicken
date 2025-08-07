@@ -144,7 +144,7 @@ export async function PUT(
   }
 }
 
-// 체크리스트 삭제 (실제 삭제 대신 isActive를 false로 설정)
+// 체크리스트 삭제 (실제 삭제)
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -184,13 +184,34 @@ export async function DELETE(
       return NextResponse.json({ error: "체크리스트를 찾을 수 없습니다." }, { status: 404 });
     }
 
-    // 체크리스트 비활성화
-    await prisma.checklistTemplate.update({
-      where: { id: checklistId },
-      data: { isActive: false }
+    // 관련 데이터 먼저 삭제
+    await prisma.checklistTemplateTagRelation.deleteMany({
+      where: { templateId: checklistId }
     });
 
-    return NextResponse.json({ success: true, message: "체크리스트가 성공적으로 삭제되었습니다." });
+    // 체크리스트 항목들도 삭제
+    const checklistItems = await prisma.checklistItem.findMany({
+      where: { templateId: checklistId }
+    });
+
+    for (const item of checklistItems) {
+      // 각 항목의 연결 관계 삭제
+      await prisma.checklistItemConnection.deleteMany({
+        where: { itemId: item.id }
+      });
+    }
+
+    // 체크리스트 항목들 삭제
+    await prisma.checklistItem.deleteMany({
+      where: { templateId: checklistId }
+    });
+
+    // 체크리스트 템플릿 실제 삭제
+    await prisma.checklistTemplate.delete({
+      where: { id: checklistId }
+    });
+
+    return NextResponse.json({ success: true, message: "체크리스트가 완전히 삭제되었습니다." });
   } catch (error) {
     console.error("체크리스트 삭제 오류:", error);
     return NextResponse.json({ error: "체크리스트 삭제 중 오류가 발생했습니다." }, { status: 500 });

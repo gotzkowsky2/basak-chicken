@@ -368,7 +368,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE: 메뉴얼 삭제 (소프트 삭제)
+// DELETE: 메뉴얼 삭제 (실제 삭제)
 export async function DELETE(request: NextRequest) {
   try {
     await verifyAdminAuth();
@@ -395,13 +395,29 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 소프트 삭제 (isActive를 false로 설정)
-    await prisma.manual.update({
-      where: { id },
-      data: { isActive: false }
+    // 관련 데이터 먼저 삭제
+    await prisma.manualTagRelation.deleteMany({
+      where: { manualId: id }
     });
 
-    return NextResponse.json({ message: '메뉴얼이 삭제되었습니다.' });
+    await prisma.manualPrecautionRelation.deleteMany({
+      where: { manualId: id }
+    });
+
+    // 체크리스트 연결에서도 제거
+    await prisma.checklistItemConnection.deleteMany({
+      where: { 
+        itemType: 'manual',
+        itemId: id 
+      }
+    });
+
+    // 실제 삭제
+    await prisma.manual.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ message: '메뉴얼이 완전히 삭제되었습니다.' });
   } catch (error: any) {
     console.error('메뉴얼 삭제 오류:', error);
     return NextResponse.json(

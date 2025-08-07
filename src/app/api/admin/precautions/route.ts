@@ -253,7 +253,7 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// 주의사항 삭제
+// 주의사항 삭제 (실제 삭제)
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -298,20 +298,31 @@ export async function DELETE(req: NextRequest) {
       }, { status: 404 });
     }
 
-    // 태그 연결 삭제
+    // 관련 데이터 먼저 삭제
     await prisma.precautionTagRelation.deleteMany({
       where: { precautionId: id }
     });
 
-    // 주의사항 삭제 (소프트 삭제)
-    await prisma.precaution.update({
-      where: { id },
-      data: { isActive: false }
+    await prisma.manualPrecautionRelation.deleteMany({
+      where: { precautionId: id }
+    });
+
+    // 체크리스트 연결에서도 제거
+    await prisma.checklistItemConnection.deleteMany({
+      where: { 
+        itemType: 'precaution',
+        itemId: id 
+      }
+    });
+
+    // 주의사항 실제 삭제
+    await prisma.precaution.delete({
+      where: { id }
     });
 
     return NextResponse.json({ 
       success: true, 
-      message: "주의사항이 삭제되었습니다." 
+      message: "주의사항이 완전히 삭제되었습니다." 
     });
 
   } catch (error) {
