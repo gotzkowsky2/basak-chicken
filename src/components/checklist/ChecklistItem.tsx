@@ -188,7 +188,11 @@ export default function ChecklistItem({
   };
 
   return (
-         <div className="bg-pink-100 border border-pink-300 rounded-lg p-3 sm:p-4 mb-4 transition-all duration-300">
+         <div className={`${
+           isCompleted 
+             ? 'bg-gray-100 border-gray-300' 
+             : 'bg-pink-50 border-pink-200'
+         } border rounded-lg p-3 sm:p-4 mb-4 transition-all duration-300`}>
       {/* 메인 항목 */}
       <div className="flex items-start gap-3">
         <input
@@ -202,7 +206,11 @@ export default function ChecklistItem({
         <div className="flex-1">
           {/* 첫째줄: 제목과 연결항목 아이콘 */}
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-gray-800 flex-1">
+            <h3 className={`text-lg font-semibold flex-1 ${
+              isCompleted 
+                ? 'text-gray-500 line-through' 
+                : 'text-gray-800'
+            }`}>
               {item.content}
             </h3>
             
@@ -264,15 +272,15 @@ export default function ChecklistItem({
            {completedBy && (
              <div className="mb-2">
                <div className="flex items-center gap-2">
-                 <span className="text-sm text-gray-500">✅ 완료자:</span>
-                 <span className="text-sm font-medium text-green-700">{completedBy}</span>
+                 <span className={`text-sm ${isCompleted ? 'text-gray-400' : 'text-gray-500'}`}>✅ 완료자:</span>
+                 <span className={`text-sm font-medium ${isCompleted ? 'text-gray-500' : 'text-green-700'}`}>{completedBy}</span>
                </div>
                {completedAt && (
                  <div className="flex items-center gap-2 mt-1 ml-6 sm:ml-0 sm:mt-0 sm:inline">
-                   <span className="text-sm text-gray-400">
+                   <span className={`text-sm ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
                      {new Date(completedAt).toLocaleDateString()}
                    </span>
-                   <span className="text-sm text-gray-400">
+                   <span className={`text-sm ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
                      {new Date(completedAt).toLocaleTimeString()}
                    </span>
                  </div>
@@ -282,11 +290,11 @@ export default function ChecklistItem({
 
           {/* 셋째줄: 메모 (하위 항목이 없을 때만) */}
           {(!item.connectedItems || item.connectedItems.length === 0) && notes && !showMemoInputs?.[item.id] && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-2">
+            <div className={`${isCompleted ? 'bg-gray-100 border-gray-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-2 mb-2`}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1">
-                  <span className="text-blue-600">📝</span>
-                  <span className="text-sm font-medium text-blue-700">메모</span>
+                  <span className={isCompleted ? 'text-gray-500' : 'text-blue-600'}>📝</span>
+                  <span className={`text-sm font-medium ${isCompleted ? 'text-gray-500' : 'text-blue-700'}`}>메모</span>
                 </div>
                 {!isReadOnly && (
                   <div className="flex items-center gap-1">
@@ -296,7 +304,7 @@ export default function ChecklistItem({
                         e.stopPropagation();
                         toggleMemoInput?.(item.id);
                       }}
-                      className="text-blue-600 hover:text-blue-800 text-xs p-1 rounded hover:bg-blue-100 transition-colors"
+                      className={`${isCompleted ? 'text-gray-400 hover:text-gray-600' : 'text-blue-600 hover:text-blue-800'} text-xs p-1 rounded hover:bg-gray-100 transition-colors`}
                       title="수정"
                     >
                       ✏️
@@ -309,7 +317,7 @@ export default function ChecklistItem({
                           onNotesChange(item.id, "");
                         }
                       }}
-                      className="text-red-600 hover:text-red-800 text-xs p-1 rounded hover:bg-red-100 transition-colors"
+                      className={`${isCompleted ? 'text-gray-400 hover:text-gray-600' : 'text-red-600 hover:text-red-800'} text-xs p-1 rounded hover:bg-gray-100 transition-colors`}
                       title="삭제"
                     >
                       🗑️
@@ -317,7 +325,7 @@ export default function ChecklistItem({
                   </div>
                 )}
               </div>
-              <div className="text-sm text-gray-700">{notes}</div>
+              <div className={`text-sm ${isCompleted ? 'text-gray-500' : 'text-gray-700'}`}>{notes}</div>
             </div>
           )}
 
@@ -370,6 +378,9 @@ export default function ChecklistItem({
       {isExpanded && item.connectedItems && item.connectedItems.length > 0 && (
         <div id={`detail-${item.id}`} className="mt-4 pl-4 sm:pl-8 border-l-2 border-gray-200">
           <h4 className="text-sm font-semibold text-gray-700 mb-3">세부 항목</h4>
+          
+
+          
           <div className="space-y-3 sm:space-y-4">
             {item.connectedItems!
               .sort((a, b) => {
@@ -385,17 +396,19 @@ export default function ChecklistItem({
                 // 같은 카테고리 내에서는 order로 정렬
                 return a.order - b.order;
               })
+
               .map((connection, index) => {
               const key = `${connection.itemType}_${connection.itemId}`;
               const connectionDetails = connectedItemsDetails[key];
               const isConnectionCompleted = connectedItemsStatus[connection.id]?.isCompleted || false;
+              const isConnectionExpanded = expandedItems[`${item.id}_${connection.id}`] || false;
               
               return (
                                  <div 
                    key={connection.id} 
                    className={`border-b-2 border-gray-300 last:border-b-0 transition-all duration-300 ease-in-out ${
                      isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-                   } bg-yellow-50`}
+                   } ${isConnectionCompleted ? 'bg-gray-100' : 'bg-pink-50'}`}
                    style={{
                      transitionDelay: isExpanded ? `${index * 100}ms` : '0ms'
                    }}
@@ -446,8 +459,12 @@ export default function ChecklistItem({
                              connection.itemType === 'manual' ? '메뉴얼' : '연결된 항목'}
                           </span>
                           
-                          <div className="flex items-center justify-between w-full">
-                            <h4 className="font-medium text-sm text-gray-800 break-words flex-1">
+                          <div className="w-full">
+                            <h4 className={`font-medium text-sm break-words ${
+                              isConnectionCompleted 
+                                ? 'text-gray-500 line-through' 
+                                : 'text-gray-800'
+                            }`}>
                               {connectionDetails ? (
                                 connection.itemType === 'inventory' ? connectionDetails.name :
                                 connection.itemType === 'precaution' ? connectionDetails.title :
@@ -457,20 +474,6 @@ export default function ChecklistItem({
                                 '로딩 중...'
                               )}
                             </h4>
-                            
-                            {/* 팝업 버튼 */}
-                            {connectionDetails && (
-                              <button
-                                onClick={() => openDetailModal({
-                                  itemType: connection.itemType,
-                                  itemId: connection.itemId
-                                })}
-                                className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors flex-shrink-0 ml-2"
-                                title="상세 내용 보기"
-                              >
-                                <EyeIcon className="w-4 h-4" />
-                              </button>
-                            )}
                           </div>
                         </div>
 
@@ -654,10 +657,19 @@ export default function ChecklistItem({
                         {/* 주의사항 항목 */}
                         {connectionDetails && connection.itemType === 'precaution' && (
                           <>
-                            {/* 둘째줄: 주의사항 내용 */}
-                            <div className="w-full p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            {/* 둘째줄: 주의사항 내용 미리보기 */}
+                            <div 
+                              onClick={() => openDetailModal({
+                                itemType: connection.itemType,
+                                itemId: connection.itemId
+                              })}
+                              className="w-full p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
+                            >
                               <div className="text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
-                                {connectionDetails.content}
+                                {getPreviewText(connectionDetails.content)}
+                              </div>
+                              <div className="mt-2 text-xs text-orange-600 font-medium">
+                                클릭하여 전체 내용 보기 →
                               </div>
                             </div>
 
@@ -673,17 +685,17 @@ export default function ChecklistItem({
                             {connectedItemsStatus[connection.id]?.completedBy && (
                               <div className="w-full space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-500">✅ 완료자:</span>
-                                  <span className="text-xs font-medium text-green-700">
+                                  <span className={`text-xs ${isConnectionCompleted ? 'text-gray-400' : 'text-gray-500'}`}>✅ 완료자:</span>
+                                  <span className={`text-xs font-medium ${isConnectionCompleted ? 'text-gray-500' : 'text-green-700'}`}>
                                     {connectedItemsStatus[connection.id].completedBy}
                                   </span>
                                 </div>
                                 {connectedItemsStatus[connection.id].completedAt && (
                                   <div className="flex items-center gap-2 mt-1 ml-4 sm:ml-0 sm:mt-0 sm:inline">
-                                    <span className="text-xs text-gray-400">
+                                    <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
                                       {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleDateString()}
                                     </span>
-                                    <span className="text-xs text-gray-400">
+                                    <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
                                       {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleTimeString()}
                                     </span>
                                   </div>
@@ -693,11 +705,11 @@ export default function ChecklistItem({
 
                             {/* 다섯째줄: 메모 정보 */}
                             {connectedItemsStatus[connection.id]?.notes && !showMemoInputs?.[connection.id] && (
-                              <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-2">
+                              <div className={`w-full ${isConnectionCompleted ? 'bg-gray-100 border-gray-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-2`}>
                                 <div className="flex items-center justify-between mb-1">
                                   <div className="flex items-center gap-1">
-                                    <span className="text-xs text-blue-600">📝</span>
-                                    <span className="text-xs font-medium text-blue-700">메모</span>
+                                    <span className={`text-xs ${isConnectionCompleted ? 'text-gray-500' : 'text-blue-600'}`}>📝</span>
+                                    <span className={`text-xs font-medium ${isConnectionCompleted ? 'text-gray-500' : 'text-blue-700'}`}>메모</span>
                                   </div>
                                   {!isReadOnly && (
                                     <div className="flex items-center gap-1">
@@ -707,7 +719,7 @@ export default function ChecklistItem({
                                           e.stopPropagation();
                                           toggleMemoInput?.(connection.id);
                                         }}
-                                        className="text-blue-600 hover:text-blue-800 text-xs p-1 rounded hover:bg-blue-100 transition-colors"
+                                        className={`${isConnectionCompleted ? 'text-gray-400 hover:text-gray-600' : 'text-blue-600 hover:text-blue-800'} text-xs p-1 rounded hover:bg-gray-100 transition-colors`}
                                         title="수정"
                                       >
                                         ✏️
@@ -720,7 +732,7 @@ export default function ChecklistItem({
                                             onNotesChange(connection.id, "");
                                           }
                                         }}
-                                        className="text-red-600 hover:text-red-800 text-xs p-1 rounded hover:bg-red-100 transition-colors"
+                                        className={`${isConnectionCompleted ? 'text-gray-400 hover:text-gray-600' : 'text-red-600 hover:text-red-800'} text-xs p-1 rounded hover:bg-gray-100 transition-colors`}
                                         title="삭제"
                                       >
                                         🗑️
@@ -728,7 +740,7 @@ export default function ChecklistItem({
                                     </div>
                                   )}
                                 </div>
-                                <div className="text-xs text-gray-700">
+                                <div className={`text-xs ${isConnectionCompleted ? 'text-gray-500' : 'text-gray-700'}`}>
                                   {connectedItemsStatus[connection.id].notes}
                                 </div>
                               </div>
@@ -739,10 +751,19 @@ export default function ChecklistItem({
                         {/* 매뉴얼 항목 */}
                         {connectionDetails && connection.itemType === 'manual' && (
                           <>
-                            {/* 둘째줄: 매뉴얼 내용 */}
-                            <div className="w-full p-3 bg-green-50 border border-green-200 rounded-lg">
+                            {/* 둘째줄: 매뉴얼 내용 미리보기 */}
+                            <div 
+                              onClick={() => openDetailModal({
+                                itemType: connection.itemType,
+                                itemId: connection.itemId
+                              })}
+                              className="w-full p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
+                            >
                               <div className="text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
-                                {connectionDetails.content}
+                                {getPreviewText(connectionDetails.content)}
+                              </div>
+                              <div className="mt-2 text-xs text-green-600 font-medium">
+                                클릭하여 전체 내용 보기 →
                               </div>
                             </div>
 
@@ -758,17 +779,17 @@ export default function ChecklistItem({
                             {connectedItemsStatus[connection.id]?.completedBy && (
                               <div className="w-full space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-500">✅ 완료자:</span>
-                                  <span className="text-xs font-medium text-green-700">
+                                  <span className={`text-xs ${isConnectionCompleted ? 'text-gray-400' : 'text-gray-500'}`}>✅ 완료자:</span>
+                                  <span className={`text-xs font-medium ${isConnectionCompleted ? 'text-gray-500' : 'text-green-700'}`}>
                                     {connectedItemsStatus[connection.id].completedBy}
                                   </span>
                                 </div>
                                 {connectedItemsStatus[connection.id].completedAt && (
                                   <div className="flex items-center gap-2 mt-1 ml-4 sm:ml-0 sm:mt-0 sm:inline">
-                                    <span className="text-xs text-gray-400">
+                                    <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
                                       {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleDateString()}
                                     </span>
-                                    <span className="text-xs text-gray-400">
+                                    <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
                                       {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleTimeString()}
                                     </span>
                                   </div>
@@ -778,11 +799,11 @@ export default function ChecklistItem({
 
                             {/* 다섯째줄: 메모 정보 */}
                             {connectedItemsStatus[connection.id]?.notes && !showMemoInputs?.[connection.id] && (
-                              <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-2">
+                              <div className={`w-full ${isConnectionCompleted ? 'bg-gray-100 border-gray-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-2`}>
                                 <div className="flex items-center justify-between mb-1">
                                   <div className="flex items-center gap-1">
-                                    <span className="text-xs text-blue-600">📝</span>
-                                    <span className="text-xs font-medium text-blue-700">메모</span>
+                                    <span className={`text-xs ${isConnectionCompleted ? 'text-gray-500' : 'text-blue-600'}`}>📝</span>
+                                    <span className={`text-xs font-medium ${isConnectionCompleted ? 'text-gray-500' : 'text-blue-700'}`}>메모</span>
                                   </div>
                                   {!isReadOnly && (
                                     <div className="flex items-center gap-1">
@@ -792,7 +813,7 @@ export default function ChecklistItem({
                                           e.stopPropagation();
                                           toggleMemoInput?.(connection.id);
                                         }}
-                                        className="text-blue-600 hover:text-blue-800 text-xs p-1 rounded hover:bg-blue-100 transition-colors"
+                                        className={`${isConnectionCompleted ? 'text-gray-400 hover:text-gray-600' : 'text-blue-600 hover:text-blue-800'} text-xs p-1 rounded hover:bg-gray-100 transition-colors`}
                                         title="수정"
                                       >
                                         ✏️
@@ -805,7 +826,7 @@ export default function ChecklistItem({
                                             onNotesChange(connection.id, "");
                                           }
                                         }}
-                                        className="text-red-600 hover:text-red-800 text-xs p-1 rounded hover:bg-red-100 transition-colors"
+                                        className={`${isConnectionCompleted ? 'text-gray-400 hover:text-gray-600' : 'text-red-600 hover:text-red-800'} text-xs p-1 rounded hover:bg-gray-100 transition-colors`}
                                         title="삭제"
                                       >
                                         🗑️
@@ -813,7 +834,7 @@ export default function ChecklistItem({
                                     </div>
                                   )}
                                 </div>
-                                <div className="text-xs text-gray-700">
+                                <div className={`text-xs ${isConnectionCompleted ? 'text-gray-500' : 'text-gray-700'}`}>
                                   {connectedItemsStatus[connection.id].notes}
                                 </div>
                               </div>
