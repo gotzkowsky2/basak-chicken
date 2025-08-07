@@ -281,11 +281,41 @@ export default function ChecklistItem({
            )}
 
           {/* 셋째줄: 메모 (하위 항목이 없을 때만) */}
-          {(!item.connectedItems || item.connectedItems.length === 0) && notes && (
+          {(!item.connectedItems || item.connectedItems.length === 0) && notes && !showMemoInputs?.[item.id] && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-2">
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-blue-600">📝</span>
-                <span className="text-sm font-medium text-blue-700">메모</span>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-blue-600">📝</span>
+                  <span className="text-sm font-medium text-blue-700">메모</span>
+                </div>
+                {!isReadOnly && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleMemoInput?.(item.id);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 text-xs p-1 rounded hover:bg-blue-100 transition-colors"
+                      title="수정"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (onNotesChange) {
+                          onNotesChange(item.id, "");
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-800 text-xs p-1 rounded hover:bg-red-100 transition-colors"
+                      title="삭제"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="text-sm text-gray-700">{notes}</div>
             </div>
@@ -317,9 +347,13 @@ export default function ChecklistItem({
              )}
 
              {/* 메모 아이콘 (하위 항목이 없을 때만) */}
-             {(!item.connectedItems || item.connectedItems.length === 0) && toggleMemoInput && (
+             {(!item.connectedItems || item.connectedItems.length === 0) && !notes && toggleMemoInput && (
                <button
-                 onClick={() => toggleMemoInput(item.id)}
+                 onClick={(e) => {
+                   e.preventDefault();
+                   e.stopPropagation();
+                   toggleMemoInput(item.id);
+                 }}
                  className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
                  title="메모"
                >
@@ -658,11 +692,41 @@ export default function ChecklistItem({
                             )}
 
                             {/* 다섯째줄: 메모 정보 */}
-                            {connectedItemsStatus[connection.id]?.notes && (
+                            {connectedItemsStatus[connection.id]?.notes && !showMemoInputs?.[connection.id] && (
                               <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-2">
-                                <div className="flex items-center gap-1 mb-1">
-                                  <span className="text-xs text-blue-600">📝</span>
-                                  <span className="text-xs font-medium text-blue-700">메모</span>
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-blue-600">📝</span>
+                                    <span className="text-xs font-medium text-blue-700">메모</span>
+                                  </div>
+                                  {!isReadOnly && (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          toggleMemoInput?.(connection.id);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 text-xs p-1 rounded hover:bg-blue-100 transition-colors"
+                                        title="수정"
+                                      >
+                                        ✏️
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          if (onNotesChange) {
+                                            onNotesChange(connection.id, "");
+                                          }
+                                        }}
+                                        className="text-red-600 hover:text-red-800 text-xs p-1 rounded hover:bg-red-100 transition-colors"
+                                        title="삭제"
+                                      >
+                                        🗑️
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="text-xs text-gray-700">
                                   {connectedItemsStatus[connection.id].notes}
@@ -713,11 +777,41 @@ export default function ChecklistItem({
                             )}
 
                             {/* 다섯째줄: 메모 정보 */}
-                            {connectedItemsStatus[connection.id]?.notes && (
+                            {connectedItemsStatus[connection.id]?.notes && !showMemoInputs?.[connection.id] && (
                               <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-2">
-                                <div className="flex items-center gap-1 mb-1">
-                                  <span className="text-xs text-blue-600">📝</span>
-                                  <span className="text-xs font-medium text-blue-700">메모</span>
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-blue-600">📝</span>
+                                    <span className="text-xs font-medium text-blue-700">메모</span>
+                                  </div>
+                                  {!isReadOnly && (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          toggleMemoInput?.(connection.id);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 text-xs p-1 rounded hover:bg-blue-100 transition-colors"
+                                        title="수정"
+                                      >
+                                        ✏️
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          if (onNotesChange) {
+                                            onNotesChange(connection.id, "");
+                                          }
+                                        }}
+                                        className="text-red-600 hover:text-red-800 text-xs p-1 rounded hover:bg-red-100 transition-colors"
+                                        title="삭제"
+                                      >
+                                        🗑️
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="text-xs text-gray-700">
                                   {connectedItemsStatus[connection.id].notes}
@@ -757,7 +851,11 @@ export default function ChecklistItem({
                           )}
                           {toggleMemoInput && (
                             <button
-                              onClick={() => toggleMemoInput(connection.id)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleMemoInput(connection.id);
+                              }}
                               className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
                             >
                               취소
@@ -771,7 +869,11 @@ export default function ChecklistItem({
                     {!connectedItemsStatus[connection.id]?.notes && !showMemoInputs?.[connection.id] && toggleMemoInput && (
                       <div className="flex justify-start">
                         <button
-                          onClick={() => toggleMemoInput(connection.id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleMemoInput(connection.id);
+                          }}
                           className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors"
                         >
                           <span>📝</span>
@@ -812,7 +914,11 @@ export default function ChecklistItem({
             )}
             {toggleMemoInput && (
               <button
-                onClick={() => toggleMemoInput(item.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMemoInput(item.id);
+                }}
                 className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
               >
                 취소
