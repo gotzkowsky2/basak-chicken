@@ -989,47 +989,29 @@ export default function ManualsPage() {
                   <div className="space-y-4">
                     {filteredManuals.map((manual) => (
                       <div key={manual.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                        <div className="flex flex-col gap-1">
-                          {/* 1줄: 제목 + 액션 */}
-                          <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-base sm:text-lg font-medium text-gray-900 truncate pr-2 min-w-0">{manual.title}</h3>
-                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                              <button
-                                onClick={() => handleEdit(manual)}
-                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
-                                title="수정"
-                              >
-                                <PencilIcon className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setDeleteId(manual.id)}
-                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
-                                title="삭제"
-                              >
-                                <TrashIcon className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* 2줄: 보조정보(버전/주의/미디어) */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              v{manual.version}
-                            </span>
-                            {manual.precautions && manual.precautions.length > 0 && (
-                              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                </svg>
-                                <span>{manual.precautions.length}</span>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <h3 className="text-lg font-medium text-gray-900 flex-1 min-w-0">{manual.title}</h3>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  v{manual.version}
+                                </span>
+                                {manual.precautions && manual.precautions.length > 0 && (
+                                  <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <span>{manual.precautions.length}</span>
+                                  </div>
+                                )}
+                                {manual.mediaUrls && manual.mediaUrls.length > 0 && (
+                                  <span className="inline-flex items-center text-gray-500">
+                                    {getFileIcon(manual.mediaUrls)}
+                                  </span>
+                                )}
                               </div>
-                            )}
-                            {manual.mediaUrls && manual.mediaUrls.length > 0 && (
-                              <span className="inline-flex items-center text-gray-500">
-                                {getFileIcon(manual.mediaUrls)}
-                              </span>
-                            )}
-                          </div>
+                            </div>
                             
                             <div className="text-gray-600 text-sm mb-3">
                               <p className="line-clamp-3 whitespace-pre-wrap">
@@ -1111,6 +1093,21 @@ export default function ManualsPage() {
                                 </div>
                               </div>
                             )}
+                          </div>
+                          
+                          <div className="flex space-x-2 ml-4">
+                            <button
+                              onClick={() => handleEdit(manual)}
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(manual.id)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
