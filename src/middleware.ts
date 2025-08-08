@@ -17,6 +17,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/employee/login") ||
     pathname.startsWith("/employee/forgot-password") ||
     pathname.startsWith("/employee/change-password") ||
+    pathname === "/employee" || // 직원 메인은 내부 리다이렉트로 처리
     pathname.startsWith("/admin/login") ||
     pathname === "/"
   ) {
@@ -39,14 +40,6 @@ export function middleware(request: NextRequest) {
 // 정적 파일과 API는 제외하고 인증이 필요한 페이지만 처리
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - files with extensions (images, css, js, etc.)
-     */
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
   ],
 }; 
