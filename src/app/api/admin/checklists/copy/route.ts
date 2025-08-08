@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
             children: {
               include: {
                 connectedItems: true,
-                // 더 깊은 트리가 필요하면 여기에 추가 include 계층을 늘릴 수 있습니다.
               },
             },
           },
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
           data: {
             templateId: newTemplate.id,
             parentId: parentNewId,
-            type: item.type,
+            type: item.type ?? 'check',
             content: item.content,
             instructions: item.instructions ?? null,
             order: item.order ?? 0,
