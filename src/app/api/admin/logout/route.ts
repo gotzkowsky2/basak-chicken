@@ -16,6 +16,14 @@ export async function POST(req: NextRequest) {
     headers.append("Set-Cookie", `${name}=; Path=/; Expires=${expires}; HttpOnly; SameSite=Lax`);
     headers.append("Set-Cookie", `${name}=; Path=/employee; Expires=${expires}; HttpOnly; SameSite=Lax`);
     headers.append("Set-Cookie", `${name}=; Path=/admin; Expires=${expires}; HttpOnly; SameSite=Lax`);
+
+    headers.append("Set-Cookie", `${name}=; Path=/; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
+    headers.append("Set-Cookie", `${name}=; Path=/employee; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
+    headers.append("Set-Cookie", `${name}=; Path=/admin; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
+
+    headers.append("Set-Cookie", `${name}=; Path=/; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
+    headers.append("Set-Cookie", `${name}=; Path=/employee; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
+    headers.append("Set-Cookie", `${name}=; Path=/admin; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
   }
 
   const domains = ["crew.basak-chicken.com", ".crew.basak-chicken.com"];
@@ -24,6 +32,14 @@ export async function POST(req: NextRequest) {
       headers.append("Set-Cookie", `${name}=; Path=/; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
       headers.append("Set-Cookie", `${name}=; Path=/employee; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
       headers.append("Set-Cookie", `${name}=; Path=/admin; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
+
+      headers.append("Set-Cookie", `${name}=; Path=/; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
+      headers.append("Set-Cookie", `${name}=; Path=/employee; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
+      headers.append("Set-Cookie", `${name}=; Path=/admin; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
+
+      headers.append("Set-Cookie", `${name}=; Path=/; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
+      headers.append("Set-Cookie", `${name}=; Path=/employee; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
+      headers.append("Set-Cookie", `${name}=; Path=/admin; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
     }
   }
 
