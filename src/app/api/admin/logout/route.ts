@@ -1,34 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 export const runtime = "nodejs"; // nodejs 런타임 강제
 
 export async function POST(req: NextRequest) {
-  const res = NextResponse.json({ message: "로그아웃 되었습니다." }, {
-    headers: {
-      "Cache-Control": "no-store",
-      "Clear-Site-Data": '"cookies"',
-    }
+  const headers = new Headers({
+    "Cache-Control": "no-store",
+    "Clear-Site-Data": '"cookies"',
+    "Content-Type": "application/json; charset=utf-8",
   });
 
-  const base = {
-    httpOnly: true,
-    maxAge: -1,
-    expires: new Date(0),
-    sameSite: 'lax' as const,
-    secure: false,
-  } as const;
-
-  const domains = [undefined, 'crew.basak-chicken.com', '.crew.basak-chicken.com'];
-  const paths = ['/', '/employee', '/admin'];
-  const names = ['employee_auth', 'admin_auth', 'superadmin_auth', 'temp_pw_auth'] as const;
+  const expires = "Thu, 01 Jan 1970 00:00:00 GMT";
+  const names = ["employee_auth", "admin_auth", "superadmin_auth", "temp_pw_auth"];
 
   for (const name of names) {
-    for (const p of paths) res.cookies.set(name, '', { ...base, path: p });
-    for (const d of domains) {
-      if (!d) continue;
-      for (const p of paths) res.cookies.set(name, '', { ...base, path: p, domain: d });
+    headers.append("Set-Cookie", `${name}=; Path=/; Expires=${expires}; HttpOnly; SameSite=Lax`);
+    headers.append("Set-Cookie", `${name}=; Path=/employee; Expires=${expires}; HttpOnly; SameSite=Lax`);
+    headers.append("Set-Cookie", `${name}=; Path=/admin; Expires=${expires}; HttpOnly; SameSite=Lax`);
+  }
+
+  const domains = ["crew.basak-chicken.com", ".crew.basak-chicken.com"];
+  for (const d of domains) {
+    for (const name of names) {
+      headers.append("Set-Cookie", `${name}=; Path=/; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
+      headers.append("Set-Cookie", `${name}=; Path=/employee; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
+      headers.append("Set-Cookie", `${name}=; Path=/admin; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
     }
   }
 
-  return res;
+  const body = JSON.stringify({ message: "로그아웃 되었습니다." });
+  return new Response(body, { status: 200, headers });
 } 
