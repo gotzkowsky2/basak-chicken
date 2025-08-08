@@ -327,43 +327,44 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 연결된 항목들의 진행 상태 업데이트
+    // 연결된 항목들의 진행 상태 업데이트 (존재 데이터 보존, 제공된 필드만 갱신)
     if (connectedItemsProgress && Array.isArray(connectedItemsProgress)) {
-      // 기존 연결된 항목 진행 상태 삭제
-      await prisma.connectedItemProgress.deleteMany({
-        where: {
-          instanceId: instance.id
+      for (const item of connectedItemsProgress) {
+        // 기존 레코드 조회 (instanceId + connectionId 조합)
+        const existing = await prisma.connectedItemProgress.findFirst({
+          where: { instanceId: instance.id, connectionId: item.connectionId }
+        });
+
+        const baseData: any = {
+          instanceId: instance.id,
+          itemId: item.itemId,
+          connectionId: item.connectionId,
+          isCompleted: !!item.isCompleted,
+          notes: item.notes ?? existing?.notes ?? ''
+        };
+
+        // 제공된 값만 덮어쓰기 (이전 수치 보존)
+        if (item.currentStock !== undefined && item.currentStock !== null) {
+          baseData.currentStock = item.currentStock;
         }
-      });
+        if (item.updatedStock !== undefined && item.updatedStock !== null) {
+          baseData.updatedStock = item.updatedStock;
+        }
+        if (item.completedBy !== undefined) {
+          baseData.completedBy = item.completedBy;
+        }
+        if (item.completedAt !== undefined) {
+          baseData.completedAt = item.completedAt ? new Date(item.completedAt) : null;
+        }
 
-      // 새로운 연결된 항목 진행 상태 생성
-      if (connectedItemsProgress.length > 0) {
-        const connectedItemsData = connectedItemsProgress.map((item: any) => {
-          const itemData: any = {
-            instanceId: instance.id,
-            itemId: item.itemId,
-            connectionId: item.connectionId,
-            currentStock: item.currentStock,
-            updatedStock: item.updatedStock,
-            isCompleted: item.isCompleted,
-            notes: item.notes
-          };
-          
-          if (item.completedBy !== undefined) {
-            itemData.completedBy = item.completedBy;
-          }
-          if (item.completedAt !== undefined) {
-            itemData.completedAt = item.completedAt ? new Date(item.completedAt) : null;
-          }
-          
-          return itemData;
-        });
-
-        console.log('연결된 항목 데이터:', connectedItemsData);
-        
-        await prisma.connectedItemProgress.createMany({
-          data: connectedItemsData
-        });
+        if (existing) {
+          await prisma.connectedItemProgress.update({
+            where: { id: existing.id },
+            data: baseData
+          });
+        } else {
+          await prisma.connectedItemProgress.create({ data: baseData });
+        }
       }
     }
 
