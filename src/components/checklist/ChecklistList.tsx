@@ -1,6 +1,7 @@
 "use client";
 import { memo, useMemo } from "react";
-import { FixedSizeList as VirtualList, ListChildComponentProps } from 'react-window';
+// @ts-ignore - types provided via custom d.ts
+import { FixedSizeList as VirtualList } from 'react-window';
 import { ChecklistTemplate } from "@/types/checklist";
 import StatusDisplay from "./StatusDisplay";
 
@@ -28,7 +29,7 @@ function ChecklistList({
   const pendingList = useMemo(() => checklists.filter(c => !c.isSubmitted), [checklists]);
   const useVirtual = pendingList.length > 30;
 
-  const Row = ({ index, style }: ListChildComponentProps) => {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const checklist = pendingList[index];
     const status = getChecklistStatus(checklist);
     return (
