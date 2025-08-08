@@ -1,9 +1,8 @@
 module.exports = {
   apps: [{
     name: 'basak-chicken-app',
-    script: '.next/standalone/server.js', // 실행 대상 파일
-    interpreter: 'node',                  // Node로 실행
-    args: '',
+    script: 'node_modules/.bin/next',
+    args: 'start -H 0.0.0.0 -p 3001',
     cwd: '/root/basak-chicken-app',
     instances: 1,
     exec_mode: 'cluster',

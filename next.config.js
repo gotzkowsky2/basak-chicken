@@ -19,8 +19,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // prerendering 완전 비활성화
-  output: 'standalone',
   trailingSlash: false,
   
   // CSS 최적화 설정 조정 (빌드 후 화면 깨짐 방지)
@@ -34,43 +32,28 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
       },
     ];
   },
   
   // 정적 파일 최적화
-  images: {
-    domains: [],
-  },
+  images: { domains: [] },
   
   // 서버 컴포넌트 외부 패키지
   serverExternalPackages: ['bcryptjs'],
   
-  // 빌드 시 특정 페이지 제외
-  async rewrites() {
-    return [];
-  },
+  async rewrites() { return []; },
   
   // 빌드 안정성 향상
   compress: true,
   
   // 웹팩 설정 (CSS 안정성)
   webpack: (config, { isServer }) => {
-    // CSS 처리 안정성 향상
     if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-      };
+      config.resolve.fallback = { ...config.resolve.fallback, fs: false };
     }
     return config;
   },
