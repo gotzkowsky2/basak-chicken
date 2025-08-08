@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -91,6 +91,8 @@ export default function ManualsPage() {
   const [precautionFilterTimeSlot, setPrecautionFilterTimeSlot] = useState('ALL');
   const [precautionFilterTags, setPrecautionFilterTags] = useState<string[]>([]);
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const formRef = useRef<HTMLDivElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
   
   // 주의사항 수정 모달 상태
   const [showEditPrecautionModal, setShowEditPrecautionModal] = useState(false);
@@ -358,6 +360,16 @@ export default function ManualsPage() {
     // 디버깅을 위한 로그
     console.log('편집할 매뉴얼의 주의사항:', manual.precautions);
     console.log('선택된 주의사항 IDs:', manual.precautions?.map(p => p.id) || []);
+
+    // 모바일: 편집 클릭 시 폼으로 자동 스크롤 및 포커스
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        try {
+          (titleInputRef.current as any)?.focus?.({ preventScroll: true });
+        } catch {}
+      }, 200);
+    });
   };
 
   // 편집 취소
@@ -1050,11 +1062,11 @@ export default function ManualsPage() {
                               <span>{getTimeSlotLabel(manual.timeSlot)}</span>
                               <span>{getCategoryLabel(manual.category)}</span>
                               <span>{new Date(manual.createdAt).toLocaleDateString()}</span>
-                              {manual.precautions && manual.precautions.length > 0 && (
-                                <span className="text-orange-600">
-                                  ⚠️ {manual.precautions.length}개 주의사항
-                                </span>
-                              )}
+                            {manual.precautions && manual.precautions.length > 0 && (
+                              <span className="text-orange-600 hidden sm:inline">
+                                ⚠️ {manual.precautions.length}개 주의사항
+                              </span>
+                            )}
                             </div>
                             
                             {/* 연결된 주의사항 표시 */}

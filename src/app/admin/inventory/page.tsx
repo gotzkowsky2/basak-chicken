@@ -331,6 +331,11 @@ export default function InventoryPage() {
     });
     // 모바일에서 편집 모드일 때 폼 펼치기
     setIsFormCollapsed(false);
+    // 폼 상단으로 스크롤
+    const el = document.getElementById('inventory-form-top');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   // 편집 취소
@@ -534,7 +539,7 @@ export default function InventoryPage() {
         {/* 모바일: 세로 배치, 데스크톱: 가로 배치 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 재고 아이템 생성/수정 폼 */}
-          <div className="lg:col-span-1 order-1 lg:order-1">
+          <div className="lg:col-span-1 order-1 lg:order-1" id="inventory-form-top">
             <div className="bg-white rounded-lg shadow">
               {/* 모바일에서 접기/펼치기 헤더 */}
               <div className="lg:hidden p-4 border-b border-gray-200">
@@ -975,9 +980,9 @@ export default function InventoryPage() {
                                   <span className="text-lg font-bold text-blue-600">
                                     {item.checks[0]?.currentStock || 0} {item.unit}
                                   </span>
-                                  <span className="text-xs text-gray-500">
-                                    ({item.checks[0]?.employee?.name || '알 수 없음'} • {new Date(item.lastUpdated).toLocaleDateString('ko-KR')})
-                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-500 mb-1">
+                                  {item.checks[0]?.employee?.name || '알 수 없음'} • {new Date(item.lastUpdated).toLocaleDateString('ko-KR')}
                                 </div>
                                 
                                 {/* 이전 기록 - 접기/펼치기 */}
