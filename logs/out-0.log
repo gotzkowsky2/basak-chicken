@@ -4158,3 +4158,27 @@
 2025-08-08 15:48:54 +00:00: Middleware processing: /admin/manuals
 2025-08-08 15:48:55 +00:00: Middleware processing: /admin
 2025-08-08 15:48:56 +00:00: Middleware processing: /employee
+2025-08-08 15:51:41 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:51:42 +00:00: Middleware processing: /admin
+2025-08-08 15:51:42 +00:00: Middleware processing: /employee
+2025-08-08 15:51:46 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:51:47 +00:00: Middleware processing: /admin
+2025-08-08 15:51:47 +00:00: Middleware processing: /employee
+2025-08-08 15:52:09 +00:00:    ▲ Next.js 15.3.5
+2025-08-08 15:52:09 +00:00:    - Local:        http://localhost:3001
+2025-08-08 15:52:09 +00:00:    - Network:      http://0.0.0.0:3001
+2025-08-08 15:52:09 +00:00: 
+2025-08-08 15:52:09 +00:00:  ✓ Starting...
+2025-08-08 15:52:09 +00:00:  ✓ Ready in 280ms
+2025-08-08 15:52:10 +00:00: DEBUG DATABASE_URL: postgresql://basak_user:Sewon2002@localhost:5432/basak_chicken_db?sslmode=disable
+2025-08-08 15:52:11 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:52:29 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:52:30 +00:00: Middleware processing: /admin
+2025-08-08 15:52:30 +00:00: Middleware processing: /employee
+2025-08-08 15:52:35 +00:00: Middleware processing: /admin/employees
+2025-08-08 15:52:35 +00:00: Middleware processing: /admin/checklists
+2025-08-08 15:52:35 +00:00: Middleware processing: /admin/dev-checklist-generator
+2025-08-08 15:52:35 +00:00: Middleware processing: /admin/precautions
+2025-08-08 15:52:35 +00:00: Middleware processing: /admin/inventory
+2025-08-08 15:52:35 +00:00: Middleware processing: /admin/tags
+2025-08-08 15:52:35 +00:00: Middleware processing: /admin/submissions

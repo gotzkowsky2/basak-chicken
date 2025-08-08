@@ -624,7 +624,7 @@ export default function ManualsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 메뉴얼 생성/수정 폼 */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6" ref={formRef}>
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 {editingId ? '메뉴얼 수정' : '새 메뉴얼 생성'}
               </h2>
@@ -638,6 +638,7 @@ export default function ManualsPage() {
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    ref={titleInputRef}
                     className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
                     required
                   />
