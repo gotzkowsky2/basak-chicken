@@ -5016,3 +5016,1497 @@
 2025-08-08 15:56:16 +00:00: Middleware processing: /admin/manuals
 2025-08-08 15:56:18 +00:00: Middleware processing: /admin
 2025-08-08 15:56:18 +00:00: Middleware processing: /employee
+2025-08-08 16:01:10 +00:00:    ▲ Next.js 15.3.5
+2025-08-08 16:01:10 +00:00:    - Local:        http://localhost:3001
+2025-08-08 16:01:10 +00:00:    - Network:      http://0.0.0.0:3001
+2025-08-08 16:01:10 +00:00: 
+2025-08-08 16:01:10 +00:00:  ✓ Starting...
+2025-08-08 16:01:10 +00:00:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2025-08-08 16:01:10 +00:00:  ✓ Ready in 285ms
+2025-08-08 16:01:10 +00:00: DEBUG DATABASE_URL: postgresql://basak_user:Sewon2002@localhost:5432/basak_chicken_db?sslmode=disable
+2025-08-08 16:01:11 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:02:50 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:02:50 +00:00: === API 응답 데이터 ===
+2025-08-08 16:02:50 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:02:50 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:02:50 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:02:51 +00:00: Middleware processing: /employee
+2025-08-08 16:02:51 +00:00: Middleware processing: /admin
+2025-08-08 16:02:51 +00:00: === API 응답 데이터 ===
+2025-08-08 16:02:51 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:02:51 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:02:51 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:04 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:03:05 +00:00: === API 응답 데이터 ===
+2025-08-08 16:03:05 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:03:05 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:05 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:05 +00:00: Middleware processing: /employee
+2025-08-08 16:03:05 +00:00: Middleware processing: /admin
+2025-08-08 16:03:05 +00:00: === API 응답 데이터 ===
+2025-08-08 16:03:05 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:03:05 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:05 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:38 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:03:39 +00:00: Middleware processing: /employee
+2025-08-08 16:03:39 +00:00: === API 응답 데이터 ===
+2025-08-08 16:03:39 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:03:39 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:39 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:39 +00:00: Middleware processing: /admin
+2025-08-08 16:03:39 +00:00: === API 응답 데이터 ===
+2025-08-08 16:03:39 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:03:39 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:39 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:43 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:03:44 +00:00: === 체크리스트 진행 상태 저장 시작 ===
+2025-08-08 16:03:44 +00:00: 요청 URL: https://0.0.0.0:3001/api/employee/checklist-progress
+2025-08-08 16:03:44 +00:00: 요청 메서드: POST
+2025-08-08 16:03:44 +00:00: 인증된 직원: {
+  id: 'cmdsu69xq0031u2rupekcg9ug',
+  employeeId: 'gotzkowsky2',
+  password: '$2b$10$NU8x3QyzrDbSRLps9z.H9uF0xoINbeg7nVu2KwGUVMXY5KK53pS5O',
+  name: '배재범',
+  email: 'baejaebum@gmail.com',
+  phone: '',
+  department: '유동적',
+  position: '유동적',
+  isActive: true,
+  createdAt: 2025-08-01T13:05:14.703Z,
+  updatedAt: 2025-08-01T13:06:09.230Z,
+  isSuperAdmin: true,
+  isTempPassword: false,
+  address: null
+}
+2025-08-08 16:03:44 +00:00: 요청 본문: {
+  "templateId": "cmdyhd1ew000uu24nwie9yh5z",
+  "isCompleted": false,
+  "notes": "",
+  "connectedItemsProgress": [
+    {
+      "connectionId": "cmdyhe2f10012u24n1uv3k7rf",
+      "itemId": "cmdsuob4f0002u2m7p8wpqu5m",
+      "updatedStock": 20,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T11:47:22.172Z"
+    },
+    {
+      "connectionId": "cmdyhe2f10013u24nfp9nnqyg",
+      "itemId": "cmdsuob4i0004u2m7095ncorn",
+      "updatedStock": 21,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T11:06:18.158Z"
+    },
+    {
+      "connectionId": "cmdyhe2f10014u24nswt7hrsx",
+      "itemId": "cmdsuob4i0005u2m7azhuz1ub",
+      "updatedStock": 16,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T10:02:14.215Z"
+    },
+    {
+      "connectionId": "cmdyhe2f10015u24nb3kf1763",
+      "itemId": "cmdsuob4i0006u2m79aqk6bly",
+      "updatedStock": 680,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T10:02:22.904Z"
+    },
+    {
+      "connectionId": "cmdyhefe00019u24n18mpwhde",
+      "itemId": "cmdsupxq60007u2w969dqlmq7",
+      "updatedStock": null,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T12:15:12.975Z"
+    },
+    {
+      "connectionId": "cmdyhefe0001au24nvuaw4nrb",
+      "itemId": "cmdyhefe0001au24nvuaw4nrb",
+      "updatedStock": null,
+      "isCompleted": false,
+      "notes": "",
+      "completedBy": null,
+      "completedAt": null
+    }
+  ],
+  "checklistItemsProgress": [
+    {
+      "itemId": "cmdyhdfio000wu24nfphtz55k",
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T16:03:42.306Z"
+    },
+    {
+      "itemId": "cmdyhdiwt000yu24nf318u3m0",
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T11:47:22.172Z"
+    }
+  ],
+  "completedBy": "배재범",
+  "completedAt": null
+}
+2025-08-08 16:03:44 +00:00: === POST 요청 데이터 ===
+2025-08-08 16:03:44 +00:00: templateId: cmdyhd1ew000uu24nwie9yh5z
+2025-08-08 16:03:44 +00:00: isCompleted: false
+2025-08-08 16:03:44 +00:00: connectedItemsProgress: [
+  {
+    connectionId: 'cmdyhe2f10012u24n1uv3k7rf',
+    itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+    updatedStock: 20,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T11:47:22.172Z'
+  },
+  {
+    connectionId: 'cmdyhe2f10013u24nfp9nnqyg',
+    itemId: 'cmdsuob4i0004u2m7095ncorn',
+    updatedStock: 21,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T11:06:18.158Z'
+  },
+  {
+    connectionId: 'cmdyhe2f10014u24nswt7hrsx',
+    itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+    updatedStock: 16,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T10:02:14.215Z'
+  },
+  {
+    connectionId: 'cmdyhe2f10015u24nb3kf1763',
+    itemId: 'cmdsuob4i0006u2m79aqk6bly',
+    updatedStock: 680,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T10:02:22.904Z'
+  },
+  {
+    connectionId: 'cmdyhefe00019u24n18mpwhde',
+    itemId: 'cmdsupxq60007u2w969dqlmq7',
+    updatedStock: null,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T12:15:12.975Z'
+  },
+  {
+    connectionId: 'cmdyhefe0001au24nvuaw4nrb',
+    itemId: 'cmdyhefe0001au24nvuaw4nrb',
+    updatedStock: null,
+    isCompleted: false,
+    notes: '',
+    completedBy: null,
+    completedAt: null
+  }
+]
+2025-08-08 16:03:44 +00:00: 템플릿 정보: {
+  id: 'cmdyhd1ew000uu24nwie9yh5z',
+  name: '테스트체크리스트',
+  workplace: 'HALL',
+  timeSlot: 'CLOSING',
+  category: 'CHECKLIST'
+}
+2025-08-08 16:03:44 +00:00: 기존 인스턴스: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  employeeId: 'cmdsu69xq0031u2rupekcg9ug',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  date: 2025-08-08T00:00:00.000Z,
+  workplace: 'HALL',
+  timeSlot: 'CLOSING',
+  isCompleted: false,
+  isSubmitted: false,
+  submittedAt: null,
+  isReopened: false,
+  reopenedAt: null,
+  reopenedBy: null,
+  reopenReason: null,
+  notes: '',
+  createdAt: 2025-08-08T09:52:08.729Z,
+  updatedAt: 2025-08-08T12:46:18.698Z,
+  completedAt: null,
+  completedBy: null,
+  itemProgress: null,
+  connectedItemsProgress: [
+    {
+      id: 'cme2tkw260008u2ijwfdohx64',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+      currentStock: null,
+      updatedStock: 20,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T12:46:18.702Z,
+      updatedAt: 2025-08-08T12:46:18.702Z,
+      completedAt: 2025-08-08T11:47:22.172Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10012u24n1uv3k7rf'
+    },
+    {
+      id: 'cme2tkw260009u2ijidr6rzr0',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0004u2m7095ncorn',
+      currentStock: null,
+      updatedStock: 21,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T12:46:18.702Z,
+      updatedAt: 2025-08-08T12:46:18.702Z,
+      completedAt: 2025-08-08T11:06:18.158Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10013u24nfp9nnqyg'
+    },
+    {
+      id: 'cme2tkw26000au2ijxyssi0lg',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+      currentStock: null,
+      updatedStock: 16,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T12:46:18.702Z,
+      updatedAt: 2025-08-08T12:46:18.702Z,
+      completedAt: 2025-08-08T10:02:14.215Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10014u24nswt7hrsx'
+    },
+    {
+      id: 'cme2tkw26000bu2ijyi96j8qe',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0006u2m79aqk6bly',
+      currentStock: null,
+      updatedStock: 680,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T12:46:18.702Z,
+      updatedAt: 2025-08-08T12:46:18.702Z,
+      completedAt: 2025-08-08T10:02:22.904Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10015u24nb3kf1763'
+    },
+    {
+      id: 'cme2tkw26000cu2ijawkf00ym',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsupxq60007u2w969dqlmq7',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T12:46:18.702Z,
+      updatedAt: 2025-08-08T12:46:18.702Z,
+      completedAt: 2025-08-08T12:15:12.975Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhefe00019u24n18mpwhde'
+    },
+    {
+      id: 'cme2tkw26000du2ijqy19rlbx',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhefe0001au24nvuaw4nrb',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: false,
+      notes: '',
+      createdAt: 2025-08-08T12:46:18.702Z,
+      updatedAt: 2025-08-08T12:46:18.702Z,
+      completedAt: null,
+      completedBy: null,
+      connectionId: 'cmdyhefe0001au24nvuaw4nrb'
+    }
+  ]
+}
+2025-08-08 16:03:44 +00:00: 연결된 항목 데이터: [
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+    connectionId: 'cmdyhe2f10012u24n1uv3k7rf',
+    currentStock: undefined,
+    updatedStock: 20,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T11:47:22.172Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4i0004u2m7095ncorn',
+    connectionId: 'cmdyhe2f10013u24nfp9nnqyg',
+    currentStock: undefined,
+    updatedStock: 21,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T11:06:18.158Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+    connectionId: 'cmdyhe2f10014u24nswt7hrsx',
+    currentStock: undefined,
+    updatedStock: 16,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T10:02:14.215Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4i0006u2m79aqk6bly',
+    connectionId: 'cmdyhe2f10015u24nb3kf1763',
+    currentStock: undefined,
+    updatedStock: 680,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T10:02:22.904Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsupxq60007u2w969dqlmq7',
+    connectionId: 'cmdyhefe00019u24n18mpwhde',
+    currentStock: undefined,
+    updatedStock: null,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T12:15:12.975Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdyhefe0001au24nvuaw4nrb',
+    connectionId: 'cmdyhefe0001au24nvuaw4nrb',
+    currentStock: undefined,
+    updatedStock: null,
+    isCompleted: false,
+    notes: '',
+    completedBy: null,
+    completedAt: null
+  }
+]
+2025-08-08 16:03:44 +00:00: 개별 항목 데이터: [
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdyhdfio000wu24nfphtz55k',
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T16:03:42.306Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdyhdiwt000yu24nf318u3m0',
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T11:47:22.172Z
+  }
+]
+2025-08-08 16:03:44 +00:00: 업데이트된 인스턴스: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  employeeId: 'cmdsu69xq0031u2rupekcg9ug',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  date: 2025-08-08T00:00:00.000Z,
+  workplace: 'HALL',
+  timeSlot: 'CLOSING',
+  isCompleted: false,
+  isSubmitted: false,
+  submittedAt: null,
+  isReopened: false,
+  reopenedAt: null,
+  reopenedBy: null,
+  reopenReason: null,
+  notes: '',
+  createdAt: 2025-08-08T09:52:08.729Z,
+  updatedAt: 2025-08-08T16:03:44.563Z,
+  completedAt: null,
+  completedBy: null,
+  itemProgress: null,
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    content: '',
+    inputter: '배재범',
+    inputDate: 2025-08-05T11:53:12.296Z,
+    workplace: 'HALL',
+    category: 'CHECKLIST',
+    timeSlot: 'CLOSING',
+    isActive: true,
+    createdAt: 2025-08-05T11:53:12.296Z,
+    updatedAt: 2025-08-05T11:53:12.296Z,
+    name: '테스트체크리스트',
+    items: [ [Object], [Object], [Object] ]
+  },
+  connectedItemsProgress: [
+    {
+      id: 'cme30mse30000u22bixit24kx',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+      currentStock: null,
+      updatedStock: 20,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T11:47:22.172Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10012u24n1uv3k7rf'
+    },
+    {
+      id: 'cme30mse40001u22b4wq3aa0n',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0004u2m7095ncorn',
+      currentStock: null,
+      updatedStock: 21,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T11:06:18.158Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10013u24nfp9nnqyg'
+    },
+    {
+      id: 'cme30mse40002u22ba862s0g5',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+      currentStock: null,
+      updatedStock: 16,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T10:02:14.215Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10014u24nswt7hrsx'
+    },
+    {
+      id: 'cme30mse40003u22by51qqzm6',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0006u2m79aqk6bly',
+      currentStock: null,
+      updatedStock: 680,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T10:02:22.904Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10015u24nb3kf1763'
+    },
+    {
+      id: 'cme30mse40004u22bk5y1ynxz',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsupxq60007u2w969dqlmq7',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T12:15:12.975Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhefe00019u24n18mpwhde'
+    },
+    {
+      id: 'cme30mse40005u22bd1gw62wv',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhefe0001au24nvuaw4nrb',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: false,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: null,
+      completedBy: null,
+      connectionId: 'cmdyhefe0001au24nvuaw4nrb'
+    }
+  ],
+  checklistItemProgresses: [
+    {
+      id: 'cme30mse90006u22bwabv13dj',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhdfio000wu24nfphtz55k',
+      isCompleted: true,
+      completedBy: '배재범',
+      completedAt: 2025-08-08T16:03:42.306Z,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.578Z,
+      updatedAt: 2025-08-08T16:03:44.578Z
+    },
+    {
+      id: 'cme30mse90007u22b21gk1zx6',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhdiwt000yu24nf318u3m0',
+      isCompleted: true,
+      completedBy: '배재범',
+      completedAt: 2025-08-08T11:47:22.172Z,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.578Z,
+      updatedAt: 2025-08-08T16:03:44.578Z
+    }
+  ]
+}
+2025-08-08 16:03:44 +00:00: 이메일 발송 조건 불충족:
+2025-08-08 16:03:44 +00:00: sendEmail: undefined
+2025-08-08 16:03:44 +00:00: checklistItemsProgress 존재: true
+2025-08-08 16:03:49 +00:00: === 체크리스트 진행 상태 저장 시작 ===
+2025-08-08 16:03:49 +00:00: 요청 URL: https://0.0.0.0:3001/api/employee/checklist-progress
+2025-08-08 16:03:49 +00:00: 요청 메서드: POST
+2025-08-08 16:03:49 +00:00: 인증된 직원: {
+  id: 'cmdsu69xq0031u2rupekcg9ug',
+  employeeId: 'gotzkowsky2',
+  password: '$2b$10$NU8x3QyzrDbSRLps9z.H9uF0xoINbeg7nVu2KwGUVMXY5KK53pS5O',
+  name: '배재범',
+  email: 'baejaebum@gmail.com',
+  phone: '',
+  department: '유동적',
+  position: '유동적',
+  isActive: true,
+  createdAt: 2025-08-01T13:05:14.703Z,
+  updatedAt: 2025-08-01T13:06:09.230Z,
+  isSuperAdmin: true,
+  isTempPassword: false,
+  address: null
+}
+2025-08-08 16:03:49 +00:00: 요청 본문: {
+  "templateId": "cmdyhd1ew000uu24nwie9yh5z",
+  "isCompleted": true,
+  "notes": "",
+  "connectedItemsProgress": [
+    {
+      "connectionId": "cmdyhe2f10012u24n1uv3k7rf",
+      "itemId": "cmdsuob4f0002u2m7p8wpqu5m",
+      "updatedStock": 20,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T11:47:22.172Z"
+    },
+    {
+      "connectionId": "cmdyhe2f10013u24nfp9nnqyg",
+      "itemId": "cmdsuob4i0004u2m7095ncorn",
+      "updatedStock": 21,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T11:06:18.158Z"
+    },
+    {
+      "connectionId": "cmdyhe2f10014u24nswt7hrsx",
+      "itemId": "cmdsuob4i0005u2m7azhuz1ub",
+      "updatedStock": 16,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T10:02:14.215Z"
+    },
+    {
+      "connectionId": "cmdyhe2f10015u24nb3kf1763",
+      "itemId": "cmdsuob4i0006u2m79aqk6bly",
+      "updatedStock": 680,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T10:02:22.904Z"
+    },
+    {
+      "connectionId": "cmdyhefe00019u24n18mpwhde",
+      "itemId": "cmdsupxq60007u2w969dqlmq7",
+      "updatedStock": null,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T12:15:12.975Z"
+    },
+    {
+      "connectionId": "cmdyhefe0001au24nvuaw4nrb",
+      "itemId": "cmdyhefe0001au24nvuaw4nrb",
+      "updatedStock": null,
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T16:03:47.445Z"
+    }
+  ],
+  "checklistItemsProgress": [
+    {
+      "itemId": "cmdyhdfio000wu24nfphtz55k",
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T16:03:42.306Z"
+    },
+    {
+      "itemId": "cmdyhdiwt000yu24nf318u3m0",
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T11:47:22.172Z"
+    },
+    {
+      "itemId": "cmdyhdn7h0010u24nvscmtxg8",
+      "isCompleted": true,
+      "notes": "",
+      "completedBy": "배재범",
+      "completedAt": "2025-08-08T16:03:47.445Z"
+    }
+  ],
+  "completedBy": "배재범",
+  "completedAt": "2025-08-08T16:03:47.449Z"
+}
+2025-08-08 16:03:49 +00:00: === POST 요청 데이터 ===
+2025-08-08 16:03:49 +00:00: templateId: cmdyhd1ew000uu24nwie9yh5z
+2025-08-08 16:03:49 +00:00: isCompleted: true
+2025-08-08 16:03:49 +00:00: connectedItemsProgress: [
+  {
+    connectionId: 'cmdyhe2f10012u24n1uv3k7rf',
+    itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+    updatedStock: 20,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T11:47:22.172Z'
+  },
+  {
+    connectionId: 'cmdyhe2f10013u24nfp9nnqyg',
+    itemId: 'cmdsuob4i0004u2m7095ncorn',
+    updatedStock: 21,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T11:06:18.158Z'
+  },
+  {
+    connectionId: 'cmdyhe2f10014u24nswt7hrsx',
+    itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+    updatedStock: 16,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T10:02:14.215Z'
+  },
+  {
+    connectionId: 'cmdyhe2f10015u24nb3kf1763',
+    itemId: 'cmdsuob4i0006u2m79aqk6bly',
+    updatedStock: 680,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T10:02:22.904Z'
+  },
+  {
+    connectionId: 'cmdyhefe00019u24n18mpwhde',
+    itemId: 'cmdsupxq60007u2w969dqlmq7',
+    updatedStock: null,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T12:15:12.975Z'
+  },
+  {
+    connectionId: 'cmdyhefe0001au24nvuaw4nrb',
+    itemId: 'cmdyhefe0001au24nvuaw4nrb',
+    updatedStock: null,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: '2025-08-08T16:03:47.445Z'
+  }
+]
+2025-08-08 16:03:49 +00:00: 템플릿 정보: {
+  id: 'cmdyhd1ew000uu24nwie9yh5z',
+  name: '테스트체크리스트',
+  workplace: 'HALL',
+  timeSlot: 'CLOSING',
+  category: 'CHECKLIST'
+}
+2025-08-08 16:03:49 +00:00: 기존 인스턴스: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  employeeId: 'cmdsu69xq0031u2rupekcg9ug',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  date: 2025-08-08T00:00:00.000Z,
+  workplace: 'HALL',
+  timeSlot: 'CLOSING',
+  isCompleted: false,
+  isSubmitted: false,
+  submittedAt: null,
+  isReopened: false,
+  reopenedAt: null,
+  reopenedBy: null,
+  reopenReason: null,
+  notes: '',
+  createdAt: 2025-08-08T09:52:08.729Z,
+  updatedAt: 2025-08-08T16:03:44.563Z,
+  completedAt: null,
+  completedBy: null,
+  itemProgress: null,
+  connectedItemsProgress: [
+    {
+      id: 'cme30mse30000u22bixit24kx',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+      currentStock: null,
+      updatedStock: 20,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T11:47:22.172Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10012u24n1uv3k7rf'
+    },
+    {
+      id: 'cme30mse40001u22b4wq3aa0n',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0004u2m7095ncorn',
+      currentStock: null,
+      updatedStock: 21,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T11:06:18.158Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10013u24nfp9nnqyg'
+    },
+    {
+      id: 'cme30mse40002u22ba862s0g5',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+      currentStock: null,
+      updatedStock: 16,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T10:02:14.215Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10014u24nswt7hrsx'
+    },
+    {
+      id: 'cme30mse40003u22by51qqzm6',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0006u2m79aqk6bly',
+      currentStock: null,
+      updatedStock: 680,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T10:02:22.904Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10015u24nb3kf1763'
+    },
+    {
+      id: 'cme30mse40004u22bk5y1ynxz',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsupxq60007u2w969dqlmq7',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: 2025-08-08T12:15:12.975Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhefe00019u24n18mpwhde'
+    },
+    {
+      id: 'cme30mse40005u22bd1gw62wv',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhefe0001au24nvuaw4nrb',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: false,
+      notes: '',
+      createdAt: 2025-08-08T16:03:44.572Z,
+      updatedAt: 2025-08-08T16:03:44.572Z,
+      completedAt: null,
+      completedBy: null,
+      connectionId: 'cmdyhefe0001au24nvuaw4nrb'
+    }
+  ]
+}
+2025-08-08 16:03:49 +00:00: 연결된 항목 데이터: [
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+    connectionId: 'cmdyhe2f10012u24n1uv3k7rf',
+    currentStock: undefined,
+    updatedStock: 20,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T11:47:22.172Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4i0004u2m7095ncorn',
+    connectionId: 'cmdyhe2f10013u24nfp9nnqyg',
+    currentStock: undefined,
+    updatedStock: 21,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T11:06:18.158Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+    connectionId: 'cmdyhe2f10014u24nswt7hrsx',
+    currentStock: undefined,
+    updatedStock: 16,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T10:02:14.215Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsuob4i0006u2m79aqk6bly',
+    connectionId: 'cmdyhe2f10015u24nb3kf1763',
+    currentStock: undefined,
+    updatedStock: 680,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T10:02:22.904Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdsupxq60007u2w969dqlmq7',
+    connectionId: 'cmdyhefe00019u24n18mpwhde',
+    currentStock: undefined,
+    updatedStock: null,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T12:15:12.975Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdyhefe0001au24nvuaw4nrb',
+    connectionId: 'cmdyhefe0001au24nvuaw4nrb',
+    currentStock: undefined,
+    updatedStock: null,
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T16:03:47.445Z
+  }
+]
+2025-08-08 16:03:49 +00:00: 개별 항목 데이터: [
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdyhdfio000wu24nfphtz55k',
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T16:03:42.306Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdyhdiwt000yu24nf318u3m0',
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T11:47:22.172Z
+  },
+  {
+    instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+    itemId: 'cmdyhdn7h0010u24nvscmtxg8',
+    isCompleted: true,
+    notes: '',
+    completedBy: '배재범',
+    completedAt: 2025-08-08T16:03:47.445Z
+  }
+]
+2025-08-08 16:03:49 +00:00: 업데이트된 인스턴스: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  employeeId: 'cmdsu69xq0031u2rupekcg9ug',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  date: 2025-08-08T00:00:00.000Z,
+  workplace: 'HALL',
+  timeSlot: 'CLOSING',
+  isCompleted: true,
+  isSubmitted: false,
+  submittedAt: null,
+  isReopened: false,
+  reopenedAt: null,
+  reopenedBy: null,
+  reopenReason: null,
+  notes: '',
+  createdAt: 2025-08-08T09:52:08.729Z,
+  updatedAt: 2025-08-08T16:03:49.700Z,
+  completedAt: null,
+  completedBy: null,
+  itemProgress: null,
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    content: '',
+    inputter: '배재범',
+    inputDate: 2025-08-05T11:53:12.296Z,
+    workplace: 'HALL',
+    category: 'CHECKLIST',
+    timeSlot: 'CLOSING',
+    isActive: true,
+    createdAt: 2025-08-05T11:53:12.296Z,
+    updatedAt: 2025-08-05T11:53:12.296Z,
+    name: '테스트체크리스트',
+    items: [ [Object], [Object], [Object] ]
+  },
+  connectedItemsProgress: [
+    {
+      id: 'cme30mwcr0008u22b8quu7gts',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4f0002u2m7p8wpqu5m',
+      currentStock: null,
+      updatedStock: 20,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.707Z,
+      updatedAt: 2025-08-08T16:03:49.707Z,
+      completedAt: 2025-08-08T11:47:22.172Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10012u24n1uv3k7rf'
+    },
+    {
+      id: 'cme30mwcr0009u22bn8o8bk51',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0004u2m7095ncorn',
+      currentStock: null,
+      updatedStock: 21,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.707Z,
+      updatedAt: 2025-08-08T16:03:49.707Z,
+      completedAt: 2025-08-08T11:06:18.158Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10013u24nfp9nnqyg'
+    },
+    {
+      id: 'cme30mwcr000au22be76yl8jb',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0005u2m7azhuz1ub',
+      currentStock: null,
+      updatedStock: 16,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.707Z,
+      updatedAt: 2025-08-08T16:03:49.707Z,
+      completedAt: 2025-08-08T10:02:14.215Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10014u24nswt7hrsx'
+    },
+    {
+      id: 'cme30mwcr000bu22bmin6petr',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsuob4i0006u2m79aqk6bly',
+      currentStock: null,
+      updatedStock: 680,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.707Z,
+      updatedAt: 2025-08-08T16:03:49.707Z,
+      completedAt: 2025-08-08T10:02:22.904Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhe2f10015u24nb3kf1763'
+    },
+    {
+      id: 'cme30mwcr000cu22be655daj6',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdsupxq60007u2w969dqlmq7',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.707Z,
+      updatedAt: 2025-08-08T16:03:49.707Z,
+      completedAt: 2025-08-08T12:15:12.975Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhefe00019u24n18mpwhde'
+    },
+    {
+      id: 'cme30mwcr000du22btojcg5j3',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhefe0001au24nvuaw4nrb',
+      currentStock: null,
+      updatedStock: null,
+      isCompleted: true,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.707Z,
+      updatedAt: 2025-08-08T16:03:49.707Z,
+      completedAt: 2025-08-08T16:03:47.445Z,
+      completedBy: '배재범',
+      connectionId: 'cmdyhefe0001au24nvuaw4nrb'
+    }
+  ],
+  checklistItemProgresses: [
+    {
+      id: 'cme30mwcv000eu22bc94ffsxd',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhdfio000wu24nfphtz55k',
+      isCompleted: true,
+      completedBy: '배재범',
+      completedAt: 2025-08-08T16:03:42.306Z,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.711Z,
+      updatedAt: 2025-08-08T16:03:49.711Z
+    },
+    {
+      id: 'cme30mwcv000fu22b4von35k6',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhdiwt000yu24nf318u3m0',
+      isCompleted: true,
+      completedBy: '배재범',
+      completedAt: 2025-08-08T11:47:22.172Z,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.711Z,
+      updatedAt: 2025-08-08T16:03:49.711Z
+    },
+    {
+      id: 'cme30mwcv000gu22b7fn48l4y',
+      instanceId: 'cme2ncwt40001u2n0d3hfmuld',
+      itemId: 'cmdyhdn7h0010u24nvscmtxg8',
+      isCompleted: true,
+      completedBy: '배재범',
+      completedAt: 2025-08-08T16:03:47.445Z,
+      notes: '',
+      createdAt: 2025-08-08T16:03:49.711Z,
+      updatedAt: 2025-08-08T16:03:49.711Z
+    }
+  ]
+}
+2025-08-08 16:03:49 +00:00: 이메일 발송 조건 불충족:
+2025-08-08 16:03:49 +00:00: sendEmail: undefined
+2025-08-08 16:03:49 +00:00: checklistItemsProgress 존재: true
+2025-08-08 16:03:49 +00:00: === API 응답 데이터 ===
+2025-08-08 16:03:49 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:03:49 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:49 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:56 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:03:57 +00:00: === API 응답 데이터 ===
+2025-08-08 16:03:57 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:03:57 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:57 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:57 +00:00: Middleware processing: /employee
+2025-08-08 16:03:57 +00:00: Middleware processing: /admin
+2025-08-08 16:03:57 +00:00: === API 응답 데이터 ===
+2025-08-08 16:03:57 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:03:57 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:03:57 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:00 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:04:03 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:04:04 +00:00: === API 응답 데이터 ===
+2025-08-08 16:04:04 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:04:04 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:04 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:04 +00:00: Middleware processing: /employee
+2025-08-08 16:04:04 +00:00: Middleware processing: /admin
+2025-08-08 16:04:04 +00:00: === API 응답 데이터 ===
+2025-08-08 16:04:04 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:04:04 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:04 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:12 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:04:13 +00:00: === API 응답 데이터 ===
+2025-08-08 16:04:13 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:04:13 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:13 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:13 +00:00: Middleware processing: /employee
+2025-08-08 16:04:13 +00:00: Middleware processing: /admin
+2025-08-08 16:04:13 +00:00: === API 응답 데이터 ===
+2025-08-08 16:04:13 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:04:13 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:04:13 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:05:54 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:05:56 +00:00: === API 응답 데이터 ===
+2025-08-08 16:05:56 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:05:56 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:05:56 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:05:56 +00:00: Middleware processing: /employee
+2025-08-08 16:05:56 +00:00: Middleware processing: /admin
+2025-08-08 16:05:56 +00:00: === API 응답 데이터 ===
+2025-08-08 16:05:56 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:05:56 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:05:56 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:05:56 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:06:20 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:06:20 +00:00: Middleware processing: /employee
+2025-08-08 16:06:21 +00:00: === API 응답 데이터 ===
+2025-08-08 16:06:21 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:06:21 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:21 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:21 +00:00: Middleware processing: /admin
+2025-08-08 16:06:21 +00:00: === API 응답 데이터 ===
+2025-08-08 16:06:21 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:06:21 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:21 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:29 +00:00: Middleware processing: /employee/checklist
+2025-08-08 16:06:30 +00:00: === API 응답 데이터 ===
+2025-08-08 16:06:30 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:06:30 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:30 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:30 +00:00: Middleware processing: /employee
+2025-08-08 16:06:30 +00:00: Middleware processing: /admin
+2025-08-08 16:06:30 +00:00: === API 응답 데이터 ===
+2025-08-08 16:06:30 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 16:06:30 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:30 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 16:06:35 +00:00: Middleware processing: /employee/checklist

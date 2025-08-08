@@ -176,13 +176,13 @@ function ChecklistDetailView({
                 <label className="relative inline-flex items-center cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="sr-only peer"
+                    className="sr-only"
                     checked={hideCompleted}
                     onChange={(e) => setHideCompleted(e.target.checked)}
                     aria-label="완료 항목 숨김"
                   />
-                  <div className="w-9 h-5 bg-white/30 rounded-full peer-checked:bg-white/70 transition-colors">
-                    <div className="w-4 h-4 bg-white rounded-full translate-x-0.5 peer-checked:translate-x-4 transition-transform mt-0.5 ml-0.5"></div>
+                  <div className={`relative w-9 h-5 rounded-full transition-colors ${hideCompleted ? 'bg-white/70' : 'bg-white/30'}`}>
+                    <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${hideCompleted ? 'translate-x-4' : 'translate-x-0'}`}></div>
                   </div>
                 </label>
               </div>
