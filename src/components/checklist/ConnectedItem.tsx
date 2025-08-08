@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { ChecklistItemConnection, InventoryItem, Precaution, Manual } from "@/types/checklist";
 
 interface ConnectedItemProps {
@@ -15,7 +15,7 @@ interface ConnectedItemProps {
   isReadOnly?: boolean;
 }
 
-export default function ConnectedItem({
+function ConnectedItem({
   connection,
   itemDetails,
   isCompleted,
@@ -229,4 +229,6 @@ export default function ConnectedItem({
       </div>
     </div>
   );
-} 
+}
+
+export default memo(ConnectedItem);

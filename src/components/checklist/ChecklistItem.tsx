@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { XMarkIcon, EyeIcon } from '@heroicons/react/24/outline';
 
 interface ChecklistItemType {
@@ -38,7 +38,7 @@ interface ChecklistItemProps {
   onInventoryUpdate?: (itemId: string, currentStock: number, notes?: string) => Promise<void>;
 }
 
-export default function ChecklistItem({
+function ChecklistItem({
   item,
   isCompleted,
   onCheckboxChange,
@@ -59,17 +59,17 @@ export default function ChecklistItem({
   onInventoryUpdate
 }: ChecklistItemProps) {
 
-  const handleCheckboxChange = () => {
+  const handleCheckboxChange = useCallback(() => {
     if (!isReadOnly) {
       onCheckboxChange(item.id);
     }
-  };
+  }, [isReadOnly, onCheckboxChange, item.id]);
 
-  const handleNotesSave = () => {
+  const handleNotesSave = useCallback(() => {
     if (onNotesChange && notes !== undefined) {
       onNotesChange(item.id, notes);
     }
-  };
+  }, [onNotesChange, notes, item.id]);
 
   const isExpanded = expandedItems[item.id] || false;
 
@@ -487,10 +487,10 @@ export default function ChecklistItem({
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-gray-600">현재재고:</span>
                                 <span className="text-sm font-semibold text-gray-800">
-                                  {Math.round(connectionDetails.currentStock) || 0} {connectionDetails.unit}
+                                 {Math.round(connectionDetails.currentStock ?? 0)} {connectionDetails.unit}
                                 </span>
                               </div>
-                              {connectionDetails.currentStock <= (connectionDetails.minStock || 0) && (
+                             {(connectionDetails.currentStock ?? 0) <= (connectionDetails.minStock || 0) && (
                                 <div className="flex items-center gap-1">
                                   <span className="text-xs text-red-600 font-medium">🛒</span>
                                   <span className="text-xs text-red-600">구매 필요</span>
@@ -506,7 +506,7 @@ export default function ChecklistItem({
                                    type="number"
                                    min="0"
                                    step="1"
-                                   defaultValue={Math.round(connectionDetails.currentStock) || 0}
+                                  defaultValue={Math.round(connectionDetails.currentStock ?? 0)}
                                    disabled={isReadOnly}
                                    data-inventory-id={connectionDetails.id}
                                    className="w-16 sm:w-20 text-sm border border-gray-300 rounded px-1 sm:px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-gray-900"
@@ -584,19 +584,19 @@ export default function ChecklistItem({
                                         {connectedItemsStatus[connection.id].previousStock} {connectionDetails.unit}
                                       </span>
                                       <span className="text-green-600 font-semibold text-xs">
-                                        → {connectedItemsStatus[connection.id].updatedStock || connectionDetails.currentStock} {connectionDetails.unit}
+                                       → {(connectedItemsStatus[connection.id].updatedStock ?? connectionDetails.currentStock ?? 0)} {connectionDetails.unit}
                                       </span>
-                                      {connectedItemsStatus[connection.id].stockChange > 0 && (
+                                      {(connectedItemsStatus[connection.id].stockChange ?? 0) > 0 && (
                                         <span className="text-green-600 font-semibold text-xs">
                                           (+{connectedItemsStatus[connection.id].stockChange})
                                         </span>
                                       )}
-                                      {connectedItemsStatus[connection.id].stockChange < 0 && (
+                                      {(connectedItemsStatus[connection.id].stockChange ?? 0) < 0 && (
                                         <span className="text-red-600 font-semibold text-xs">
                                           ({connectedItemsStatus[connection.id].stockChange})
                                         </span>
                                       )}
-                                      {connectedItemsStatus[connection.id].stockChange === 0 && (
+                                      {(connectedItemsStatus[connection.id].stockChange ?? 0) === 0 && (
                                         <span className="text-gray-600 font-semibold text-xs">
                                           (변경 없음)
                                         </span>
@@ -631,10 +631,10 @@ export default function ChecklistItem({
                                  {connectedItemsStatus[connection.id].completedAt && (
                                    <div className="flex items-center gap-2 mt-1 ml-4 sm:ml-0 sm:mt-0 sm:inline">
                                      <span className="text-xs text-gray-400">
-                                       {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleDateString()}
+                                       {new Date(connectedItemsStatus[connection.id].completedAt ?? '').toLocaleDateString()}
                                      </span>
                                      <span className="text-xs text-gray-400">
-                                       {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleTimeString()}
+                                       {new Date(connectedItemsStatus[connection.id].completedAt ?? '').toLocaleTimeString()}
                                      </span>
                                    </div>
                                  )}
@@ -642,14 +642,14 @@ export default function ChecklistItem({
                              )}
 
                             {/* 일곱째줄: 메모 정보 */}
-                            {connectedItemsStatus[connection.id]?.notes && (
+                               {connectedItemsStatus[connection.id]?.notes && (
                               <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
                                 <div className="flex items-center gap-1 mb-1">
                                   <span className="text-xs text-blue-600">📝</span>
                                   <span className="text-xs font-medium text-blue-700">메모</span>
                                 </div>
                                 <div className="text-xs text-gray-700">
-                                  {connectedItemsStatus[connection.id].notes}
+                                   {connectedItemsStatus[connection.id].notes ?? ''}
                                 </div>
                               </div>
                             )}
@@ -668,7 +668,7 @@ export default function ChecklistItem({
                               className="w-full p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
                             >
                               <div className="text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
-                                {getPreviewText(connectionDetails.content)}
+                                {getPreviewText(connectionDetails.content ?? '')}
                               </div>
                               <div className="mt-2 text-xs text-orange-600 font-medium">
                                 클릭하여 전체 내용 보기 →
@@ -695,10 +695,10 @@ export default function ChecklistItem({
                                 {connectedItemsStatus[connection.id].completedAt && (
                                   <div className="flex items-center gap-2 mt-1 ml-4 sm:ml-0 sm:mt-0 sm:inline">
                                     <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
-                                      {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleDateString()}
+                                   {new Date(connectedItemsStatus[connection.id].completedAt ?? '').toLocaleDateString()}
                                     </span>
                                     <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
-                                      {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleTimeString()}
+                                   {new Date(connectedItemsStatus[connection.id].completedAt ?? '').toLocaleTimeString()}
                                     </span>
                                   </div>
                                 )}
@@ -762,7 +762,7 @@ export default function ChecklistItem({
                               className="w-full p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
                             >
                               <div className="text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
-                                {getPreviewText(connectionDetails.content)}
+                                {getPreviewText(connectionDetails.content ?? '')}
                               </div>
                               <div className="mt-2 text-xs text-green-600 font-medium">
                                 클릭하여 전체 내용 보기 →
@@ -789,10 +789,10 @@ export default function ChecklistItem({
                                 {connectedItemsStatus[connection.id].completedAt && (
                                   <div className="flex items-center gap-2 mt-1 ml-4 sm:ml-0 sm:mt-0 sm:inline">
                                     <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
-                                      {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleDateString()}
+                                   {new Date(connectedItemsStatus[connection.id].completedAt ?? '').toLocaleDateString()}
                                     </span>
                                     <span className={`text-xs ${isConnectionCompleted ? 'text-gray-300' : 'text-gray-400'}`}>
-                                      {new Date(connectedItemsStatus[connection.id].completedAt).toLocaleTimeString()}
+                                   {new Date(connectedItemsStatus[connection.id].completedAt ?? '').toLocaleTimeString()}
                                     </span>
                                   </div>
                                 )}
@@ -1158,4 +1158,6 @@ export default function ChecklistItem({
       )}
     </div>
   );
-} 
+}
+
+export default memo(ChecklistItem);

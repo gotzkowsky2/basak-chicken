@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { 
@@ -90,21 +90,40 @@ export default function ChecklistPage() {
     show: boolean;
   } | null>(null);
 
-  // 연결된 항목의 실제 내용을 가져오는 함수
+  // 연결된 항목 상세 정보 캐시/인플라이트 관리
+  const connectedItemCacheRef = useRef<{ [key: string]: ConnectedItemDetails | null }>({});
+  const connectedItemInFlightRef = useRef<{ [key: string]: Promise<ConnectedItemDetails | null> }>({});
+
+  // 연결된 항목의 실제 내용을 가져오는 함수 (캐싱 + 인플라이트 결합)
   const getConnectedItemDetails = async (itemType: string, itemId: string) => {
-    try {
-      const response = await fetch(`/api/employee/connected-items?type=${itemType}&id=${itemId}`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        return await response.json();
-      }
-      return null;
-    } catch (error) {
-      console.error('연결된 항목 상세 정보 조회 오류:', error);
-      return null;
+    const key = `${itemType}_${itemId}`;
+    // 캐시 히트 시 즉시 반환
+    if (key in connectedItemCacheRef.current) {
+      return connectedItemCacheRef.current[key] ?? null;
     }
+    // 인플라이트 요청 재사용
+    const inFlight = connectedItemInFlightRef.current[key];
+    if (inFlight !== undefined) {
+      return inFlight;
+    }
+    const requestPromise = (async (): Promise<ConnectedItemDetails | null> => {
+      try {
+        const response = await fetch(`/api/employee/connected-items?type=${itemType}&id=${itemId}`, {
+          credentials: 'include'
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        connectedItemCacheRef.current[key] = data;
+        return data;
+      } catch (error) {
+        console.error('연결된 항목 상세 정보 조회 오류:', error);
+        return null;
+      } finally {
+        delete connectedItemInFlightRef.current[key];
+      }
+    })();
+    connectedItemInFlightRef.current[key] = requestPromise;
+    return requestPromise;
   };
 
   // 연결된 항목 상세 정보 상태

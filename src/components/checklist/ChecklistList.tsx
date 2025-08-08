@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 import { ChecklistTemplate } from "@/types/checklist";
 import StatusDisplay from "./StatusDisplay";
 
@@ -13,7 +14,7 @@ interface ChecklistListProps {
   getCategoryLabel: (value: string) => string;
 }
 
-export default function ChecklistList({
+function ChecklistList({
   checklists,
   onChecklistSelect,
   getChecklistStatus,
@@ -202,3 +203,5 @@ export default function ChecklistList({
     </div>
   );
 } 
+
+export default memo(ChecklistList);

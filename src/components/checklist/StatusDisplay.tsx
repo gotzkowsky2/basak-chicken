@@ -1,4 +1,5 @@
 "use client";
+import { memo, useMemo } from "react";
 
 interface StatusDisplayProps {
   status: string;
@@ -6,7 +7,7 @@ interface StatusDisplayProps {
   className?: string;
 }
 
-export default function StatusDisplay({ status, progress, className = "" }: StatusDisplayProps) {
+function StatusDisplay({ status, progress, className = "" }: StatusDisplayProps) {
   const getStatusInfo = (status: string) => {
     switch (status) {
       case '미시작':
@@ -42,7 +43,7 @@ export default function StatusDisplay({ status, progress, className = "" }: Stat
     }
   };
 
-  const statusInfo = getStatusInfo(status);
+  const statusInfo = useMemo(() => getStatusInfo(status), [status]);
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -56,4 +57,6 @@ export default function StatusDisplay({ status, progress, className = "" }: Stat
       )}
     </div>
   );
-} 
+}
+
+export default memo(StatusDisplay);

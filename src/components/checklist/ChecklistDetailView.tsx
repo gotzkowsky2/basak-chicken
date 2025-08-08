@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 import { ChecklistTemplate, ChecklistItem, Employee } from "@/types/checklist";
 import { ChecklistItem as ChecklistItemComponent } from "./index";
 
@@ -28,7 +29,7 @@ interface ChecklistDetailViewProps {
 
 }
 
-export default function ChecklistDetailView({
+function ChecklistDetailView({
   selectedChecklist,
   currentEmployee,
   checklistItems,
@@ -278,4 +279,6 @@ export default function ChecklistDetailView({
       </div>
     </>
   );
-} 
+}
+
+export default memo(ChecklistDetailView);

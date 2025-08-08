@@ -1,4 +1,5 @@
 "use client";
+import { memo, useMemo } from "react";
 
 interface ChecklistProgressBarProps {
   completed: number;
@@ -6,12 +7,12 @@ interface ChecklistProgressBarProps {
   className?: string;
 }
 
-export default function ChecklistProgressBar({ 
+function ChecklistProgressBar({ 
   completed, 
   total, 
   className = "" 
 }: ChecklistProgressBarProps) {
-  const percentage = total > 0 ? (completed / total) * 100 : 0;
+  const percentage = useMemo(() => (total > 0 ? (completed / total) * 100 : 0), [completed, total]);
 
   return (
     <div className={`mb-4 ${className}`}>
@@ -29,4 +30,6 @@ export default function ChecklistProgressBar({
       </div>
     </div>
   );
-} 
+}
+
+export default memo(ChecklistProgressBar);
