@@ -912,15 +912,33 @@ export default function InventoryPage() {
                   ) : (
                     inventoryItems.map((item) => (
                       <div key={item.id} className={`border rounded-lg p-4 ${isLowStock(item) ? 'border-red-200 bg-red-50' : 'border-gray-200'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <h4 className="font-medium text-gray-900">{item.name}</h4>
+                        <div className="flex flex-col gap-1">
+                          {/* 1줄: 제목 + 액션 */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <h4 className="font-medium text-gray-900 truncate pr-2">{item.name}</h4>
                               {isLowStock(item) && (
                                 <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
                               )}
-                              <span className="text-sm text-gray-500">{getCategoryLabel(item.category)}</span>
+                              <span className="text-xs sm:text-sm text-gray-500">{getCategoryLabel(item.category)}</span>
                             </div>
+                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => handleEdit(item)}
+                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                                title="수정"
+                              >
+                                <PencilIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteId(item.id)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                                title="삭제"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
                             {/* 태그 표시 */}
                             {item.tagRelations && item.tagRelations.length > 0 && (
                               <div className="flex flex-wrap gap-1 mb-2">
@@ -1017,22 +1035,6 @@ export default function InventoryPage() {
                                 )}
                               </div>
                             )}
-                          </div>
-                          
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
-                            >
-                              <PencilIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteId(item.id)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                            </button>
-                          </div>
                         </div>
                       </div>
                     ))
