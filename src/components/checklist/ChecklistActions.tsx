@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 
 interface ChecklistActionsProps {
   totalItems: number;
@@ -10,7 +11,7 @@ interface ChecklistActionsProps {
   className?: string;
 }
 
-export default function ChecklistActions({
+function ChecklistActions({
   totalItems,
   completedItems,
   submitting,
@@ -58,4 +59,6 @@ export default function ChecklistActions({
       </div>
     </div>
   );
-} 
+}
+
+export default memo(ChecklistActions);

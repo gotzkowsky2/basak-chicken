@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 import { ChecklistItem } from "@/types/checklist";
 
 interface DetailModalProps {
@@ -9,7 +10,7 @@ interface DetailModalProps {
   isCompleted: boolean;
 }
 
-export default function DetailModal({
+function DetailModal({
   item,
   isOpen,
   onClose,
@@ -140,4 +141,6 @@ export default function DetailModal({
       </div>
     </div>
   );
-} 
+}
+
+export default memo(DetailModal);

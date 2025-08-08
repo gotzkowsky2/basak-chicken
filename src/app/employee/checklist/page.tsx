@@ -91,15 +91,21 @@ export default function ChecklistPage() {
   } | null>(null);
 
   // 연결된 항목 상세 정보 캐시/인플라이트 관리
-  const connectedItemCacheRef = useRef<{ [key: string]: ConnectedItemDetails | null }>({});
+  const connectedItemCacheRef = useRef<{ [key: string]: { data: ConnectedItemDetails | null; ts: number } }>({});
   const connectedItemInFlightRef = useRef<{ [key: string]: Promise<ConnectedItemDetails | null> }>({});
+  const CONNECTED_ITEM_TTL_MS = 5 * 60 * 1000; // 5분 TTL
 
   // 연결된 항목의 실제 내용을 가져오는 함수 (캐싱 + 인플라이트 결합)
   const getConnectedItemDetails = async (itemType: string, itemId: string) => {
     const key = `${itemType}_${itemId}`;
     // 캐시 히트 시 즉시 반환
-    if (key in connectedItemCacheRef.current) {
-      return connectedItemCacheRef.current[key] ?? null;
+    const cached = connectedItemCacheRef.current[key];
+    if (cached) {
+      if (Date.now() - cached.ts < CONNECTED_ITEM_TTL_MS) {
+        return cached.data ?? null;
+      }
+      // TTL 만료 시 캐시 삭제
+      delete connectedItemCacheRef.current[key];
     }
     // 인플라이트 요청 재사용
     const inFlight = connectedItemInFlightRef.current[key];
@@ -109,11 +115,12 @@ export default function ChecklistPage() {
     const requestPromise = (async (): Promise<ConnectedItemDetails | null> => {
       try {
         const response = await fetch(`/api/employee/connected-items?type=${itemType}&id=${itemId}`, {
-          credentials: 'include'
+          credentials: 'include',
+          cache: 'no-store'
         });
         if (!response.ok) return null;
         const data = await response.json();
-        connectedItemCacheRef.current[key] = data;
+        connectedItemCacheRef.current[key] = { data, ts: Date.now() };
         return data;
       } catch (error) {
         console.error('연결된 항목 상세 정보 조회 오류:', error);
@@ -124,6 +131,12 @@ export default function ChecklistPage() {
     })();
     connectedItemInFlightRef.current[key] = requestPromise;
     return requestPromise;
+  };
+
+  // 캐시 무효화: 재고 업데이트 성공 시 해당 inventory 연결 캐시 삭제
+  const invalidateConnectedItemCache = (itemType: string, itemId: string) => {
+    const key = `${itemType}_${itemId}`;
+    delete connectedItemCacheRef.current[key];
   };
 
   // 연결된 항목 상세 정보 상태
@@ -727,6 +740,9 @@ export default function ChecklistPage() {
         
         const message = `재고 업데이트: ${result.previousStock} → ${result.item.currentStock} (${changeText})`;
         showToast(message, 'success');
+
+        // 캐시 무효화 (해당 inventory 연결 항목)
+        invalidateConnectedItemCache('inventory', itemId);
         
         // 연결된 항목 상태를 완료로 설정 (재고 업데이트 시 자동 체크)
         // 모든 연결된 항목에서 해당 재고 아이템을 찾아서 체크
