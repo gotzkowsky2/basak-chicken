@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const employeeAuth = request.cookies.get('employee_auth')?.value;
     const adminAuth = request.cookies.get('admin_auth')?.value;
-    
+
     if (!employeeAuth && !adminAuth) {
       return NextResponse.json(
         { error: '인증이 필요합니다.' },
