@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs"; // nodejs 런타임 강제
 
 export async function POST(req: NextRequest) {
-  const res = NextResponse.json({ message: "로그아웃 되었습니다." });
+  const res = NextResponse.json({ message: "로그아웃 되었습니다." }, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Clear-Site-Data": '"cookies"',
+    }
+  });
 
   const base = {
     httpOnly: true,
@@ -18,9 +23,7 @@ export async function POST(req: NextRequest) {
   const names = ['employee_auth', 'admin_auth', 'superadmin_auth', 'temp_pw_auth'] as const;
 
   for (const name of names) {
-    // host-only + 모든 path
     for (const p of paths) res.cookies.set(name, '', { ...base, path: p });
-    // 명시적 도메인 + 모든 path
     for (const d of domains) {
       if (!d) continue;
       for (const p of paths) res.cookies.set(name, '', { ...base, path: p, domain: d });

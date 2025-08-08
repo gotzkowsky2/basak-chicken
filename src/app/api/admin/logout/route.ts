@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs"; // nodejs 런타임 강제
 
 export async function POST(req: NextRequest) {
-  const res = NextResponse.json({ message: "로그아웃 되었습니다." });
+  const res = NextResponse.json({ message: "로그아웃 되었습니다." }, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Clear-Site-Data": '"cookies"',
+    }
+  });
 
   const base = {
     httpOnly: true,
