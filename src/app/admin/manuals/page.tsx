@@ -989,10 +989,10 @@ export default function ManualsPage() {
                   <div className="space-y-4">
                     {filteredManuals.map((manual) => (
                       <div key={manual.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                           <div className="flex-1">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <h3 className="text-lg font-medium text-gray-900 flex-1 min-w-0">{manual.title}</h3>
+                              <h3 className="text-base sm:text-lg font-medium text-gray-900 flex-1 min-w-0 truncate pr-2">{manual.title}</h3>
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                   v{manual.version}
@@ -1095,16 +1095,16 @@ export default function ManualsPage() {
                             )}
                           </div>
                           
-                          <div className="flex space-x-2 ml-4">
+                          <div className="flex items-center gap-1 sm:gap-2 sm:ml-4 self-start">
                             <button
                               onClick={() => handleEdit(manual)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                              className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
                             >
                               <PencilIcon className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setDeleteId(manual.id)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                              className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
                             >
                               <TrashIcon className="w-4 h-4" />
                             </button>
