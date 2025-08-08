@@ -4182,3 +4182,67 @@
 2025-08-08 15:52:35 +00:00: Middleware processing: /admin/inventory
 2025-08-08 15:52:35 +00:00: Middleware processing: /admin/tags
 2025-08-08 15:52:35 +00:00: Middleware processing: /admin/submissions
+2025-08-08 15:55:39 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:55:40 +00:00: Middleware processing: /admin
+2025-08-08 15:55:40 +00:00: Middleware processing: /employee
+2025-08-08 15:55:45 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:55:46 +00:00: Middleware processing: /admin
+2025-08-08 15:55:46 +00:00: Middleware processing: /employee
+2025-08-08 15:55:56 +00:00: Middleware processing: /employee/checklist
+2025-08-08 15:55:57 +00:00: Middleware processing: /employee
+2025-08-08 15:55:57 +00:00: === API 응답 데이터 ===
+2025-08-08 15:55:57 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 15:55:57 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 15:55:57 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 15:55:57 +00:00: Middleware processing: /admin
+2025-08-08 15:55:57 +00:00: === API 응답 데이터 ===
+2025-08-08 15:55:57 +00:00: 조회된 인스턴스 수: 2
+2025-08-08 15:55:57 +00:00: 인스턴스 1: {
+  id: 'cme2ncwt40001u2n0d3hfmuld',
+  templateId: 'cmdyhd1ew000uu24nwie9yh5z',
+  template: {
+    id: 'cmdyhd1ew000uu24nwie9yh5z',
+    name: '테스트체크리스트',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 15:55:57 +00:00: 인스턴스 2: {
+  id: 'cme2ncwt90003u2n0vqt5ewf9',
+  templateId: 'cmdyp95q90000u2zfppe3jutl',
+  template: {
+    id: 'cmdyp95q90000u2zfppe3jutl',
+    name: '주방 준비',
+    content: '',
+    itemsCount: 3
+  }
+}
+2025-08-08 15:56:07 +00:00:    ▲ Next.js 15.3.5
+2025-08-08 15:56:07 +00:00:    - Local:        http://localhost:3001
+2025-08-08 15:56:07 +00:00:    - Network:      http://0.0.0.0:3001
+2025-08-08 15:56:07 +00:00: 
+2025-08-08 15:56:07 +00:00:  ✓ Starting...
+2025-08-08 15:56:07 +00:00:  ✓ Ready in 334ms
+2025-08-08 15:56:08 +00:00: DEBUG DATABASE_URL: postgresql://basak_user:Sewon2002@localhost:5432/basak_chicken_db?sslmode=disable
+2025-08-08 15:56:08 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:56:16 +00:00: Middleware processing: /admin/manuals
+2025-08-08 15:56:18 +00:00: Middleware processing: /admin
+2025-08-08 15:56:18 +00:00: Middleware processing: /employee

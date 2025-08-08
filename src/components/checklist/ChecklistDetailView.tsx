@@ -1,5 +1,5 @@
 "use client";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { ChecklistTemplate, ChecklistItem, Employee } from "@/types/checklist";
 import { ChecklistItem as ChecklistItemComponent } from "./index";
 
@@ -54,6 +54,17 @@ function ChecklistDetailView({
   onInventoryUpdate
 }: ChecklistDetailViewProps) {
   
+  // 완료 항목 숨기기 스위치 (기본 ON)
+  const [hideCompleted, setHideCompleted] = useState<boolean>(true);
+
+  // 항목 완료 여부 계산 (연결항목까지 고려)
+  const isItemCompleted = (item: ChecklistItem): boolean => {
+    if (item.connectedItems && item.connectedItems.length > 0) {
+      return item.connectedItems.every((connection) => connectedItemsStatus[connection.id]?.isCompleted === true);
+    }
+    return !!checklistItems[item.id]?.isCompleted;
+  };
+
   // 하위항목 종류별 개수 계산
   const getConnectedItemsCount = () => {
     const counts = {
@@ -158,6 +169,23 @@ function ChecklistDetailView({
                   {getTimeSlotLabel(selectedChecklist.timeSlot)}
                 </span>
               </div>
+
+              {/* 완료 숨김 스위치 */}
+              <div className="ml-2 flex items-center gap-1">
+                <span className="text-[10px] sm:text-xs text-white/80">완료숨김</span>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={hideCompleted}
+                    onChange={(e) => setHideCompleted(e.target.checked)}
+                    aria-label="완료 항목 숨김"
+                  />
+                  <div className="w-9 h-5 bg-white/30 rounded-full peer-checked:bg-white/70 transition-colors">
+                    <div className="w-4 h-4 bg-white rounded-full translate-x-0.5 peer-checked:translate-x-4 transition-transform mt-0.5 ml-0.5"></div>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -193,6 +221,7 @@ function ChecklistDetailView({
             {selectedChecklist.items && selectedChecklist.items.length > 0 ? (
               selectedChecklist.items
                 .sort((a, b) => a.order - b.order)
+                .filter((item) => (hideCompleted ? !isItemCompleted(item) : true))
                 .map((item) => (
                   <ChecklistItemComponent
                     key={item.id}
