@@ -25,15 +25,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 403 });
     }
 
-    // 원본 템플릿과 하위 항목/연결 조회
+    // 원본 템플릿과 하위 항목/연결 조회 (자식까지 포함)
     const source = await prisma.checklistTemplate.findUnique({
       where: { id: sourceTemplateId },
       include: {
         items: {
-          include: { connectedItems: true, children: { include: { connectedItems: true } } },
-          orderBy: { order: 'asc' }
-        }
-      }
+          where: { parentId: null },
+          include: {
+            connectedItems: true,
+            children: {
+              include: {
+                connectedItems: true,
+                // 더 깊은 트리가 필요하면 여기에 추가 include 계층을 늘릴 수 있습니다.
+              },
+            },
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
     });
 
     if (!source) {
@@ -50,67 +59,55 @@ export async function POST(req: NextRequest) {
         timeSlot: source.timeSlot,
         isActive: source.isActive,
         inputter: employee.name,
-        inputDate: new Date()
-      }
+        inputDate: new Date(),
+      },
     });
 
     if (includeItems && source.items && source.items.length > 0) {
-      // 원본 item id -> 신규 item id 매핑 보관
       const idMap = new Map<string, string>();
 
-      // 1차: 루트 아이템만 생성
-      for (const item of source.items.filter(i => !i.parentId)) {
+      // 재귀 복제 함수: 항목 생성 → 연결 복사 → 자식 재귀
+      const cloneItemTree = async (
+        item: any,
+        parentNewId: string | null,
+      ): Promise<void> => {
         const created = await prisma.checklistItem.create({
           data: {
             templateId: newTemplate.id,
-            parentId: null,
+            parentId: parentNewId,
             type: item.type,
             content: item.content,
             instructions: item.instructions ?? null,
             order: item.order ?? 0,
             isRequired: item.isRequired ?? true,
             isActive: item.isActive ?? true,
-          }
+          },
         });
         idMap.set(item.id, created.id);
-      }
 
-      // 2차: 자식 아이템 생성(있다면)
-      for (const parent of source.items.filter(i => !i.parentId)) {
-        const parentNewId = idMap.get(parent.id)!;
-        for (const child of parent.children || []) {
-          const created = await prisma.checklistItem.create({
-            data: {
-              templateId: newTemplate.id,
-              parentId: parentNewId,
-              type: child.type,
-              content: child.content,
-              instructions: child.instructions ?? null,
-              order: child.order ?? 0,
-              isRequired: child.isRequired ?? true,
-              isActive: child.isActive ?? true,
-            }
-          });
-          idMap.set(child.id, created.id);
-        }
-      }
-
-      if (includeConnections) {
-        // 연결 항목 복사 (부모와 자식 모두)
-        for (const item of source.items) {
-          const newItemId = idMap.get(item.id);
-          if (!newItemId) continue;
+        if (includeConnections) {
           for (const conn of item.connectedItems || []) {
             await prisma.checklistItemConnection.create({
               data: {
-                checklistItemId: newItemId,
+                checklistItemId: created.id,
                 itemType: conn.itemType,
                 itemId: conn.itemId,
                 order: conn.order ?? 0,
-              }
+              },
             });
           }
         }
+
+        if (item.children && item.children.length > 0) {
+          for (const child of item.children) {
+            await cloneItemTree(child, created.id);
+          }
+        }
+      };
+
+      // 루트부터 복제 시작
+      for (const rootItem of source.items) {
+        await cloneItemTree(rootItem, null);
       }
     }
 
@@ -120,5 +117,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '템플릿 복사 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }
+
 
 

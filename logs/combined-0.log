@@ -11767,3 +11767,111 @@ Argument `type` is missing.
     at async p (.next/server/app/api/admin/checklists/copy/route.js:1:1512) {
   clientVersion: '6.12.0'
 }
+2025-08-08 17:14:32 +00:00: Middleware processing: /admin/checklists
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cme331lz30000u2olxwkx7657/items
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/new
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cme331lz30000u2olxwkx7657/edit
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/edit
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/items
+2025-08-08 17:14:33 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/edit
+2025-08-08 17:14:34 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/items
+2025-08-08 17:14:34 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/edit
+2025-08-08 17:14:34 +00:00: Middleware processing: /employee
+2025-08-08 17:14:55 +00:00: 템플릿 복사 오류: Error [PrismaClientValidationError]: 
+Invalid `prisma.checklistItem.create()` invocation:
+
+{
+  data: {
+    templateId: "cme336c220003u2olceij1qeg",
+    content: "재료 준비",
+    order: 1,
++   type: String
+  }
+}
+
+Argument `type` is missing.
+    at async p (.next/server/app/api/admin/checklists/copy/route.js:1:1512) {
+  clientVersion: '6.12.0'
+}
+2025-08-08 17:14:59 +00:00: Middleware processing: /admin/checklists
+2025-08-08 17:14:59 +00:00: Middleware processing: /admin
+2025-08-08 17:14:59 +00:00: Middleware processing: /employee
+2025-08-08 17:14:59 +00:00: Middleware processing: /admin/checklists/cme336c220003u2olceij1qeg/items
+2025-08-08 17:14:59 +00:00: Middleware processing: /admin/checklists/cme336c220003u2olceij1qeg/edit
+2025-08-08 17:14:59 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/new
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/edit
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/items
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/edit
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/items
+2025-08-08 17:15:00 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/edit
+2025-08-08 17:15:35 +00:00:    ▲ Next.js 15.3.5
+2025-08-08 17:15:35 +00:00:    - Local:        http://localhost:3001
+2025-08-08 17:15:35 +00:00:    - Network:      http://0.0.0.0:3001
+2025-08-08 17:15:35 +00:00: 
+2025-08-08 17:15:35 +00:00:  ✓ Starting...
+2025-08-08 17:15:35 +00:00:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2025-08-08 17:15:35 +00:00:  ✓ Ready in 350ms
+2025-08-08 17:15:35 +00:00: DEBUG DATABASE_URL: postgresql://basak_user:Sewon2002@localhost:5432/basak_chicken_db?sslmode=disable
+2025-08-08 17:16:32 +00:00: Middleware processing: /admin/checklists
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin
+2025-08-08 17:16:33 +00:00: Middleware processing: /employee
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/new
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/edit
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/items
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/edit
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/items
+2025-08-08 17:16:33 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/edit
+2025-08-08 17:16:43 +00:00: 템플릿 복사 오류: Error [PrismaClientValidationError]: 
+Invalid `prisma.checklistItem.create()` invocation:
+
+{
+  data: {
+    templateId: "cme338nc50000u25ids9p26pf",
+    content: "재료 준비",
+    order: 1,
++   type: String
+  }
+}
+
+Argument `type` is missing.
+    at async p (.next/server/app/api/admin/checklists/copy/route.js:1:1512) {
+  clientVersion: '6.12.0'
+}
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin
+2025-08-08 17:16:49 +00:00: Middleware processing: /employee
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/new
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cme338nc50000u25ids9p26pf/items
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cme338nc50000u25ids9p26pf/edit
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/edit
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/items
+2025-08-08 17:16:49 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/edit
+2025-08-08 17:16:50 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/items
+2025-08-08 17:16:50 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/edit
+2025-08-08 17:17:56 +00:00: Middleware processing: /admin/checklists
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin
+2025-08-08 17:17:57 +00:00: Middleware processing: /employee
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/new
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cme338nc50000u25ids9p26pf/items
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cme338nc50000u25ids9p26pf/edit
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/edit
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/items
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/edit
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/items
+2025-08-08 17:17:57 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/edit
