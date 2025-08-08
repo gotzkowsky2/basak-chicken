@@ -1,9 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useChecklistState } from "@/hooks/useChecklistState";
-import { useChecklistAPI } from "@/hooks/useChecklistAPI";
-import { useChecklistMemo } from "@/hooks/useChecklistMemo";
+
 import { 
   ChecklistTemplate, 
   ChecklistItem, 
@@ -21,14 +19,7 @@ import {
   TimeSlotStatus
 } from "@/types/checklist";
 import { workplaceOptions, timeSlotOptions, categoryLabels } from "@/constants/checklist";
-import { 
-  calculateChecklistProgress, 
-  isAllItemsCompleted, 
-  getChecklistStatus, 
-  getStatusInfo,
-  restoreConnectedItemsStatus,
-  restoreChecklistItemsStatus
-} from "@/utils/checklistHelpers";
+
 import { 
   ChecklistList, 
   ChecklistItem as ChecklistItemComponent, 
@@ -1037,13 +1028,43 @@ export default function ChecklistPage() {
   // 진행상황 계산 함수
   const calculateProgress = () => {
     if (!selectedChecklist?.items) return { completed: 0, total: 0 };
-    return calculateChecklistProgress(selectedChecklist.items, connectedItemsStatus);
+    
+    let completed = 0;
+    let total = 0;
+    
+    selectedChecklist.items.forEach(item => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+        const allConnectedCompleted = item.connectedItems.every(connection => 
+          connectedItemsStatus[connection.id]?.isCompleted
+        );
+        if (allConnectedCompleted) completed++;
+        total++;
+      } else {
+        // 연결된 항목이 없는 경우, 메인 항목만 체크
+        if (checklistItems[item.id]?.isCompleted) completed++;
+        total++;
+      }
+    });
+    
+    return { completed, total };
   };
 
   // 모든 항목이 완료되었는지 확인하는 함수
   const checkAllItemsCompleted = () => {
     if (!selectedChecklist?.items) return false;
-    return isAllItemsCompleted(selectedChecklist.items, connectedItemsStatus);
+    
+    return selectedChecklist.items.every(item => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+        return item.connectedItems.every(connection => 
+          connectedItemsStatus[connection.id]?.isCompleted
+        );
+      } else {
+        // 연결된 항목이 없는 경우, 메인 항목만 체크
+        return checklistItems[item.id]?.isCompleted;
+      }
+    });
   };
 
   const handleNotesChange = (id: string, notes: string) => {
@@ -1569,7 +1590,75 @@ export default function ChecklistPage() {
 
   // 체크리스트 상태 계산 함수
   const calculateChecklistStatus = (checklist: ChecklistTemplate) => {
-    return getChecklistStatus(checklist, connectedItemsStatus);
+    const instance = checklist.groupInstances?.[0];
+    if (!instance) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
+    
+    if (instance.isSubmitted) {
+      return { status: '제출 완료', color: 'green', progress: null, connectedItems: null };
+    }
+    
+    // 진행상황 계산 - 실제 체크 상태 기반
+    const totalItems = checklist.items?.length || 0;
+    if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
+    
+    const completedItems = checklist.items?.filter((item: any) => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
+        return item.connectedItems.every((connection: any) => 
+          connectedItemsStatus[connection.id]?.isCompleted
+        );
+      } else {
+        // 연결된 항목이 없는 경우, 메인 항목만 체크
+        return checklistItems[item.id]?.isCompleted;
+      }
+    }).length || 0;
+    
+    // 연결된 항목 종류별 개수 계산
+    const connectedItemsCount = {
+      inventory: 0,
+      precaution: 0,
+      manual: 0
+    };
+    
+    checklist.items?.forEach((item: any) => {
+      if (item.connectedItems && item.connectedItems.length > 0) {
+        item.connectedItems.forEach((connection: any) => {
+          if (connection.itemType === 'inventory') {
+            connectedItemsCount.inventory++;
+          } else if (connection.itemType === 'precaution') {
+            connectedItemsCount.precaution++;
+          } else if (connection.itemType === 'manual') {
+            connectedItemsCount.manual++;
+          }
+        });
+      }
+    });
+    
+    // 퍼센트 계산
+    const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    
+    if (completedItems === 0) {
+      return { 
+        status: '미시작', 
+        color: 'gray', 
+        progress: `${progressPercent}%`, 
+        connectedItems: connectedItemsCount
+      };
+    } else if (completedItems === totalItems) {
+      return { 
+        status: '완료', 
+        color: 'blue', 
+        progress: `${progressPercent}%`, 
+        connectedItems: connectedItemsCount
+      };
+    } else {
+      return { 
+        status: '진행중', 
+        color: 'yellow', 
+        progress: `${progressPercent}%`, 
+        connectedItems: connectedItemsCount
+      };
+    }
   };
 
   // 상태 정보 가져오기 (유틸리티 함수 사용)
@@ -1788,30 +1877,30 @@ export default function ChecklistPage() {
 
         {/* 상세 화면 */}
         {currentView === 'detail' && selectedChecklist && (
-                      <ChecklistDetailView
-              selectedChecklist={selectedChecklist}
-              currentEmployee={currentEmployee}
-              checklistItems={checklistItems}
-              connectedItemsStatus={connectedItemsStatus}
-              connectedItemDetails={connectedItemDetails}
-              expandedItems={expandedItems}
-              showMemoInputs={showMemoInputs}
-              submitting={submitting}
-              getWorkplaceLabel={getWorkplaceLabel}
-              getTimeSlotLabel={getTimeSlotLabel}
-              handleBackToList={handleBackToList}
-              calculateProgress={calculateProgress}
-              isAllItemsCompleted={checkAllItemsCompleted}
-              handleCheckboxChange={handleCheckboxChange}
-              handleConnectedItemCheckboxChange={handleConnectedItemCheckboxChange}
-              toggleItemExpansion={toggleItemExpansion}
-              handleNotesChange={handleNotesChange}
-              toggleMemoInput={toggleMemoInput}
-              saveMemo={saveMemo}
-              saveProgress={saveProgress}
-              handleSubmit={handleSubmit}
-              onInventoryUpdate={handleInventoryUpdate}
-            />
+          <ChecklistDetailView
+            selectedChecklist={selectedChecklist}
+            currentEmployee={currentEmployee}
+            checklistItems={checklistItems}
+            connectedItemsStatus={connectedItemsStatus}
+            connectedItemDetails={connectedItemDetails}
+            expandedItems={expandedItems}
+            showMemoInputs={showMemoInputs}
+            submitting={submitting}
+            getWorkplaceLabel={getWorkplaceLabel}
+            getTimeSlotLabel={getTimeSlotLabel}
+            handleBackToList={handleBackToList}
+            calculateProgress={calculateProgress}
+            isAllItemsCompleted={checkAllItemsCompleted}
+            handleCheckboxChange={handleCheckboxChange}
+            handleConnectedItemCheckboxChange={handleConnectedItemCheckboxChange}
+            toggleItemExpansion={toggleItemExpansion}
+            handleNotesChange={handleNotesChange}
+            toggleMemoInput={toggleMemoInput}
+            saveMemo={saveMemo}
+            saveProgress={saveProgress}
+            handleSubmit={handleSubmit}
+            onInventoryUpdate={handleInventoryUpdate}
+          />
         )}
       </div>
 
