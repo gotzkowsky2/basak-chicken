@@ -21,68 +21,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "비밀번호가 일치하지 않습니다." }, { status: 401 });
     }
 
-    // 임시비밀번호 여부 체크 (isTempPassword 필드가 있다고 가정)
+    const isProd = process.env.NODE_ENV === "production";
+    const domain = "crew.basak-chicken.com";
+    const commonCookie = {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax" as const,
+      secure: false,
+      ...(isProd ? { domain } : {}),
+    };
+
+    // 임시비밀번호 여부 체크
     if ((employee as any).isTempPassword) {
-      // 임시비밀번호인 경우 비밀번호 변경 페이지로 리다이렉트
       const response = NextResponse.json({ redirectTo: "/employee/change-password" });
-      const isProd = process.env.NODE_ENV === "production";
-      const prodDomain = "crew.basak-chicken.com";
-      const domainOption = isProd ? { domain: prodDomain } : {};
-      response.cookies.set("employee_auth", employee.id, {
-        httpOnly: true,
-        path: "/",
-        sameSite: 'lax',
-        secure: false, // HTTP 환경에서도 작동하도록 false로 설정
-        ...domainOption
-      });
-      response.cookies.set("temp_pw_auth", "1", {
-        httpOnly: true,
-        path: "/",
-        sameSite: 'lax',
-        secure: false, // HTTP 환경에서도 작동하도록 false로 설정
-        ...domainOption
-      });
+      response.cookies.set("employee_auth", employee.id, commonCookie);
+      response.cookies.set("temp_pw_auth", "1", commonCookie);
       return response;
     }
 
-    // 로그인 성공: 쿠키 발급
+    // 로그인 성공
     const response = NextResponse.json({
       success: true,
-      redirectTo: (employee as any).isSuperAdmin ? "/admin-choose" : "/employee"
+      redirectTo: (employee as any).isSuperAdmin ? "/admin-choose" : "/employee",
     });
-    const isProd = process.env.NODE_ENV === "production";
-    const prodDomain = "crew.basak-chicken.com";
-    const domainOption = isProd ? { domain: prodDomain } : {};
-    
-    // 모든 직원에게 employee_auth 쿠키 발급
-    response.cookies.set("employee_auth", employee.id, {
-      httpOnly: true,
-      path: "/",
-      sameSite: 'lax',
-      secure: false, // HTTP 환경에서도 작동하도록 false로 설정
-      ...domainOption
-    });
-    
-    // 최고 관리자인 경우 admin_auth 쿠키도 발급
+
+    response.cookies.set("employee_auth", employee.id, commonCookie);
+
     if ((employee as any).isSuperAdmin) {
-      response.cookies.set("admin_auth", employee.id, {
-        httpOnly: true,
-        path: "/",
-        sameSite: 'lax',
-        secure: false, // HTTP 환경에서도 작동하도록 false로 설정
-        ...domainOption
-      });
+      response.cookies.set("admin_auth", employee.id, commonCookie);
+    } else {
+      // 슈퍼관리자 쿠키 잔류 제거
+      response.cookies.set("admin_auth", "", { ...commonCookie, maxAge: -1, expires: new Date(0) });
     }
-    // 임시비밀번호 쿠키 삭제
-    response.cookies.set("temp_pw_auth", "", {
-      httpOnly: true,
-      path: "/",
-      maxAge: -1,
-      expires: new Date(0),
-      sameSite: 'lax',
-      secure: false, // HTTP 환경에서도 작동하도록 false로 설정
-      ...domainOption
-    });
+
+    // 임시비밀번호 쿠키 제거
+    response.cookies.set("temp_pw_auth", "", { ...commonCookie, maxAge: -1, expires: new Date(0) });
+
     return response;
   } catch (error) {
     console.error("직원 로그인 오류:", error);

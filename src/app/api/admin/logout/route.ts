@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
     maxAge: -1,
     expires: new Date(0),
     sameSite: 'lax' as const,
-    ...(isProd ? { secure: true } : {}),
-  };
+    secure: false,
+  } as const;
   const domain = "crew.basak-chicken.com";
   const domainOption = isProd ? { domain } : {};
 

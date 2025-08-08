@@ -1,16 +1,15 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import EmployeeMainClient from "./EmployeeMainClient";
+"use client";
+import { useEffect } from "react";
 
-export default async function EmployeeMain() {
-  const cookieStore = await cookies();
-  const isEmployee = !!cookieStore.get("employee_auth")?.value;
-  const isTempPw = cookieStore.get("temp_pw_auth")?.value === "1";
-  if (!isEmployee) {
-    redirect("/employee/login");
-  }
-  if (isTempPw) {
-    redirect("/employee/change-password");
-  }
-  return <EmployeeMainClient />;
+export default function EmployeeEntry() {
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const hasEmployee = document.cookie.includes("employee_auth=");
+      if (!hasEmployee) {
+        window.location.replace("/employee/login");
+      }
+    }
+  }, []);
+
+  return null;
 } 

@@ -10,8 +10,9 @@ export async function POST(req: NextRequest) {
     maxAge: -1,
     expires: new Date(0),
     sameSite: 'lax' as const,
-    ...(isProd ? { secure: true } : {}),
-  };
+    // 운영에서도 HTTP(3001) 사용 중이므로 secure=false로 통일
+    secure: false,
+  } as const;
   const domain = "crew.basak-chicken.com";
   const domainOption = isProd ? { domain } : {};
 
