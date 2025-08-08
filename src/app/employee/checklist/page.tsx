@@ -39,6 +39,8 @@ export const runtime = 'nodejs';
 
 export default function ChecklistPage() {
   const router = useRouter();
+  const DEBUG_LOG = false;
+  const dbg = (...args: any[]) => { if (DEBUG_LOG) console.log(...args); };
   
   // searchParams를 안전하게 사용
   const [urlParams, setUrlParams] = useState<URLSearchParams | null>(null);
@@ -214,24 +216,24 @@ export default function ChecklistPage() {
 
   // 현재 직원 정보 가져오기
   const fetchCurrentEmployee = async () => {
-    console.log('fetchCurrentEmployee 함수 호출됨');
+    dbg('fetchCurrentEmployee 함수 호출됨');
     try {
       const response = await fetch('/api/employee/me', {
         credentials: 'include',
         cache: 'no-store'
       });
       
-      console.log('API 응답 상태:', response.status);
+      dbg('API 응답 상태:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('API 응답 데이터:', data);
+        dbg('API 응답 데이터:', data);
         // API는 employee 객체를 직접 반환하므로 data.employee가 아닌 data를 사용
         if (data && data.id) {
           setCurrentEmployee(data);
-          console.log('현재 직원 정보 설정됨:', data);
+          dbg('현재 직원 정보 설정됨:', data);
         } else {
-          console.log('직원 데이터가 유효하지 않음:', data);
+          dbg('직원 데이터가 유효하지 않음:', data);
         }
       } else {
         console.error('직원 정보 조회 실패:', response.status);
@@ -306,8 +308,8 @@ export default function ChecklistPage() {
 
           // 연결된 항목들의 진행 상태도 로드
           if (instance.connectedItemsProgress) {
-            console.log('=== 연결된 항목 진행 상태 로드 시작 ===');
-            console.log('instance.connectedItemsProgress:', instance.connectedItemsProgress);
+            dbg('=== 연결된 항목 진행 상태 로드 시작 ===');
+            dbg('instance.connectedItemsProgress:', instance.connectedItemsProgress);
             instance.connectedItemsProgress.forEach((connectedItem: any) => {
               // connectionId를 키로 사용 (connection.id와 일치해야 함)
               const key = connectedItem.connectionId;
@@ -320,29 +322,29 @@ export default function ChecklistPage() {
                 currentStock: connectedItem.currentStock,
                 updatedStock: connectedItem.updatedStock
               };
-              console.log(`연결된 항목 ${key} 로드: isCompleted=${connectedItem.isCompleted}, completedBy=${connectedItem.completedBy}`);
+              dbg(`연결된 항목 ${key} 로드: isCompleted=${connectedItem.isCompleted}, completedBy=${connectedItem.completedBy}`);
             });
-            console.log('최종 connectedStatus:', connectedStatus);
+            dbg('최종 connectedStatus:', connectedStatus);
           } else {
-            console.log('connectedItemsProgress가 없습니다.');
+            dbg('connectedItemsProgress가 없습니다.');
           }
 
           // 연결된 항목들의 상태를 기반으로 상위 체크리스트 항목들의 상태를 계산
           if (instance.template?.items) {
             instance.template.items.forEach((item: any) => {
               if (item.connectedItems && item.connectedItems.length > 0) {
-                console.log(`=== 상위 항목 ${item.id} (${item.content}) 처리 중 ===`);
-                console.log('연결된 항목들:', item.connectedItems);
+                dbg(`=== 상위 항목 ${item.id} (${item.content}) 처리 중 ===`);
+                dbg('연결된 항목들:', item.connectedItems);
                 
                 // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되었는지 확인
                 const allConnectedCompleted = item.connectedItems.every((connection: any) => {
                   const key = connection.id; // connection.id를 키로 사용 (connectedStatus에서도 동일하게 사용)
                   const isCompleted = connectedStatus[key]?.isCompleted === true;
-                  console.log(`연결된 항목 ${key}: ${isCompleted ? '완료' : '미완료'}`);
+                  dbg(`연결된 항목 ${key}: ${isCompleted ? '완료' : '미완료'}`);
                   return isCompleted;
                 });
                 
-                console.log(`모든 연결된 항목 완료 여부: ${allConnectedCompleted}`);
+                dbg(`모든 연결된 항목 완료 여부: ${allConnectedCompleted}`);
                 
                 // 상위 항목의 상태를 연결된 항목들의 상태에 따라 설정
                 // 모든 연결된 항목이 완료되었을 때만 상위 항목도 완료
@@ -368,7 +370,7 @@ export default function ChecklistPage() {
                     completedAt: lastCompletedItem?.status?.completedAt || new Date().toISOString(),
                     notes: ''
                   };
-                  console.log(`상위 항목 ${item.id} 완료로 설정 (완료자: ${itemsStatus[item.id].completedBy})`);
+                  dbg(`상위 항목 ${item.id} 완료로 설정 (완료자: ${itemsStatus[item.id].completedBy})`);
                 } else {
                   // 연결된 항목 중 하나라도 완료되지 않았으면 상위 항목도 완료되지 않음
                   itemsStatus[item.id] = {
@@ -379,22 +381,22 @@ export default function ChecklistPage() {
                     completedAt: undefined,
                     notes: ''
                   };
-                  console.log(`상위 항목 ${item.id} 미완료로 설정`);
+                  dbg(`상위 항목 ${item.id} 미완료로 설정`);
                 }
               }
             });
           }
         });
         
-        console.log('로드된 메인 항목 상태:', itemsStatus);
-        console.log('로드된 연결 항목 상태:', connectedStatus);
+        dbg('로드된 메인 항목 상태:', itemsStatus);
+        dbg('로드된 연결 항목 상태:', connectedStatus);
         
         setChecklistItems(itemsStatus);
         setConnectedItemsStatus(connectedStatus);
         
-        console.log('=== fetchProgress 완료 ===');
-        console.log('설정된 checklistItems:', itemsStatus);
-        console.log('설정된 connectedItemsStatus:', connectedStatus);
+        dbg('=== fetchProgress 완료 ===');
+        dbg('설정된 checklistItems:', itemsStatus);
+        dbg('설정된 connectedItemsStatus:', connectedStatus);
       }
     } catch (error) {
       console.error('진행 상태 조회 오류:', error);
@@ -586,28 +588,28 @@ export default function ChecklistPage() {
           // 첫 번째 인스턴스를 기준으로 템플릿 정보 생성
           const firstInstance = groupInstances[0];
           
-          console.log('=== 그룹 처리 중 ===');
-          console.log('템플릿 이름:', templateName);
-          console.log('그룹 인스턴스 수:', groupInstances.length);
-          console.log('첫 번째 인스턴스:', firstInstance);
-          console.log('첫 번째 인스턴스 template:', firstInstance.template);
-          console.log('첫 번째 인스턴스 template.items:', firstInstance.template?.items);
+          dbg('=== 그룹 처리 중 ===');
+          dbg('템플릿 이름:', templateName);
+          dbg('그룹 인스턴스 수:', groupInstances.length);
+          dbg('첫 번째 인스턴스:', firstInstance);
+          dbg('첫 번째 인스턴스 template:', firstInstance.template);
+          dbg('첫 번째 인스턴스 template.items:', firstInstance.template?.items);
           
           // 모든 인스턴스의 항목들을 하나로 합침 (중복 제거)
           const allItems = groupInstances.flatMap((instance: any) => {
-            console.log('인스턴스 처리 중:', instance.id);
-            console.log('인스턴스 template.items:', instance.template?.items);
+            dbg('인스턴스 처리 중:', instance.id);
+            dbg('인스턴스 template.items:', instance.template?.items);
             return instance.template?.items || [];
           });
           
-          console.log('모든 항목들 (중복 제거 전):', allItems);
+          dbg('모든 항목들 (중복 제거 전):', allItems);
           
           // 중복 제거 (같은 ID를 가진 항목은 하나만 유지)
           const uniqueItems = allItems.filter((item: any, index: number, self: any[]) => 
             index === self.findIndex((t: any) => t.id === item.id)
           );
           
-          console.log('중복 제거된 항목들:', uniqueItems);
+          dbg('중복 제거된 항목들:', uniqueItems);
           
           return {
             id: templateName, // 템플릿 그룹 ID로 사용
