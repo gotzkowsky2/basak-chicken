@@ -15,12 +15,14 @@ interface ChecklistItemType {
   }>;
 }
 
+import { ConnectedItemStatus, ConnectedItemDetails, Employee } from "@/types/checklist";
+
 interface ChecklistItemProps {
   item: ChecklistItemType;
   isCompleted: boolean;
   onCheckboxChange: (id: string) => void;
-  connectedItemsStatus: any;
-  connectedItemsDetails: any;
+  connectedItemsStatus: {[key: string]: ConnectedItemStatus};
+  connectedItemsDetails: {[key: string]: ConnectedItemDetails};
   onConnectedItemCheckboxChange: (connectionId: string, parentItemId: string) => Promise<void>;
   expandedItems: {[key: string]: boolean};
   onToggleExpansion: (itemId: string) => void;
@@ -29,10 +31,10 @@ interface ChecklistItemProps {
   isReadOnly?: boolean;
   completedBy?: string;
   completedAt?: string;
-  showMemoInputs?: any;
+  showMemoInputs?: {[key: string]: boolean};
   toggleMemoInput?: (id: string) => void;
   saveMemo?: (id: string) => Promise<void>;
-  currentEmployee?: any;
+  currentEmployee?: Employee;
   onInventoryUpdate?: (itemId: string, currentStock: number, notes?: string) => Promise<void>;
 }
 

@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useChecklistState } from "@/hooks/useChecklistState";
+import { useChecklistAPI } from "@/hooks/useChecklistAPI";
+import { useChecklistMemo } from "@/hooks/useChecklistMemo";
 import { 
   ChecklistTemplate, 
   ChecklistItem, 
@@ -10,9 +13,22 @@ import {
   Manual, 
   Tag, 
   Employee, 
-  ChecklistItemResponse 
+  ChecklistItemResponse,
+  ConnectedItemStatus,
+  ConnectedItemDetails,
+  ChecklistInstance,
+  ChecklistStatus,
+  TimeSlotStatus
 } from "@/types/checklist";
 import { workplaceOptions, timeSlotOptions, categoryLabels } from "@/constants/checklist";
+import { 
+  calculateChecklistProgress, 
+  isAllItemsCompleted, 
+  getChecklistStatus, 
+  getStatusInfo,
+  restoreConnectedItemsStatus,
+  restoreChecklistItemsStatus
+} from "@/utils/checklistHelpers";
 import { 
   ChecklistList, 
   ChecklistItem as ChecklistItemComponent, 
@@ -54,7 +70,7 @@ export default function ChecklistPage() {
   const [checklistItems, setChecklistItems] = useState<{[key: string]: ChecklistItemResponse}>({});
   
   // 연결된 항목들의 상태 관리
-  const [connectedItemsStatus, setConnectedItemsStatus] = useState<{[key: string]: any}>({});
+  const [connectedItemsStatus, setConnectedItemsStatus] = useState<{[key: string]: ConnectedItemStatus}>({});
   
   // 메모 입력 상태
   const [showMemoInputs, setShowMemoInputs] = useState<{[key: string]: boolean}>({});
@@ -67,7 +83,7 @@ export default function ChecklistPage() {
   });
 
   // 시간대 잠금 관련 상태
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<any>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlotStatus | null>(null);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
 
   // 상세 작업 모달 관련 상태
@@ -101,7 +117,7 @@ export default function ChecklistPage() {
   };
 
   // 연결된 항목 상세 정보 상태
-  const [connectedItemDetails, setConnectedItemDetails] = useState<{[key: string]: any}>({});
+  const [connectedItemDetails, setConnectedItemDetails] = useState<{[key: string]: ConnectedItemDetails}>({});
 
   // 토스트 알림 표시 함수
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -171,7 +187,7 @@ export default function ChecklistPage() {
   }, [selectedChecklist]);
 
   // 현재 로그인한 직원 정보
-  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
+  const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
 
   // 현재 직원 정보 가져오기
   const fetchCurrentEmployee = async () => {
@@ -613,6 +629,7 @@ export default function ChecklistPage() {
               setSelectedTimeSlot({
                 workplace: filters.workplace,
                 timeSlot: filters.timeSlot,
+                isLocked: true,
                 lockedBy: lockResult.details.lockedBy,
                 department: lockResult.details.department,
                 lockedAt: lockResult.details.lockedAt
@@ -1020,43 +1037,13 @@ export default function ChecklistPage() {
   // 진행상황 계산 함수
   const calculateProgress = () => {
     if (!selectedChecklist?.items) return { completed: 0, total: 0 };
-    
-    let completed = 0;
-    let total = 0;
-    
-    selectedChecklist.items.forEach(item => {
-      if (item.connectedItems && item.connectedItems.length > 0) {
-        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
-        const allConnectedCompleted = item.connectedItems.every(connection => 
-          connectedItemsStatus[connection.id]?.isCompleted
-        );
-        if (allConnectedCompleted) completed++;
-        total++;
-      } else {
-        // 연결된 항목이 없는 경우, 메인 항목만 체크
-        if (checklistItems[item.id]?.isCompleted) completed++;
-        total++;
-      }
-    });
-    
-    return { completed, total };
+    return calculateChecklistProgress(selectedChecklist.items, connectedItemsStatus);
   };
 
   // 모든 항목이 완료되었는지 확인하는 함수
-  const isAllItemsCompleted = () => {
+  const checkAllItemsCompleted = () => {
     if (!selectedChecklist?.items) return false;
-    
-    return selectedChecklist.items.every(item => {
-      if (item.connectedItems && item.connectedItems.length > 0) {
-        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
-        return item.connectedItems.every(connection => 
-          connectedItemsStatus[connection.id]?.isCompleted
-        );
-      } else {
-        // 연결된 항목이 없는 경우, 메인 항목만 체크
-        return checklistItems[item.id]?.isCompleted;
-      }
-    });
+    return isAllItemsCompleted(selectedChecklist.items, connectedItemsStatus);
   };
 
   const handleNotesChange = (id: string, notes: string) => {
@@ -1581,112 +1568,13 @@ export default function ChecklistPage() {
   };
 
   // 체크리스트 상태 계산 함수
-  const getChecklistStatus = (checklist: any) => {
-    const instance = checklist.groupInstances?.[0];
-    if (!instance) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
-    
-    if (instance.isSubmitted) {
-      return { status: '제출 완료', color: 'green', progress: null, connectedItems: null };
-    }
-    
-    // 진행상황 계산 - 실제 체크 상태 기반
-    const totalItems = checklist.items?.length || 0;
-    if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
-    
-    const completedItems = checklist.items?.filter((item: any) => {
-      if (item.connectedItems && item.connectedItems.length > 0) {
-        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
-        return item.connectedItems.every((connection: any) => 
-          connectedItemsStatus[connection.id]?.isCompleted
-        );
-      } else {
-        // 연결된 항목이 없는 경우, 메인 항목만 체크
-        return checklistItems[item.id]?.isCompleted;
-      }
-    }).length || 0;
-    
-    // 연결된 항목 종류별 개수 계산
-    const connectedItemsCount = {
-      inventory: 0,
-      precaution: 0,
-      manual: 0
-    };
-    
-    checklist.items?.forEach((item: any) => {
-      if (item.connectedItems && item.connectedItems.length > 0) {
-        item.connectedItems.forEach((connection: any) => {
-          if (connection.itemType === 'inventory') {
-            connectedItemsCount.inventory++;
-          } else if (connection.itemType === 'precaution') {
-            connectedItemsCount.precaution++;
-          } else if (connection.itemType === 'manual') {
-            connectedItemsCount.manual++;
-          }
-        });
-      }
-    });
-    
-    // 퍼센트 계산
-    const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
-    
-    if (completedItems === 0) {
-      return { 
-        status: '미시작', 
-        color: 'gray', 
-        progress: `${progressPercent}%`, 
-        connectedItems: connectedItemsCount
-      };
-    } else if (completedItems === totalItems) {
-      return { 
-        status: '완료', 
-        color: 'blue', 
-        progress: `${progressPercent}%`, 
-        connectedItems: connectedItemsCount
-      };
-    } else {
-      return { 
-        status: '진행중', 
-        color: 'yellow', 
-        progress: `${progressPercent}%`, 
-        connectedItems: connectedItemsCount
-      };
-    }
+  const calculateChecklistStatus = (checklist: ChecklistTemplate) => {
+    return getChecklistStatus(checklist, connectedItemsStatus);
   };
 
-  // 상태 정보 가져오기
+  // 상태 정보 가져오기 (유틸리티 함수 사용)
   const getStatusInfo = (status: string) => {
-    switch (status) {
-      case '미시작':
-        return {
-          label: '미시작',
-          color: 'bg-gray-100 text-gray-800',
-          icon: '⭕'
-        };
-      case '진행중':
-        return {
-          label: '진행중',
-          color: 'bg-yellow-100 text-yellow-800',
-          icon: '🔄'
-        };
-      case '완료':
-        return {
-          label: '완료',
-          color: 'bg-blue-100 text-blue-800',
-          icon: '✅'
-        };
-      case '제출 완료':
-        return {
-          label: '제출 완료',
-          color: 'bg-green-100 text-green-800',
-          icon: '📤'
-        };
-      default:
-        return {
-          label: '미시작',
-          color: 'bg-gray-100 text-gray-800',
-          icon: '⭕'
-        };
-    }
+    return getStatusInfo(status);
   };
 
   const handleChecklistSelect = (checklist: ChecklistTemplate) => {
@@ -1888,7 +1776,7 @@ export default function ChecklistPage() {
             <ChecklistList
               checklists={checklists}
               onChecklistSelect={handleChecklistSelect}
-              getChecklistStatus={getChecklistStatus}
+              getChecklistStatus={calculateChecklistStatus}
               connectedItemsStatus={connectedItemsStatus}
               checklistItems={checklistItems}
               getWorkplaceLabel={getWorkplaceLabel}
@@ -1913,7 +1801,7 @@ export default function ChecklistPage() {
               getTimeSlotLabel={getTimeSlotLabel}
               handleBackToList={handleBackToList}
               calculateProgress={calculateProgress}
-              isAllItemsCompleted={isAllItemsCompleted}
+              isAllItemsCompleted={checkAllItemsCompleted}
               handleCheckboxChange={handleCheckboxChange}
               handleConnectedItemCheckboxChange={handleConnectedItemCheckboxChange}
               toggleItemExpansion={toggleItemExpansion}
