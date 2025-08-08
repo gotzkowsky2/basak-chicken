@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Copy } from "lucide-react";
 
 interface ChecklistTemplate {
   id: string;
@@ -43,6 +43,9 @@ export default function ChecklistsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isCopying, setIsCopying] = useState(false);
+  const [copyName, setCopyName] = useState('');
+  const [copySourceId, setCopySourceId] = useState<string | null>(null);
 
   // 필터링 상태
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,6 +98,46 @@ export default function ChecklistsPage() {
       setError(error instanceof Error ? error.message : "삭제 중 오류가 발생했습니다.");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const openCopyDialog = (id: string) => {
+    setCopySourceId(id);
+    setCopyName('');
+    setIsCopying(true);
+  };
+
+  const handleCopy = async () => {
+    if (!copySourceId || !copyName.trim()) return;
+    try {
+      const response = await fetch('/api/admin/checklists/copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sourceTemplateId: copySourceId, newName: copyName, includeItems: true, includeConnections: true })
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || '복사에 실패했습니다.');
+      }
+      const data = await response.json();
+      // 새 템플릿을 목록에 반영
+      setTemplates(prev => [{
+        id: data.template.id,
+        name: data.template.name,
+        workplace: data.template.workplace,
+        category: data.template.category,
+        timeSlot: data.template.timeSlot,
+        inputter: data.template.inputter,
+        inputDate: data.template.inputDate,
+        isActive: data.template.isActive,
+        itemCount: 0
+      }, ...prev]);
+      setIsCopying(false);
+      setCopySourceId(null);
+      setCopyName('');
+    } catch (e: any) {
+      setError(e.message || '복사 중 오류가 발생했습니다.');
     }
   };
 
@@ -282,6 +325,13 @@ export default function ChecklistsPage() {
                         <Edit className="w-4 h-4" />
                       </Link>
                       <button
+                        onClick={() => openCopyDialog(template.id)}
+                        className="p-2 text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                        title="복사"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleDelete(template.id)}
                         disabled={deletingId === template.id}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
@@ -332,6 +382,26 @@ export default function ChecklistsPage() {
           </div>
         )}
       </div>
+      {/* 복사 모달 */}
+      {isCopying && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">템플릿 복사</h3>
+            <p className="text-sm text-gray-600 mb-4">새 템플릿 이름을 입력하세요. 항목과 연결 항목이 함께 복사됩니다.</p>
+            <input
+              type="text"
+              value={copyName}
+              onChange={(e) => setCopyName(e.target.value)}
+              placeholder="새 템플릿 이름"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setIsCopying(false); setCopySourceId(null); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">취소</button>
+              <button onClick={handleCopy} disabled={!copyName.trim()} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">복사</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

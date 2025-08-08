@@ -622,7 +622,7 @@ export default function AdminSubmissionsPage() {
                                     <span className={`text-xs sm:text-sm ${item.isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>
                                       {item.title}
                                     </span>
-                                    {item.previousStock !== undefined && item.updatedStock !== undefined && (
+                                    {item.previousStock != null && item.updatedStock != null && (
                                       <span className="text-[11px] sm:text-xs text-blue-600">
                                         ({item.previousStock} → {item.updatedStock})
                                       </span>

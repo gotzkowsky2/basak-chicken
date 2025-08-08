@@ -271,9 +271,9 @@ export default function SubmissionModal({ submission, isOpen, onClose }: Submiss
                                         <div className="flex flex-wrap items-center gap-1">
                                           <span className="text-blue-600">📦</span>
                                           <span className="font-medium text-blue-700">재고 변경:</span> 
-                                          <span className="line-through text-gray-500">{connectedItem.previousStock || 0}</span> 
+                                          <span className="line-through text-gray-500">{connectedItem.previousStock ?? 0}</span> 
                                           <span className="text-blue-600">→</span> 
-                                          <span className="font-bold text-blue-800">{connectedItem.updatedStock || 0}</span>
+                                          <span className="font-bold text-blue-800">{connectedItem.updatedStock ?? 0}</span>
                                         </div>
                                       </div>
                                     )}
