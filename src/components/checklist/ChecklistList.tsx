@@ -1,5 +1,5 @@
 "use client";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { ChecklistTemplate } from "@/types/checklist";
 import StatusDisplay from "./StatusDisplay";
 
@@ -24,18 +24,18 @@ function ChecklistList({
   getTimeSlotLabel,
   getCategoryLabel
 }: ChecklistListProps) {
+  const pendingList = useMemo(() => checklists.filter(c => !c.isSubmitted), [checklists]);
   return (
     <div className="space-y-4">
       {/* 미완료 체크리스트 */}
       <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-        {checklists.filter(c => !c.isSubmitted).length === 0 ? (
+        {pendingList.length === 0 ? (
           <div className="text-center py-6 text-gray-500">
             <p className="text-sm">진행 중인 체크리스트가 없습니다.</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {checklists
-              .filter(checklist => !checklist.isSubmitted)
+            {pendingList
               .map((checklist) => {
               const status = getChecklistStatus(checklist);
               
