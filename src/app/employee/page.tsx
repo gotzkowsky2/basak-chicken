@@ -1,15 +1,6 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function EmployeeEntry() {
-  const cookieStore = await cookies();
-  const emp = cookieStore.get("employee_auth");
-  const adm = cookieStore.get("admin_auth");
-
-  if (!emp && !adm) {
-    redirect("/employee/login");
-  }
-
-  // 인증되었으면 직원 기본 화면으로 이동
+export default function EmployeeEntry() {
+  // 직원 메인 진입 시 바로 체크리스트로 이동 (인증 여부는 미들웨어에서 처리)
   redirect("/employee/checklist");
 } 
