@@ -378,12 +378,12 @@ export default function AdminSubmissionsPage() {
 
         {/* 제출내역 목록 */}
         <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">제출내역 ({submissions.length}개)</h2>
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">제출내역 ({submissions.length}개)</h2>
           </div>
 
           {error && (
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-red-800">{error}</p>
               </div>
@@ -392,7 +392,7 @@ export default function AdminSubmissionsPage() {
 
           <div className="divide-y divide-gray-200">
             {submissions.length === 0 ? (
-              <div className="p-6 text-center">
+              <div className="p-4 sm:p-6 text-center">
                 <p className="text-gray-500">제출내역이 없습니다.</p>
               </div>
             ) : (
@@ -404,7 +404,7 @@ export default function AdminSubmissionsPage() {
                   : 0;
 
                 return (
-                  <div key={submission.id} className={`p-6 ${
+                  <div key={submission.id} className={`p-4 sm:p-6 ${
                     (() => {
                       const today = new Date().toISOString().split('T')[0];
                       const isPast = submission.date < today;
@@ -412,8 +412,8 @@ export default function AdminSubmissionsPage() {
                       return isPast && isNotSubmitted ? 'bg-pink-50 border-l-4 border-pink-300' : '';
                     })()
                   }`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
                         {/* 상태 표시 */}
                         <div className="mb-2">
                           {(() => {
@@ -459,14 +459,14 @@ export default function AdminSubmissionsPage() {
                         </div>
 
                         {/* 날짜 - 가장 눈에 띄게 */}
-                        <div className="mb-3">
+                        <div className="mb-2 sm:mb-3">
                           {(() => {
                             const today = new Date().toISOString().split('T')[0];
                             const isToday = submission.date === today;
                             const isPast = submission.date < today;
                             
                             return (
-                              <div className={`text-2xl font-bold ${
+                              <div className={`text-xl sm:text-2xl font-bold break-words ${
                                 isToday ? 'text-blue-600' : 
                                 isPast ? 'text-gray-500' : 'text-gray-700'
                               }`}>
@@ -482,15 +482,15 @@ export default function AdminSubmissionsPage() {
                         </div>
 
                         {/* 템플릿 정보 */}
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-start gap-3 mb-3">
                           <div className={`p-2 rounded-lg ${statusInfo.bgColor}`}>
                             <StatusIcon className={`w-5 h-5 ${statusInfo.color}`} />
                           </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
+                          <div className="min-w-0">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">
                               {submission.templateName}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">
                               👤 {submission.employeeName} • 📍 {getWorkplaceLabel(submission.workplace)} • ⏰ {getTimeSlotLabel(submission.timeSlot)}
                             </p>
                           </div>
@@ -498,8 +498,8 @@ export default function AdminSubmissionsPage() {
 
                         {/* 협업 직원 표시 */}
                         {submission.collaboratingEmployees && submission.collaboratingEmployees.length > 0 && (
-                          <div className="mb-3">
-                            <div className="text-sm text-gray-600">
+                          <div className="mb-2 sm:mb-3">
+                            <div className="text-xs sm:text-sm text-gray-600">
                               <span className="font-medium">참여 직원:</span>
                             </div>
                             <div className="flex flex-wrap gap-2 mt-1">
@@ -517,13 +517,13 @@ export default function AdminSubmissionsPage() {
                         )}
 
                         {/* 제출 시간 */}
-                        <div className="mb-3">
+                        <div className="mb-2 sm:mb-3">
                           {submission.submittedAt ? (
-                            <div className="text-sm text-gray-600">
+                            <div className="text-xs sm:text-sm text-gray-600">
                               <span className="font-medium">제출 시간:</span> {new Date(submission.submittedAt).toLocaleString('ko-KR')}
                             </div>
                           ) : (
-                            <div className="text-sm text-gray-500">
+                            <div className="text-xs sm:text-sm text-gray-500">
                               아직 제출하지 않음
                             </div>
                           )}
@@ -531,8 +531,8 @@ export default function AdminSubmissionsPage() {
 
                         <div className="mt-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium text-gray-700">진행률:</span>
-                            <span className="text-sm text-gray-600">
+                            <span className="text-xs sm:text-sm font-medium text-gray-700">진행률:</span>
+                            <span className="text-xs sm:text-sm text-gray-600">
                               {submission.progress.mainItems}/{submission.progress.totalMainItems} 항목 완료
                             </span>
                           </div>
@@ -542,11 +542,12 @@ export default function AdminSubmissionsPage() {
                               style={{ width: `${progressRate}%` }}
                             ></div>
                           </div>
-                          <span className="text-xs text-gray-500 mt-1">{progressRate}%</span>
+                          <span className="text-[11px] sm:text-xs text-gray-500 mt-1">{progressRate}%</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* 데스크톱용 액션 */}
+                      <div className="hidden sm:flex items-center gap-2">
                         <button
                           onClick={() => viewAsChecklist(submission)}
                           className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
@@ -566,23 +567,43 @@ export default function AdminSubmissionsPage() {
                       </div>
                     </div>
 
+                    {/* 모바일용 액션 */}
+                    <div className="mt-3 sm:hidden flex items-center gap-2">
+                      <button
+                        onClick={() => viewAsChecklist(submission)}
+                        className="flex-1 px-4 py-3 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        체크리스트 보기
+                      </button>
+                      <button
+                        onClick={() => toggleExpansion(submission.id)}
+                        className="p-2 text-gray-400 hover:text-gray-600"
+                      >
+                        {expandedItems.has(submission.id) ? (
+                          <ChevronDownIcon className="w-5 h-5" />
+                        ) : (
+                          <ChevronRightIcon className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+
                     {/* 상세 내용 */}
                     {expandedItems.has(submission.id) && (
-                      <div className="mt-4 pl-8 border-l-2 border-gray-200">
+                      <div className="mt-4 sm:pl-8 border-l-0 sm:border-l-2 border-gray-200">
                         <div className="space-y-4">
                           {/* 메인 항목 */}
                           {submission.details.mainItems.length > 0 && (
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-2">메인 항목</h4>
+                              <h4 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2">메인 항목</h4>
                               <div className="space-y-2">
                                 {submission.details.mainItems.map((item) => (
                                   <div key={item.id} className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${item.isCompleted ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                    <span className={`text-sm ${item.isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>
+                                    <span className={`text-xs sm:text-sm ${item.isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>
                                       {item.content}
                                     </span>
                                     {item.notes && (
-                                      <span className="text-xs text-gray-400">({item.notes})</span>
+                                      <span className="text-[11px] sm:text-xs text-gray-400">({item.notes})</span>
                                     )}
                                   </div>
                                 ))}
@@ -593,21 +614,21 @@ export default function AdminSubmissionsPage() {
                           {/* 연결된 항목 */}
                           {submission.details.connectedItems.length > 0 && (
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-800 mb-2">연결된 항목</h4>
+                              <h4 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2">연결된 항목</h4>
                               <div className="space-y-2">
                                 {submission.details.connectedItems.map((item) => (
                                   <div key={item.id} className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${item.isCompleted ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                    <span className={`text-sm ${item.isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>
+                                    <span className={`text-xs sm:text-sm ${item.isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>
                                       {item.title}
                                     </span>
                                     {item.previousStock !== undefined && item.updatedStock !== undefined && (
-                                      <span className="text-xs text-blue-600">
+                                      <span className="text-[11px] sm:text-xs text-blue-600">
                                         ({item.previousStock} → {item.updatedStock})
                                       </span>
                                     )}
                                     {item.notes && (
-                                      <span className="text-xs text-gray-400">({item.notes})</span>
+                                      <span className="text-[11px] sm:text-xs text-gray-400">({item.notes})</span>
                                     )}
                                   </div>
                                 ))}

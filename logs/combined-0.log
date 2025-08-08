@@ -6684,3 +6684,52 @@
 2025-08-08 16:09:19 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
 2025-08-08 16:12:56 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
 2025-08-08 16:13:04 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 16:14:13 +00:00:    ▲ Next.js 15.3.5
+2025-08-08 16:14:13 +00:00:    - Local:        http://localhost:3001
+2025-08-08 16:14:13 +00:00:    - Network:      http://0.0.0.0:3001
+2025-08-08 16:14:13 +00:00: 
+2025-08-08 16:14:13 +00:00:  ✓ Starting...
+2025-08-08 16:14:13 +00:00:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2025-08-08 16:14:13 +00:00:  ✓ Ready in 281ms
+2025-08-08 16:14:14 +00:00: DEBUG DATABASE_URL: postgresql://basak_user:Sewon2002@localhost:5432/basak_chicken_db?sslmode=disable
+2025-08-08 16:14:15 +00:00: Middleware processing: /admin/checklists
+2025-08-08 16:14:15 +00:00: Middleware processing: /admin/checklists/TEST/edit
+2025-08-08 16:14:22 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/items
+2025-08-08 16:14:22 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 16:14:23 +00:00: Middleware processing: /admin/checklists
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin
+2025-08-08 16:14:24 +00:00: Middleware processing: /employee
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/new
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/edit
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/items
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/cmdt3toof0016u2xcgj64v6ra/edit
+2025-08-08 16:14:24 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/items
+2025-08-08 16:14:25 +00:00: Middleware processing: /admin/checklists/cmdsvr78g003au2ruxzzckzh3/edit
+2025-08-08 16:14:26 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 16:14:34 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 16:14:40 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 16:14:46 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 16:14:51 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 16:14:59 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 16:15:05 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/edit
+2025-08-08 16:15:13 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 16:15:15 +00:00: 검색 결과: 재고 7개, 주의사항 6개, 메뉴얼 5개
+2025-08-08 16:15:35 +00:00: Middleware processing: /admin/checklists/cmdyp95q90000u2zfppe3jutl/items
+2025-08-08 16:15:44 +00:00: Middleware processing: /admin
+2025-08-08 16:15:44 +00:00: Middleware processing: /admin/employees
+2025-08-08 16:15:44 +00:00: Middleware processing: /admin/precautions
+2025-08-08 16:15:44 +00:00: Middleware processing: /admin/manuals
+2025-08-08 16:15:44 +00:00: Middleware processing: /admin/inventory
+2025-08-08 16:15:44 +00:00: Middleware processing: /admin/tags
+2025-08-08 16:15:44 +00:00: Middleware processing: /admin/submissions
+2025-08-08 16:15:49 +00:00: Middleware processing: /admin/checklists/cmdyhd1ew000uu24nwie9yh5z/items
+2025-08-08 16:15:52 +00:00: 검색 결과: 재고 7개, 주의사항 6개, 메뉴얼 5개
+2025-08-08 16:16:07 +00:00: Middleware processing: /admin
+2025-08-08 16:16:18 +00:00: Middleware processing: /admin
+2025-08-08 16:16:29 +00:00: Middleware processing: /admin
+2025-08-08 16:16:30 +00:00: 제출내역 조회 요청: { employee: '배재범', isSuperAdmin: true }
+2025-08-08 16:16:30 +00:00: 적용된 필터: {}
+2025-08-08 16:16:30 +00:00: 조회된 인스턴스 수: 16
