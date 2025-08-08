@@ -12,9 +12,14 @@ export async function GET(req: NextRequest) {
     const timeSlot = searchParams.get('timeSlot');
     const category = searchParams.get('category');
 
-    // 직원 인증 확인 (employee_auth 없으면 admin_auth 허용)
     const employeeAuth = req.cookies.get("employee_auth")?.value;
     const adminAuth = req.cookies.get("admin_auth")?.value;
+    const cookieHeader = req.headers.get('cookie') || '';
+
+    console.log('[employee/checklists] cookieHeader:', cookieHeader ? 'present' : 'empty');
+    console.log('[employee/checklists] employee_auth:', employeeAuth ? 'present' : 'missing');
+    console.log('[employee/checklists] admin_auth:', adminAuth ? 'present' : 'missing');
+
     const authId = employeeAuth || adminAuth;
     if (!authId) {
       return NextResponse.json({ 
@@ -33,7 +38,6 @@ export async function GET(req: NextRequest) {
       }, { status: 404 });
     }
 
-    // 필터 조건 구성
     const whereClause: any = {
       isActive: true,
       AND: []
@@ -74,7 +78,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 체크리스트 템플릿 조회
     const checklists = await prisma.checklistTemplate.findMany({
       where: whereClause,
       include: {

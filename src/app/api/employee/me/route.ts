@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
+    const cookieHeader = request.headers.get('cookie') || '';
     const employeeAuth = request.cookies.get('employee_auth')?.value;
     const adminAuth = request.cookies.get('admin_auth')?.value;
+
+    console.log('[employee/me] cookieHeader:', cookieHeader ? 'present' : 'empty');
+    console.log('[employee/me] employee_auth:', employeeAuth ? 'present' : 'missing');
+    console.log('[employee/me] admin_auth:', adminAuth ? 'present' : 'missing');
 
     if (!employeeAuth && !adminAuth) {
       return NextResponse.json(
@@ -17,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const authId = employeeAuth || adminAuth;
     const employee = await prisma.employee.findUnique({
-      where: { id: authId },
+      where: { id: authId! },
       select: {
         id: true,
         name: true,
