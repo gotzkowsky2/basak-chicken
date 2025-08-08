@@ -368,19 +368,19 @@ export default function PrecautionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">주의사항 관리</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-8">주의사항 관리</h1>
 
         {/* 주의사항 등록 폼 */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">새 주의사항 등록</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">새 주의사항 등록</h2>
           
           {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
           {success && <div className="text-green-500 text-sm mb-4">{success}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   근무지 *
@@ -388,7 +388,7 @@ export default function PrecautionsPage() {
                 <select
                   value={formData.workplace}
                   onChange={(e) => setFormData({ ...formData, workplace: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 text-sm"
                   required
                 >
                   {workplaceOptions.map((option) => (
@@ -406,7 +406,7 @@ export default function PrecautionsPage() {
                 <select
                   value={formData.timeSlot}
                   onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 text-sm"
                   required
                 >
                   {timeSlotOptions.map((option) => (
@@ -424,7 +424,7 @@ export default function PrecautionsPage() {
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 text-sm"
                   required
                 >
                   {priorityOptions.map((option) => (
@@ -444,7 +444,7 @@ export default function PrecautionsPage() {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-500"
+                className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-500 text-sm"
                 placeholder="주의사항 제목을 입력하세요..."
                 required
               />
@@ -457,22 +457,22 @@ export default function PrecautionsPage() {
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-500"
-                rows={4}
+                className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-500 text-sm"
+                rows={3}
                 placeholder="주의사항 내용을 입력하세요..."
                 required
               />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <label className="block text-sm font-medium text-gray-700">
                   태그
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowTagModal(true)}
-                  className="flex items-center space-x-1 px-2 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                className="flex items-center space-x-1 px-2 py-1 text-xs sm:text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -480,16 +480,16 @@ export default function PrecautionsPage() {
                   <span>태그 추가</span>
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg min-h-[60px]">
+            <div className="flex flex-wrap gap-2 p-2 sm:p-3 border border-gray-300 rounded-lg min-h-[52px]">
                 {tags.length === 0 ? (
-                  <p className="text-gray-500 text-sm">등록된 태그가 없습니다.</p>
+                <p className="text-gray-500 text-xs sm:text-sm">등록된 태그가 없습니다.</p>
                 ) : (
                   tags.map((tag) => (
                       <button
                         key={tag.id}
                         type="button"
                         onClick={() => handleTagToggle(tag.id)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                    className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-all ${
                           selectedTags.includes(tag.id)
                             ? 'text-white shadow-md'
                             : 'hover:shadow-md'
@@ -521,14 +521,14 @@ export default function PrecautionsPage() {
         </div>
 
         {/* 필터 및 검색 */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">등록된 주의사항 목록</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">등록된 주의사항 목록</h2>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={clearFilters}
-                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
               >
                 필터 초기화
               </button>
@@ -536,11 +536,11 @@ export default function PrecautionsPage() {
               <button
                 type="button"
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
                 title={showFilters ? "필터 접기" : "필터 펼치기"}
               >
                 <svg 
-                  className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} 
+                  className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -553,7 +553,7 @@ export default function PrecautionsPage() {
           </div>
           
           {showFilters && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* 검색 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">검색</label>
@@ -562,18 +562,18 @@ export default function PrecautionsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="제목 또는 내용으로 검색..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                  className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 text-sm"
                 />
               </div>
 
               {/* 필터 옵션들 */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">근무지</label>
                   <select
                     value={filterWorkplace}
                     onChange={(e) => setFilterWorkplace(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 text-sm"
                   >
                     <option value="">전체</option>
                     {workplaceOptions.map((option) => (
@@ -589,7 +589,7 @@ export default function PrecautionsPage() {
                   <select
                     value={filterTimeSlot}
                     onChange={(e) => setFilterTimeSlot(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 text-sm"
                   >
                     <option value="">전체</option>
                     {timeSlotOptions.map((option) => (
@@ -605,7 +605,7 @@ export default function PrecautionsPage() {
                   <select
                     value={filterPriority}
                     onChange={(e) => setFilterPriority(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 text-sm"
                   >
                     <option value="">전체</option>
                     {priorityOptions.map((option) => (
@@ -783,11 +783,31 @@ export default function PrecautionsPage() {
                     <div>
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-800">{precaution.title}</h3>
+                          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-800">{precaution.title}</h3>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(precaution.priority)}`}>
                               {getPriorityLabel(precaution.priority)}
                             </span>
+                            <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                              <button
+                                onClick={() => handleEdit(precaution)}
+                                className="p-1.5 sm:p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+                                title="수정"
+                              >
+                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDelete(precaution.id)}
+                                className="p-1.5 sm:p-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                                title="삭제"
+                              >
+                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                           <p className="text-gray-700 mb-3 whitespace-pre-wrap">{precaution.content}</p>
                           
@@ -806,48 +826,29 @@ export default function PrecautionsPage() {
                             </div>
                           )}
                           
-                          <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-xs text-gray-600 whitespace-nowrap overflow-x-auto">
                             <span className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                               </svg>
                               {getWorkplaceLabel(precaution.workplace)}
                             </span>
                             <span className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               {getTimeSlotLabel(precaution.timeSlot)}
                             </span>
                             <span className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
                               {new Date(precaution.createdAt).toLocaleDateString('ko-KR')}
                             </span>
                           </div>
                         </div>
-                        <div className="flex gap-2 ml-4">
-                          <button
-                            onClick={() => handleEdit(precaution)}
-                            className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-                            title="수정"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(precaution.id)}
-                            className="p-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                            title="삭제"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
+                        
                       </div>
                     </div>
                   )}

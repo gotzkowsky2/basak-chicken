@@ -585,12 +585,12 @@ export default function ManualsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">메뉴얼 관리</h1>
-          <p className="text-gray-600">업무 매뉴얼을 생성하고 관리합니다.</p>
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">메뉴얼 관리</h1>
+          <p className="text-sm sm:text-base text-gray-600">업무 매뉴얼을 생성하고 관리합니다.</p>
         </div>
 
         {/* 알림 */}
@@ -606,10 +606,10 @@ export default function ManualsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* 메뉴얼 생성/수정 폼 */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 {editingId ? '메뉴얼 수정' : '새 메뉴얼 생성'}
               </h2>
@@ -623,7 +623,7 @@ export default function ManualsPage() {
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 text-sm"
                     required
                   />
                 </div>
@@ -635,9 +635,9 @@ export default function ManualsPage() {
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                    rows={12}
+                    rows={8}
                     placeholder="메뉴얼 내용을 상세히 입력하세요..."
-                    className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 resize-y"
+                    className="w-full px-2 sm:px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 resize-y text-sm"
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -645,7 +645,7 @@ export default function ManualsPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       근무처
@@ -653,7 +653,7 @@ export default function ManualsPage() {
                     <select
                       value={formData.workplace}
                       onChange={(e) => setFormData(prev => ({ ...prev, workplace: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      className="w-full px-2 sm:px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
                     >
                       {workplaceOptions.slice(1).map(option => (
                         <option key={option.value} value={option.value}>
@@ -670,7 +670,7 @@ export default function ManualsPage() {
                     <select
                       value={formData.timeSlot}
                       onChange={(e) => setFormData(prev => ({ ...prev, timeSlot: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      className="w-full px-2 sm:px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
                     >
                       {timeSlotOptions.slice(1).map(option => (
                         <option key={option.value} value={option.value}>
@@ -681,7 +681,7 @@ export default function ManualsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       카테고리
@@ -689,7 +689,7 @@ export default function ManualsPage() {
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      className="w-full px-2 sm:px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
                     >
                       {categoryOptions.slice(1).map(option => (
                         <option key={option.value} value={option.value}>
@@ -917,7 +917,7 @@ export default function ManualsPage() {
                     <select
                       value={filters.workplace}
                       onChange={(e) => handleFilterChange('workplace', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      className="w-full px-2 sm:px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
                     >
                       {workplaceOptions.map(option => (
                         <option key={option.value} value={option.value}>
@@ -989,8 +989,8 @@ export default function ManualsPage() {
                   <div className="space-y-4">
                     {filteredManuals.map((manual) => (
                       <div key={manual.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
                               <h3 className="text-lg font-medium text-gray-900 flex-1 min-w-0">{manual.title}</h3>
                               <div className="flex items-center gap-2 flex-shrink-0">
@@ -1045,14 +1045,14 @@ export default function ManualsPage() {
                               </div>
                             )}
                             
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <div className="flex items-center gap-2 text-xs text-gray-500 whitespace-nowrap overflow-x-auto">
                               <span>{getWorkplaceLabel(manual.workplace)}</span>
-                              <span>{getTimeSlotLabel(manual.timeSlot)}</span>
-                              <span>{getCategoryLabel(manual.category)}</span>
-                              <span>{new Date(manual.createdAt).toLocaleDateString()}</span>
+                              <span>· {getTimeSlotLabel(manual.timeSlot)}</span>
+                              <span>· {getCategoryLabel(manual.category)}</span>
+                              <span>· {new Date(manual.createdAt).toLocaleDateString('ko-KR')}</span>
                               {manual.precautions && manual.precautions.length > 0 && (
                                 <span className="text-orange-600">
-                                  ⚠️ {manual.precautions.length}개 주의사항
+                                  · ⚠️ {manual.precautions.length}개 주의사항
                                 </span>
                               )}
                             </div>
@@ -1095,18 +1095,20 @@ export default function ManualsPage() {
                             )}
                           </div>
                           
-                          <div className="flex space-x-2 ml-4">
+                          <div className="ml-2 flex items-start gap-1 sm:gap-2">
                             <button
                               onClick={() => handleEdit(manual)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                              className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                              title="수정"
                             >
-                              <PencilIcon className="w-4 h-4" />
+                              <PencilIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </button>
                             <button
                               onClick={() => setDeleteId(manual.id)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                              className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                              title="삭제"
                             >
-                              <TrashIcon className="w-4 h-4" />
+                              <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         </div>

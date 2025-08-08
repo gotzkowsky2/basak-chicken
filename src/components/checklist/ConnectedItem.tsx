@@ -136,8 +136,8 @@ function ConnectedItem({
   };
 
   return (
-    <div className={`ml-4 md:ml-6 border-l-2 border-gray-200 pl-3 md:pl-4 ${isCompleted ? 'opacity-60' : ''}`}>
-      <div className="flex items-start gap-2 md:gap-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+    <div className={`ml-2 sm:ml-4 md:ml-6 border-l-2 border-gray-200 pl-2 sm:pl-3 md:pl-4 ${isCompleted ? 'opacity-60' : ''}`}>
+      <div className="flex items-start gap-1 sm:gap-2 md:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
         {/* 체크박스 */}
         <input
           type="checkbox"
@@ -150,14 +150,14 @@ function ConnectedItem({
         {/* 아이템 내용 */}
         <div className="flex-1 min-w-0">
           {/* 헤더: 체크박스 옆에 아이콘과 라벨만 */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">{getItemIcon(connection.itemType)}</span>
-            <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
+          <div className="flex items-center flex-wrap gap-1 sm:gap-2 mb-2 sm:mb-3 min-w-0">
+            <span className="text-base sm:text-lg flex-shrink-0">{getItemIcon(connection.itemType)}</span>
+            <span className="text-[11px] sm:text-xs bg-gray-200 text-gray-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex-shrink-0">
               {getItemTypeLabel(connection.itemType)}
             </span>
             <button
               onClick={onToggleExpansion}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 ml-auto"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 ml-auto flex-shrink-0"
             >
               {isExpanded ? '▼' : '▶'}
             </button>
@@ -179,13 +179,13 @@ function ConnectedItem({
                         value={localNotes}
                         onChange={(e) => setLocalNotes(e.target.value)}
                         placeholder="메모를 입력하세요..."
-                        className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-2 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         rows={3}
                       />
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <button
                           onClick={handleNotesSave}
-                          className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                          className="px-2 sm:px-3 py-1 text-[11px] sm:text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                         >
                           저장
                         </button>
@@ -194,7 +194,7 @@ function ConnectedItem({
                             setLocalNotes(notes || "");
                             setShowNotes(false);
                           }}
-                          className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                          className="px-2 sm:px-3 py-1 text-[11px] sm:text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
                         >
                           취소
                         </button>
@@ -204,12 +204,12 @@ function ConnectedItem({
                     <div className="space-y-2">
                       <button
                         onClick={() => setShowNotes(true)}
-                        className="text-xs text-blue-600 hover:text-blue-800"
+                        className="text-[11px] sm:text-xs text-blue-600 hover:text-blue-800"
                       >
                         📝 메모 {notes ? '수정' : '추가'}
                       </button>
                       {notes && (
-                        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded break-words">
+                        <div className="text-[11px] sm:text-xs text-gray-600 bg-blue-50 p-2 rounded break-words">
                           {notes}
                         </div>
                       )}
@@ -219,7 +219,7 @@ function ConnectedItem({
               )}
 
               {isReadOnly && notes && (
-                <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded">
+                <div className="text-[11px] sm:text-xs text-gray-600 bg-blue-50 p-2 rounded">
                   📝 메모: {notes}
                 </div>
               )}
