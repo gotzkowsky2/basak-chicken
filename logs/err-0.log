@@ -774,3 +774,20 @@
 2025-08-08 16:21:06 +00:00:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
 2025-08-08 16:21:08 +00:00:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
 2025-08-08 16:27:05 +00:00:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2025-08-08 17:09:58 +00:00:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2025-08-08 17:11:15 +00:00: 템플릿 복사 오류: Error [PrismaClientValidationError]: 
+Invalid `prisma.checklistItem.create()` invocation:
+
+{
+  data: {
+    templateId: "cme331lz30000u2olxwkx7657",
+    content: "재료 준비",
+    order: 1,
++   type: String
+  }
+}
+
+Argument `type` is missing.
+    at async p (.next/server/app/api/admin/checklists/copy/route.js:1:1512) {
+  clientVersion: '6.12.0'
+}

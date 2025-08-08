@@ -63,8 +63,13 @@ export async function POST(req: NextRequest) {
         const created = await prisma.checklistItem.create({
           data: {
             templateId: newTemplate.id,
+            parentId: null,
+            type: item.type,
             content: item.content,
-            order: item.order
+            instructions: item.instructions ?? null,
+            order: item.order ?? 0,
+            isRequired: item.isRequired ?? true,
+            isActive: item.isActive ?? true,
           }
         });
         idMap.set(item.id, created.id);
@@ -78,8 +83,12 @@ export async function POST(req: NextRequest) {
             data: {
               templateId: newTemplate.id,
               parentId: parentNewId,
+              type: child.type,
               content: child.content,
-              order: child.order
+              instructions: child.instructions ?? null,
+              order: child.order ?? 0,
+              isRequired: child.isRequired ?? true,
+              isActive: child.isActive ?? true,
             }
           });
           idMap.set(child.id, created.id);
@@ -97,7 +106,7 @@ export async function POST(req: NextRequest) {
                 checklistItemId: newItemId,
                 itemType: conn.itemType,
                 itemId: conn.itemId,
-                order: conn.order ?? 0
+                order: conn.order ?? 0,
               }
             });
           }
