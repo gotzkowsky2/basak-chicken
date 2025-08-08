@@ -1,18 +1,14 @@
-"use client";
-import { useEffect } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function AdminEntry() {
-  useEffect(() => {
-    // 아주 가벼운 클라이언트 가드: 서버 미들웨어가 주 가드이지만, 사용성 보완
-    if (typeof document !== "undefined") {
-      const hasAdmin = document.cookie.includes("admin_auth=");
-      const hasSuper = document.cookie.includes("superadmin_auth=");
-      const hasEmployee = document.cookie.includes("employee_auth=");
-      if (!hasAdmin && !hasSuper && !hasEmployee) {
-        window.location.replace("/employee/login");
-      }
-    }
-  }, []);
+export default async function AdminEntry() {
+  const cookieStore = await cookies();
+  const adm = cookieStore.get("admin_auth");
+  const emp = cookieStore.get("employee_auth");
 
-  return null;
+  if (!adm && !emp) {
+    redirect("/employee/login");
+  }
+
+  redirect("/admin/checklists");
 } 
