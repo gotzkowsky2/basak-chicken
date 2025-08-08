@@ -1,6 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export default function AdminChoosePage() {
   const router = useRouter();
   return (

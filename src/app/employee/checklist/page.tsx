@@ -217,7 +217,8 @@ export default function ChecklistPage() {
     console.log('fetchCurrentEmployee 함수 호출됨');
     try {
       const response = await fetch('/api/employee/me', {
-        credentials: 'include'
+        credentials: 'include',
+        cache: 'no-store'
       });
       
       console.log('API 응답 상태:', response.status);
@@ -262,9 +263,10 @@ export default function ChecklistPage() {
   const fetchProgress = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`/api/employee/checklist-progress?date=${today}`, {
-        credentials: "include"
-      });
+        const response = await fetch(`/api/employee/checklist-progress?date=${today}`, {
+          credentials: "include",
+          cache: 'no-store'
+        });
 
       if (response.ok) {
         const progress = await response.json();
@@ -403,7 +405,8 @@ export default function ChecklistPage() {
     try {
       // 기본값으로 모든 시간대 상태 조회
       const response = await fetch('/api/employee/timeslot-status?workplace=COMMON&timeSlot=COMMON', {
-        credentials: "include"
+        credentials: "include",
+        cache: 'no-store'
       });
 
       if (response.ok) {
@@ -1702,6 +1705,8 @@ export default function ChecklistPage() {
   };
 
   const handleChecklistSelect = (checklist: ChecklistTemplate) => {
+    // 연결항목 캐시 초기화 (체크리스트 전환 시 최신화)
+    connectedItemCacheRef.current = {} as any;
     setSelectedChecklist(checklist);
     setCurrentView('detail');
     updateURL('detail', checklist.id);
