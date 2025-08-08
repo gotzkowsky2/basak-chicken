@@ -8,7 +8,10 @@ import {
   MagnifyingGlassIcon,
   DocumentTextIcon,
   PhotoIcon,
-  VideoCameraIcon
+  VideoCameraIcon,
+  BuildingOfficeIcon,
+  ClockIcon,
+  CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 
 interface Manual {
@@ -1057,11 +1060,16 @@ export default function ManualsPage() {
                               </div>
                             )}
                             
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
-                              <span>{getWorkplaceLabel(manual.workplace)}</span>
-                              <span>{getTimeSlotLabel(manual.timeSlot)}</span>
-                              <span>{getCategoryLabel(manual.category)}</span>
-                              <span>{new Date(manual.createdAt).toLocaleDateString()}</span>
+                            <div className="flex items-center gap-3 text-[11px] sm:text-xs text-gray-500 flex-wrap">
+                              <span className="inline-flex items-center gap-1">
+                                <BuildingOfficeIcon className="w-3.5 h-3.5" /> {getWorkplaceLabel(manual.workplace)}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <ClockIcon className="w-3.5 h-3.5" /> {getTimeSlotLabel(manual.timeSlot)}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <CalendarDaysIcon className="w-3.5 h-3.5" /> {new Date(manual.createdAt).toLocaleDateString()}
+                              </span>
                             {manual.precautions && manual.precautions.length > 0 && (
                               <span className="text-orange-600 hidden sm:inline">
                                 ⚠️ {manual.precautions.length}개 주의사항
