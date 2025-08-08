@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+export const dynamic = 'force-dynamic';
 import { useRouter } from "next/navigation";
 
 interface Tag {
@@ -21,7 +22,10 @@ export default function TagsPage() {
   // 태그 목록 조회
   const fetchTags = async () => {
     try {
-      const response = await fetch("/api/admin/tags");
+      const response = await fetch("/api/admin/tags", {
+        credentials: 'include',
+        cache: 'no-store'
+      });
       if (response.ok) {
         const data = await response.json();
         setTags(data);
@@ -47,6 +51,8 @@ export default function TagsPage() {
       const response = await fetch("/api/admin/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        cache: 'no-store',
         body: JSON.stringify({ name: newTagName, color: newTagColor }),
       });
 
@@ -72,6 +78,8 @@ export default function TagsPage() {
     try {
       const response = await fetch(`/api/admin/tags/${tagId}`, {
         method: "DELETE",
+        credentials: 'include',
+        cache: 'no-store',
       });
 
       if (response.ok) {
