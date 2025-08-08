@@ -17,19 +17,32 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/employee/login") ||
     pathname.startsWith("/employee/forgot-password") ||
     pathname.startsWith("/employee/change-password") ||
-    pathname === "/employee" || // 직원 메인은 내부 리다이렉트로 처리
+    pathname === "/employee" ||
     pathname.startsWith("/admin/login") ||
     pathname === "/"
   ) {
     return NextResponse.next();
   }
   
-  // 디버깅을 위한 로그
-  console.log("Middleware processing:", pathname);
-  
   const employeeAuth = request.cookies.get("employee_auth")?.value;
   const superAdminAuth = request.cookies.get("superadmin_auth")?.value;
   const adminAuth = request.cookies.get("admin_auth")?.value;
+
+  // 관리 권한이 있으나 employee_auth가 없는 경우 동기화 발급
+  if (!employeeAuth && (adminAuth || superAdminAuth)) {
+    const resp = NextResponse.next();
+    const isProd = process.env.NODE_ENV === 'production';
+    const domain = 'crew.basak-chicken.com';
+    resp.cookies.set('employee_auth', adminAuth || superAdminAuth || '', {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      secure: false,
+      ...(isProd ? { domain } : {}),
+    });
+    return resp;
+  }
+
   if (!employeeAuth && !superAdminAuth && !adminAuth) {
     const loginUrl = new URL("/employee/login", request.url);
     return NextResponse.redirect(loginUrl);
@@ -37,7 +50,6 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// 정적 파일과 API는 제외하고 인증이 필요한 페이지만 처리
 export const config = {
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
