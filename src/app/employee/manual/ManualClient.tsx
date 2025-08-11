@@ -8,6 +8,8 @@ import {
   XMarkIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 
 interface Manual {
   id: string;
@@ -48,6 +50,7 @@ interface Tag {
 
 export default function ManualClient() {
   const [manuals, setManuals] = useState<Manual[]>([]);
+  const [favoriteManualIds, setFavoriteManualIds] = useState<string[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -59,6 +62,7 @@ export default function ManualClient() {
   const [expandedManualPrecautions, setExpandedManualPrecautions] = useState<Set<string>>(new Set());
   const [selectedPrecaution, setSelectedPrecaution] = useState<any>(null);
   const [showPrecautionModal, setShowPrecautionModal] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   
   // 필터 상태
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,6 +103,30 @@ export default function ManualClient() {
   useEffect(() => {
     fetchManuals();
   }, []);
+
+  useEffect(() => {
+    // 즐겨찾기 불러오기
+    const loadFavorites = async () => {
+      const res = await fetch('/api/employee/favorites', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setFavoriteManualIds(data.manualIds || []);
+      }
+    };
+    loadFavorites();
+  }, []);
+
+  const toggleFavorite = async (manualId: string, next: boolean) => {
+    const res = await fetch('/api/employee/favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ targetType: 'MANUAL', targetId: manualId, favorite: next })
+    });
+    if (res.ok) {
+      setFavoriteManualIds(prev => next ? Array.from(new Set([...prev, manualId])) : prev.filter(id => id !== manualId));
+    }
+  };
 
   const fetchManuals = async () => {
     try {
@@ -210,8 +238,9 @@ export default function ManualClient() {
     // 태그 필터는 AND 조건: 선택 수가 늘수록 결과는 줄어들어야 함
     const matchesTags = selectedTags.length === 0 ||
       selectedTags.every(tagId => manual.tags?.some(tag => tag.id === tagId));
+    const matchesFavorite = !showFavoritesOnly || favoriteManualIds.includes(manual.id);
     
-    return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesCategory && matchesTags;
+    return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesCategory && matchesTags && matchesFavorite;
   });
 
   const clearFilters = () => {
@@ -305,6 +334,19 @@ export default function ManualClient() {
                 </svg>
                 <span className="hidden sm:inline">{showFilters ? "접기" : "필터"}</span>
                 <span className="sm:hidden">필터</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFavoritesOnly(prev => !prev)}
+                className={`flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg active:scale-95 ${showFavoritesOnly ? 'bg-pink-100 text-pink-700 hover:bg-pink-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                title="즐겨찾기만 보기"
+              >
+                {showFavoritesOnly ? (
+                  <HeartSolid className="w-4 h-4 text-pink-600" />
+                ) : (
+                  <HeartOutline className="w-4 h-4 text-gray-500" />
+                )}
+                <span className="hidden sm:inline">즐겨찾기만</span>
               </button>
             </div>
           </div>
@@ -436,6 +478,17 @@ export default function ManualClient() {
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             v{manual.version}
                           </span>
+                          <button
+                            className="p-1 rounded hover:bg-gray-100"
+                            aria-label="즐겨찾기"
+                            onClick={() => toggleFavorite(manual.id, !favoriteManualIds.includes(manual.id))}
+                          >
+                            {favoriteManualIds.includes(manual.id) ? (
+                              <HeartSolid className="w-5 h-5 text-red-500" />
+                            ) : (
+                              <HeartOutline className="w-5 h-5 text-gray-400" />
+                            )}
+                          </button>
                           {manual.precautions && manual.precautions.length > 0 && (
                             <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

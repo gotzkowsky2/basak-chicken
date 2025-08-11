@@ -29,6 +29,10 @@ export default function EmployeeMainClient() {
             <span className="text-base sm:text-lg font-semibold text-indigo-700 text-center">메뉴얼</span>
             <span className="text-xs sm:text-sm text-gray-500 mt-2 text-center">업무 가이드 및 매뉴얼</span>
           </Link>
+          <Link prefetch={false} href="/employee/favorites" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-pink-50 active:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
+            <span className="text-base sm:text-lg font-semibold text-pink-700 text-center">즐겨찾기</span>
+            <span className="text-xs sm:text-sm text-gray-500 mt-2 text-center">내가 하트한 매뉴얼/주의사항</span>
+          </Link>
         </div>
       </div>
     </main>

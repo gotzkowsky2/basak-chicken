@@ -141,6 +141,16 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                   </svg>
                   메뉴얼
                 </Link>
+                <Link 
+                  href="/employee/favorites" 
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-pink-50 hover:text-pink-700 active:bg-pink-100 focus:outline-none focus:bg-pink-50 transition-all duration-150 cursor-pointer min-h-[44px]"
+                  onClick={() => setShowMenu(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-pink-600">
+                    <path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.173 25.18 25.18 0 01-4.244-2.673C4.688 16.18 2.25 13.514 2.25 9.75 2.25 7.126 4.338 5 6.75 5c1.676 0 3.163.992 3.9 2.41.737-1.418 2.224-2.41 3.9-2.41 2.412 0 4.5 2.126 4.5 4.75 0 3.764-2.438 6.43-4.739 8.3a25.175 25.175 0 01-4.244 2.673 15.247 15.247 0 01-.383.173l-.022.01-.007.003-.003.001a.75.75 0 01-.614 0l-.003-.001z" />
+                  </svg>
+                  즐겨찾기
+                </Link>
               </div>
             )}
           </div>

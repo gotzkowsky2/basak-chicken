@@ -9,6 +9,8 @@ import {
   XMarkIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline';
 
 interface Precaution {
   id: string;
@@ -35,10 +37,12 @@ interface Tag {
 
 export default function NoticesPage() {
   const [precautions, setPrecautions] = useState<Precaution[]>([]);
+  const [favoritePrecautionIds, setFavoritePrecautionIds] = useState<string[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   
   // 필터 상태
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,8 +89,28 @@ export default function NoticesPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchPrecautions();
+      fetchFavorites();
     }
   }, [isAuthenticated]);
+  const fetchFavorites = async () => {
+    const res = await fetch('/api/employee/favorites', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      setFavoritePrecautionIds(data.precautionIds || []);
+    }
+  };
+
+  const toggleFavorite = async (precautionId: string, next: boolean) => {
+    const res = await fetch('/api/employee/favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ targetType: 'PRECAUTION', targetId: precautionId, favorite: next })
+    });
+    if (res.ok) {
+      setFavoritePrecautionIds(prev => next ? Array.from(new Set([...prev, precautionId])) : prev.filter(id => id !== precautionId));
+    }
+  };
 
   const checkAuth = async () => {
     try {
@@ -174,8 +198,9 @@ export default function NoticesPage() {
     // 태그 AND 필터: 선택한 모든 태그를 포함해야 함
     const matchesTags = selectedTags.length === 0 ||
       selectedTags.every(tagId => precaution.tags?.some(tag => tag.id === tagId));
+    const matchesFavorite = !showFavoritesOnly || favoritePrecautionIds.includes(precaution.id);
     
-    return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesTags;
+    return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesTags && matchesFavorite;
   });
 
   const clearFilters = () => {
@@ -244,6 +269,19 @@ export default function NoticesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
               {showFilters ? "접기" : "필터"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowFavoritesOnly(prev => !prev)}
+              className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${showFavoritesOnly ? 'bg-pink-100 text-pink-700 hover:bg-pink-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              title="즐겨찾기만 보기"
+            >
+              {showFavoritesOnly ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-pink-600"><path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.173 25.18 25.18 0 01-4.244-2.673C4.688 16.18 2.25 13.514 2.25 9.75 2.25 7.126 4.338 5 6.75 5c1.676 0 3.163.992 3.9 2.41.737-1.418 2.224-2.41 3.9-2.41 2.412 0 4.5 2.126 4.5 4.75 0 3.764-2.438 6.43-4.739 8.3a25.175 25.175 0 01-4.244 2.673 15.247 15.247 0 01-.383.173l-.022.01-.007.003-.003.001a.75.75 0 01-.614 0l-.003-.001z" /></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 text-gray-500"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+              )}
+              <span className="hidden sm:inline">즐겨찾기만</span>
             </button>
           </div>
         </div>
@@ -350,11 +388,22 @@ export default function NoticesPage() {
               <div key={precaution.id} className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2">
                       <h2 className="text-xl font-semibold text-gray-800">{precaution.title}</h2>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(precaution.priority)}`}>
                         {getPriorityLabel(precaution.priority)}
                       </span>
+                        <button
+                          className="p-1 rounded hover:bg-gray-100"
+                          aria-label="즐겨찾기"
+                          onClick={() => toggleFavorite(precaution.id, !favoritePrecautionIds.includes(precaution.id))}
+                        >
+                          {favoritePrecautionIds.includes(precaution.id) ? (
+                            <HeartSolid className="w-5 h-5 text-red-500" />
+                          ) : (
+                            <HeartOutline className="w-5 h-5 text-gray-400" />
+                          )}
+                        </button>
                     </div>
                     
                     {/* 태그 표시 */}

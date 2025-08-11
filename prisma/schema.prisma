@@ -79,16 +79,16 @@ model ManualTagRelation {
 
 // 메뉴얼-주의사항 관계
 model ManualPrecautionRelation {
-  id          String @id @default(cuid())
-  manualId    String
+  id           String   @id @default(cuid())
+  manualId     String
   precautionId String
-  order       Int    @default(0)
-  createdAt   DateTime @default(now())
-  
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
   // 관계
-  manual      Manual @relation(fields: [manualId], references: [id], onDelete: Cascade)
-  precaution  Precaution @relation(fields: [precautionId], references: [id], onDelete: Cascade)
-  
+  manual     Manual     @relation(fields: [manualId], references: [id], onDelete: Cascade)
+  precaution Precaution @relation(fields: [precautionId], references: [id], onDelete: Cascade)
+
   @@unique([manualId, precautionId])
 }
 
@@ -112,6 +112,7 @@ model Employee {
   purchaseRequests   PurchaseRequest[]
   purchasedItems     PurchaseRequestItem[]
   lockedTimeSlots    TimeSlotChecklistStatus[]
+  favorites          Favorite[]
 }
 
 model ChecklistTemplate {
@@ -194,37 +195,37 @@ model ChecklistItemProgress {
 }
 
 model Precaution {
-  id           String                  @id @default(cuid())
-  title        String
-  content      String
-  workplace    Workplace
-  timeSlot     TimeSlot
-  priority     Int                     @default(1)
-  isActive     Boolean                 @default(true)
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
-  tagRelations PrecautionTagRelation[]
-  tags         Tag[]                   @relation("PrecautionTags")
+  id              String                     @id @default(cuid())
+  title           String
+  content         String
+  workplace       Workplace
+  timeSlot        TimeSlot
+  priority        Int                        @default(1)
+  isActive        Boolean                    @default(true)
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  tagRelations    PrecautionTagRelation[]
+  tags            Tag[]                      @relation("PrecautionTags")
   manualRelations ManualPrecautionRelation[]
-  manuals      Manual[]                @relation("ManualPrecautions")
+  manuals         Manual[]                   @relation("ManualPrecautions")
 }
 
 model Manual {
-  id           String              @id @default(cuid())
-  title        String
-  content      String
-  mediaUrls    String[]
-  workplace    Workplace
-  timeSlot     TimeSlot
-  category     Category
-  version      String              @default("1.0")
-  isActive     Boolean             @default(true)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  tagRelations ManualTagRelation[]
-  tags         Tag[]               @relation("ManualTags")
+  id                  String                     @id @default(cuid())
+  title               String
+  content             String
+  mediaUrls           String[]
+  workplace           Workplace
+  timeSlot            TimeSlot
+  category            Category
+  version             String                     @default("1.0")
+  isActive            Boolean                    @default(true)
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  tagRelations        ManualTagRelation[]
+  tags                Tag[]                      @relation("ManualTags")
   precautionRelations ManualPrecautionRelation[]
-  precautions  Precaution[]        @relation("ManualPrecautions")
+  precautions         Precaution[]               @relation("ManualPrecautions")
 }
 
 model InventoryItem {
@@ -347,6 +348,19 @@ model PosReport {
   updatedAt        DateTime @updatedAt
 }
 
+// 즐겨찾기
+model Favorite {
+  id         String         @id @default(cuid())
+  employeeId String
+  targetType FavoriteTarget
+  targetId   String
+  createdAt  DateTime       @default(now())
+  employee   Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, targetType, targetId])
+  @@index([employeeId, targetType])
+}
+
 enum Workplace {
   HALL
   KITCHEN
@@ -383,4 +397,9 @@ enum PurchasePriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+enum FavoriteTarget {
+  MANUAL
+  PRECAUTION
 }
