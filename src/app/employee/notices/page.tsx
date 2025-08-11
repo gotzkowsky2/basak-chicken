@@ -62,7 +62,6 @@ export default function NoticesPage() {
     { value: 'ALL', label: '전체' },
     { value: 'PREPARATION', label: '준비' },
     { value: 'IN_PROGRESS', label: '진행' },
-    { value: 'OPERATION', label: '진행' },
     { value: 'CLOSING', label: '마감' },
     { value: 'COMMON', label: '공통' }
   ];
@@ -172,10 +171,9 @@ export default function NoticesPage() {
       precaution.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesWorkplace = filterWorkplace === 'ALL' || precaution.workplace === filterWorkplace;
     const matchesTimeSlot = filterTimeSlot === 'ALL' || precaution.timeSlot === filterTimeSlot;
-    const matchesTags = selectedTags.length === 0 || 
-      selectedTags.some(tagId => 
-        precaution.tags?.some(tag => tag.id === tagId)
-      );
+    // 태그 AND 필터: 선택한 모든 태그를 포함해야 함
+    const matchesTags = selectedTags.length === 0 ||
+      selectedTags.every(tagId => precaution.tags?.some(tag => tag.id === tagId));
     
     return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesTags;
   });

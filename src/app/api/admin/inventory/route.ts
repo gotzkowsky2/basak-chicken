@@ -124,13 +124,15 @@ export async function GET(request: NextRequest) {
 
     // 태그 필터링
     if (tags && tags.length > 0) {
-      where.tagRelations = {
-        some: {
-          tagId: {
-            in: tags
+      // 모든 선택된 태그를 포함해야 함 (AND)
+      where.AND = [
+        ...(where.AND || []),
+        ...tags.map((tagId: string) => ({
+          tagRelations: {
+            some: { tagId }
           }
-        }
-      };
+        }))
+      ];
     }
 
     const inventoryItems = await prisma.inventoryItem.findMany({

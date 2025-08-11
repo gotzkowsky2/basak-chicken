@@ -163,7 +163,6 @@ export default function InventoryPage() {
       if (!response.ok) throw new Error('재고 조회에 실패했습니다.');
       
       const data = await response.json();
-      console.log('재고 데이터:', data); // 태그 구조 확인용
       setInventoryItems(data);
     } catch (error: any) {
       setError(error.message);

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       path: "/",
       sameSite: "lax" as const,
-      secure: false,
+      secure: isProd, // 운영에서는 secure 쿠키로 설정해 TLS 하에서만 전송
       ...(isProd ? { domain } : {}),
     };
 

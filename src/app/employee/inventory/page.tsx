@@ -94,7 +94,7 @@ export default function EmployeeInventoryPage() {
         filters.selectedTags.forEach(tagId => params.append('tags', tagId));
       }
 
-      const response = await fetch(`/api/admin/inventory?${params}`, {
+      const response = await fetch(`/api/employee/inventory?${params}`, {
         credentials: 'include'
       });
 
@@ -104,8 +104,14 @@ export default function EmployeeInventoryPage() {
 
       const data = await response.json();
       
-      // 데이터 변환: API 응답을 컴포넌트에서 사용하는 형태로 변환
-      const transformedData = data.map((item: any) => ({
+      // 직원용 API 응답 형태에 맞춘 변환
+      const transformedData = data
+        // AND 필터가 서버에서 적용되지만, 혹시 모를 누락 대비 클라이언트에서도 한 번 더 필터
+        .filter((item: any) =>
+          filters.selectedTags.length === 0 ||
+          filters.selectedTags.every(tagId => (item.tags || []).some((t: any) => t.id === tagId))
+        )
+        .map((item: any) => ({
         id: item.id,
         name: item.name,
         category: item.category,
@@ -113,14 +119,10 @@ export default function EmployeeInventoryPage() {
         minStock: item.minStock,
         unit: item.unit,
         supplier: item.supplier,
-        lastUpdated: item.checks && item.checks.length > 0 ? item.checks[0].checkedAt : item.updatedAt,
-        lastCheckedBy: item.checks && item.checks.length > 0 ? item.checks[0].employee?.name : null,
-        isActive: item.isActive,
-        tags: item.tagRelations?.map((relation: any) => ({
-          id: relation.tag.id,
-          name: relation.tag.name,
-          color: relation.tag.color
-        })) || []
+        lastUpdated: item.lastUpdated,
+        lastCheckedBy: item.lastCheckedBy || null,
+        isActive: true,
+        tags: item.tags || []
       }));
       
       setInventoryItems(transformedData);

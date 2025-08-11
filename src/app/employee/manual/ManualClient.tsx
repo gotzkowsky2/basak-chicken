@@ -68,21 +68,20 @@ export default function ManualClient() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  // 관리자 입력 기준과 동일한 구분 사용
   const workplaceOptions = [
     { value: 'ALL', label: '전체' },
-    { value: 'COMMON', label: '공통' },
+    { value: 'HALL', label: '홀' },
     { value: 'KITCHEN', label: '주방' },
-    { value: 'COUNTER', label: '카운터' },
-    { value: 'DELIVERY', label: '배달' }
+    { value: 'COMMON', label: '공통' }
   ];
 
   const timeSlotOptions = [
     { value: 'ALL', label: '전체' },
-    { value: 'ALL_DAY', label: '전일' },
-    { value: 'MORNING', label: '오전' },
-    { value: 'AFTERNOON', label: '오후' },
-    { value: 'EVENING', label: '저녁' },
-    { value: 'NIGHT', label: '야간' }
+    { value: 'PREPARATION', label: '준비' },
+    { value: 'IN_PROGRESS', label: '진행' },
+    { value: 'CLOSING', label: '마감' },
+    { value: 'COMMON', label: '공통' }
   ];
 
   const categoryOptions = [
@@ -208,10 +207,9 @@ export default function ManualClient() {
     const matchesWorkplace = filterWorkplace === 'ALL' || manual.workplace === filterWorkplace;
     const matchesTimeSlot = filterTimeSlot === 'ALL' || manual.timeSlot === filterTimeSlot;
     const matchesCategory = filterCategory === 'ALL' || manual.category === filterCategory;
-    const matchesTags = selectedTags.length === 0 || 
-      selectedTags.some(tagId => 
-        manual.tags?.some(tag => tag.id === tagId)
-      );
+    // 태그 필터는 AND 조건: 선택 수가 늘수록 결과는 줄어들어야 함
+    const matchesTags = selectedTags.length === 0 ||
+      selectedTags.every(tagId => manual.tags?.some(tag => tag.id === tagId));
     
     return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesCategory && matchesTags;
   });

@@ -46,10 +46,10 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('isCompleted')) filter.isCompleted = searchParams.get('isCompleted') === 'true';
     if (searchParams.get('isSubmitted')) filter.isSubmitted = searchParams.get('isSubmitted') === 'true';
 
-    // 관리자가 아닌 경우 본인 데이터만 조회 (임시로 주석 처리)
-    // if (!employee.isSuperAdmin) {
-    //   filter.employeeId = employee.id;
-    // }
+    // 관리자가 아닌 경우: 기본적으로 본인 데이터만 보이도록 강제
+    if (!employee.isSuperAdmin && !searchParams.get('employeeId')) {
+      filter.employeeId = employee.id;
+    }
 
     console.log('적용된 필터:', filter);
 
@@ -210,8 +210,8 @@ export async function GET(request: NextRequest) {
         instances = uniqueInstances;
       }
     } else {
-      // 직원 필터가 없는 경우 기존 로직 사용
-      const whereClause: any = {
+      // 직원 필터가 없는 경우: 기본으로 '내가 제출했거나 내가 체크한' 인스턴스만 노출
+      const baseWhere: any = {
         ...(filter.templateId && { templateId: filter.templateId }),
         ...(filter.workplace && { workplace: filter.workplace }),
         ...(filter.timeSlot && { timeSlot: filter.timeSlot }),
@@ -220,46 +220,42 @@ export async function GET(request: NextRequest) {
         ...dateFilter
       };
 
-      instances = await prisma.checklistInstance.findMany({
-        where: whereClause,
-        include: {
-          employee: {
-            select: {
-              id: true,
-              name: true
-            }
+      if (!employee.isSuperAdmin) {
+        instances = await prisma.checklistInstance.findMany({
+          where: {
+            ...baseWhere,
+            OR: [
+              { employeeId: employee.id },
+              { checklistItemProgresses: { some: { completedBy: { contains: employee.name } } } },
+              { connectedItemsProgress: { some: { completedBy: { contains: employee.name } } } }
+            ]
           },
-          template: {
-            select: {
-              id: true,
-              name: true,
-              workplace: true,
-              timeSlot: true
-            }
-          },
-          checklistItemProgresses: {
-            include: {
-              item: {
-                select: {
-                  id: true,
-                  content: true,
-                  order: true
-                }
-              }
+          include: {
+            employee: { select: { id: true, name: true } },
+            template: { select: { id: true, name: true, workplace: true, timeSlot: true } },
+            checklistItemProgresses: {
+              include: { item: { select: { id: true, content: true, order: true } } },
+              orderBy: { item: { order: 'asc' } }
             },
-            orderBy: {
-              item: {
-                order: 'asc'
-              }
-            }
+            connectedItemsProgress: true
           },
-          connectedItemsProgress: true
-        },
-        orderBy: [
-          { date: 'desc' },
-          { submittedAt: 'desc' }
-        ]
-      });
+          orderBy: [ { date: 'desc' }, { submittedAt: 'desc' } ]
+        });
+      } else {
+        instances = await prisma.checklistInstance.findMany({
+          where: baseWhere,
+          include: {
+            employee: { select: { id: true, name: true } },
+            template: { select: { id: true, name: true, workplace: true, timeSlot: true } },
+            checklistItemProgresses: {
+              include: { item: { select: { id: true, content: true, order: true } } },
+              orderBy: { item: { order: 'asc' } }
+            },
+            connectedItemsProgress: true
+          },
+          orderBy: [ { date: 'desc' }, { submittedAt: 'desc' } ]
+        });
+      }
     }
 
     console.log(`조회된 인스턴스 수: ${instances.length}`);

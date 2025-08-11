@@ -1,48 +1,28 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "nodejs"; // nodejs 런타임 강제
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const headers = new Headers({
-    "Cache-Control": "no-store",
-    "Clear-Site-Data": '"cookies"',
-    "Content-Type": "application/json; charset=utf-8",
+  const isProd = process.env.NODE_ENV === "production";
+  const domain = "crew.basak-chicken.com";
+  const resp = NextResponse.json({ message: "로그아웃 되었습니다." }, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json; charset=utf-8",
+    }
   });
 
-  const expires = "Thu, 01 Jan 1970 00:00:00 GMT";
   const names = ["employee_auth", "admin_auth", "superadmin_auth", "temp_pw_auth"];
-
   for (const name of names) {
-    headers.append("Set-Cookie", `${name}=; Path=/; Expires=${expires}; HttpOnly; SameSite=Lax`);
-    headers.append("Set-Cookie", `${name}=; Path=/employee; Expires=${expires}; HttpOnly; SameSite=Lax`);
-    headers.append("Set-Cookie", `${name}=; Path=/admin; Expires=${expires}; HttpOnly; SameSite=Lax`);
-
-    headers.append("Set-Cookie", `${name}=; Path=/; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
-    headers.append("Set-Cookie", `${name}=; Path=/employee; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
-    headers.append("Set-Cookie", `${name}=; Path=/admin; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
-
-    headers.append("Set-Cookie", `${name}=; Path=/; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
-    headers.append("Set-Cookie", `${name}=; Path=/employee; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
-    headers.append("Set-Cookie", `${name}=; Path=/admin; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
+    resp.cookies.set(name, "", {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: isProd,
+      ...(isProd ? { domain } : {}),
+      expires: new Date(0)
+    });
   }
 
-  const domains = ["crew.basak-chicken.com", ".crew.basak-chicken.com"];
-  for (const d of domains) {
-    for (const name of names) {
-      headers.append("Set-Cookie", `${name}=; Path=/; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
-      headers.append("Set-Cookie", `${name}=; Path=/employee; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
-      headers.append("Set-Cookie", `${name}=; Path=/admin; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax`);
-
-      headers.append("Set-Cookie", `${name}=; Path=/; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
-      headers.append("Set-Cookie", `${name}=; Path=/employee; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
-      headers.append("Set-Cookie", `${name}=; Path=/admin; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=Lax; Secure`);
-
-      headers.append("Set-Cookie", `${name}=; Path=/; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
-      headers.append("Set-Cookie", `${name}=; Path=/employee; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
-      headers.append("Set-Cookie", `${name}=; Path=/admin; Domain=${d}; Expires=${expires}; HttpOnly; SameSite=None; Secure`);
-    }
-  }
-
-  const body = JSON.stringify({ message: "로그아웃 되었습니다." });
-  return new Response(body, { status: 200, headers });
-} 
+  return resp;
+}

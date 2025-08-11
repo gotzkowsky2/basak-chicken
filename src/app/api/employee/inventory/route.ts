@@ -63,24 +63,27 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { name: 'asc' }
       ],
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        currentStock: true,
-        minStock: true,
-        unit: true,
-        supplier: true,
-        lastUpdated: true,
-        lastCheckedBy: true
+      include: {
+        tagRelations: {
+          include: { tag: true }
+        }
       }
     });
 
-    // 상태 정보 추가
-    const itemsWithStatus = inventoryItems.map(item => ({
-      ...item,
+    // 상태 정보 및 태그 평탄화
+    const itemsWithStatus = inventoryItems.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      currentStock: item.currentStock,
+      minStock: item.minStock,
+      unit: item.unit,
+      supplier: item.supplier,
+      lastUpdated: item.lastUpdated,
+      lastCheckedBy: item.lastCheckedBy,
       status: item.currentStock <= item.minStock ? 'low' : 'sufficient',
-      isLowStock: item.currentStock <= item.minStock
+      isLowStock: item.currentStock <= item.minStock,
+      tags: (item.tagRelations || []).map((rel: any) => ({ id: rel.tag.id, name: rel.tag.name, color: rel.tag.color }))
     }));
 
     return NextResponse.json(itemsWithStatus);
@@ -138,7 +141,8 @@ export async function PUT(request: NextRequest) {
       data: {
         currentStock: currentStock,
         lastUpdated: new Date(),
-        lastCheckedBy: employee.id
+        // 이름을 저장하여 프론트에서 사람이름으로 바로 표시되도록 함
+        lastCheckedBy: employee.name
       }
     });
 

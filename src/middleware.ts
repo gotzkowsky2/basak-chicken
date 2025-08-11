@@ -37,7 +37,7 @@ export function middleware(request: NextRequest) {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
-      secure: false,
+      secure: isProd,
       ...(isProd ? { domain } : {}),
     });
     return resp;

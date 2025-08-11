@@ -24,9 +24,10 @@ export default function EmployeeLoginPage() {
       if (!res.ok) {
         setError(data.error || "로그인 실패");
       } else if (data.redirectTo) {
-        router.push(data.redirectTo);
+        // 하드 내비게이션으로 쿠키 반영을 보장
+        window.location.href = data.redirectTo;
       } else {
-        router.push("/employee");
+        window.location.href = "/employee";
       }
     } catch (err) {
       setError("서버 오류가 발생했습니다.");
