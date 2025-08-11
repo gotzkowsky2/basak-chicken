@@ -8,7 +8,8 @@ import {
   MinusIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  UserIcon
 } from '@heroicons/react/24/outline';
 
 interface InventoryItem {
@@ -37,6 +38,8 @@ export default function EmployeeInventoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // 나의 업데이트만 보기
+  const [onlyMine, setOnlyMine] = useState(false);
   
   // 필터 상태 (관리자 페이지와 동일한 방식)
   const [filters, setFilters] = useState({
@@ -283,8 +286,21 @@ export default function EmployeeInventoryPage() {
       <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 sm:py-6">
         {/* 헤더 */}
         <div className="mb-4 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">📦 재고/구매관리</h1>
-          <p className="text-gray-600 text-sm sm:text-base">현재 재고 현황을 확인하고 업데이트할 수 있습니다.</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">📦 재고/구매관리</h1>
+              <p className="text-gray-600 text-sm sm:text-base">현재 재고 현황을 확인하고 업데이트할 수 있습니다.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOnlyMine(v => !v)}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${onlyMine ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+              title="나의 업데이트"
+            >
+              <UserIcon className={`w-4 h-4 ${onlyMine ? 'text-white' : 'text-gray-600'}`} />
+              <span className="hidden sm:inline">나의 업데이트</span>
+            </button>
+          </div>
         </div>
 
         {/* 알림 */}
@@ -416,12 +432,20 @@ export default function EmployeeInventoryPage() {
           )}
 
           <div className="divide-y divide-gray-200">
-            {inventoryItems.length === 0 ? (
+            {(() => {
+              const itemsToRender = (onlyMine && currentUser?.name)
+                ? [...inventoryItems]
+                    .filter(item => item.lastCheckedBy === currentUser?.name)
+                    .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
+                : inventoryItems;
+              if (itemsToRender.length === 0) {
+                return (
               <div className="p-6 text-center">
                 <p className="text-gray-500 text-sm">재고 항목이 없습니다.</p>
               </div>
-            ) : (
-              inventoryItems.map((item) => {
+                );
+              }
+              return itemsToRender.map((item) => {
                 const stockStatus = getStockStatus(item.currentStock, item.minStock);
                 
                 return (
@@ -565,8 +589,8 @@ export default function EmployeeInventoryPage() {
                     </div>
                   </div>
                 );
-              })
-            )}
+              });
+            })()}
           </div>
         </div>
       </div>

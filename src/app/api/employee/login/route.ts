@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     // 로그인 성공
     const response = NextResponse.json({
       success: true,
-      redirectTo: (employee as any).isSuperAdmin ? "/admin-choose" : "/employee",
+      redirectTo: (employee as any).isSuperAdmin ? "/admin" : "/employee",
     });
 
     response.cookies.set("employee_auth", employee.id, commonCookie);

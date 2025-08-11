@@ -9,9 +9,9 @@ export default function EmployeeMainClient() {
       <div className="w-full max-w-xl bg-white rounded-xl shadow-lg p-6 sm:p-8 flex flex-col gap-6 sm:gap-8">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <Link prefetch={false} href="/employee" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-green-50 active:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
-            <span className="text-base sm:text-lg font-semibold text-green-700 text-center">직원 홈</span>
-            <span className="text-xs sm:text-sm text-gray-500 mt-2 text-center">메인으로 이동</span>
+          <Link prefetch={false} href="/employee/checklist" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-green-50 active:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
+            <span className="text-base sm:text-lg font-semibold text-green-700 text-center">오늘의 체크리스트</span>
+            <span className="text-xs sm:text-sm text-gray-500 mt-2 text-center">준비/진행/마감, 홀/부엌</span>
           </Link>
           <Link prefetch={false} href="/employee/submissions" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-blue-50 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
             <span className="text-base sm:text-lg font-semibold text-blue-700 text-center">내 제출 내역</span>

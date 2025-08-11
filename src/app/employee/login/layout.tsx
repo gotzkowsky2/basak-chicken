@@ -9,7 +9,7 @@ export default async function EmployeeLoginLayout({ children }: { children: Reac
     const prisma = new PrismaClient();
     const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
     if (employee?.isSuperAdmin) {
-      redirect("/admin-choose");
+      redirect("/admin");
     } else {
       redirect("/employee");
     }

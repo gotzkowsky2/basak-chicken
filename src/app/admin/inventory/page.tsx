@@ -78,7 +78,8 @@ export default function InventoryPage() {
     category: 'ALL',
     search: '',
     lowStock: false,
-    selectedTags: [] as string[]
+    selectedTags: [] as string[],
+    employee: 'ALL'
   });
   
   // 태그 필터 접기/펼치기 상태
@@ -158,6 +159,9 @@ export default function InventoryPage() {
       if (inventoryFilters.selectedTags.length > 0) {
         inventoryFilters.selectedTags.forEach(tagId => params.append('tags', tagId));
       }
+      if (inventoryFilters.employee && inventoryFilters.employee !== 'ALL') {
+        params.append('employeeId', inventoryFilters.employee);
+      }
 
       const response = await fetch(`/api/admin/inventory?${params}`, { credentials: 'include' });
       if (!response.ok) throw new Error('재고 조회에 실패했습니다.');
@@ -197,6 +201,20 @@ export default function InventoryPage() {
       }
     } catch (error) {
       console.error('태그 로딩 실패:', error);
+    }
+  };
+
+  // 직원 목록 로드
+  const [employees, setEmployees] = useState<{id: string; name: string;}[]>([]);
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch('/api/admin/employees', { credentials: 'include' });
+      if (res.ok) {
+        const list = await res.json();
+        setEmployees(list.map((e: any) => ({ id: e.id, name: e.name })));
+      }
+    } catch (e) {
+      console.error('직원 목록 로드 실패', e);
     }
   };
 
@@ -476,7 +494,7 @@ export default function InventoryPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      await Promise.all([fetchInventoryItems(), fetchPurchaseRequests(), fetchTags()]);
+      await Promise.all([fetchInventoryItems(), fetchPurchaseRequests(), fetchTags(), fetchEmployees()]);
       setLoading(false);
     };
     fetchData();
@@ -795,7 +813,7 @@ export default function InventoryPage() {
               <div className="p-6 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">재고 현황</h3>
                 
-                {/* 필터 */}
+            {/* 필터 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
@@ -826,7 +844,7 @@ export default function InventoryPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-end">
+              <div className="flex items-end gap-3">
                     <label className="flex items-center">
                       <input
                         type="checkbox"
@@ -836,6 +854,19 @@ export default function InventoryPage() {
                       />
                       <span className="ml-2 text-sm text-gray-700">부족 재고만</span>
                     </label>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">직원</label>
+                  <select
+                    value={inventoryFilters.employee}
+                    onChange={(e) => setInventoryFilters(prev => ({ ...prev, employee: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  >
+                    <option value="ALL">전체</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    ))}
+                  </select>
+                </div>
                   </div>
                 </div>
 

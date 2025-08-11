@@ -99,6 +99,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const lowStock = searchParams.get('lowStock');
     const tags = searchParams.getAll('tags');
+    const employeeFilter = searchParams.get('employeeId');
 
     // 필터 조건 구성
     const where: any = {
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // 태그 필터링
+    // 태그 필터링 (AND)
     if (tags && tags.length > 0) {
       // 모든 선택된 태그를 포함해야 함 (AND)
       where.AND = [
@@ -135,6 +136,26 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // 직원(업데이트한 사람) 필터링
+    if (employeeFilter && employeeFilter !== 'ALL') {
+      // 이름 또는 ID 둘 다 허용
+      where.AND = [
+        ...(where.AND || []),
+        {
+          checks: {
+            some: {
+              employee: {
+                OR: [
+                  { id: employeeFilter },
+                  { name: employeeFilter }
+                ]
+              }
+            }
+          }
+        }
+      ];
+    }
+
     const inventoryItems = await prisma.inventoryItem.findMany({
       where,
       orderBy: [
@@ -143,10 +164,11 @@ export async function GET(request: NextRequest) {
       include: {
         checks: {
           orderBy: { checkedAt: 'desc' },
-          take: 3,
+          take: employeeFilter && employeeFilter !== 'ALL' ? 1 : 3,
           include: {
             employee: {
               select: {
+                id: true,
                 name: true
               }
             }
@@ -160,7 +182,20 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(inventoryItems);
+    // 직원 필터가 있는 경우: 최근 업데이트(최신 체크)의 직원이 일치하는 항목만 반환
+    let filtered = inventoryItems;
+    if (employeeFilter && employeeFilter !== 'ALL') {
+      filtered = inventoryItems.filter((item: any) => {
+        const latest = item.checks && item.checks[0];
+        if (!latest || !latest.employee) return false;
+        return (
+          latest.employee.id === employeeFilter ||
+          latest.employee.name === employeeFilter
+        );
+      });
+    }
+
+    return NextResponse.json(filtered);
   } catch (error: any) {
     console.error('재고 아이템 조회 오류:', error);
     return NextResponse.json(
