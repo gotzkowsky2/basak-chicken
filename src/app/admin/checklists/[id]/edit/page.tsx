@@ -13,6 +13,9 @@ interface Template {
   category: string;
   timeSlot: string;
   isActive: boolean;
+  autoGenerateEnabled?: boolean;
+  recurrenceDays?: number[];
+  generationTime?: string | null;
 }
 
 interface Tag {
@@ -72,6 +75,9 @@ export default function EditChecklistTemplatePage() {
         category: data.category,
         timeSlot: data.timeSlot,
         isActive: data.isActive,
+        autoGenerateEnabled: data.autoGenerateEnabled ?? false,
+        recurrenceDays: data.recurrenceDays ?? [],
+        generationTime: data.generationTime ?? null,
       });
 
       // 기존 태그 관계가 API에 포함되어 있지 않을 수 있으므로, 템플릿의 태그 관계를 별도 확장 시까지 비움
@@ -116,6 +122,9 @@ export default function EditChecklistTemplatePage() {
         timeSlot: template.timeSlot,
         isActive: template.isActive,
         selectedTags: selectedTags,
+        autoGenerateEnabled: !!template.autoGenerateEnabled,
+        recurrenceDays: Array.isArray(template.recurrenceDays) ? template.recurrenceDays : [],
+        generationTime: template.generationTime || null,
       };
 
       const res = await fetch(`/api/admin/checklists/${template.id}`, {
@@ -310,6 +319,67 @@ export default function EditChecklistTemplatePage() {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* 반복 생성 설정 */}
+        <div className="bg-white rounded-lg shadow p-6 mt-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900">반복 생성 설정</h2>
+          <div className="space-y-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!template.autoGenerateEnabled}
+                onChange={(e) => setTemplate({ ...template, autoGenerateEnabled: e.target.checked })}
+                className="h-4 w-4"
+              />
+              <span className="text-sm text-gray-700">자동 생성 활성화</span>
+            </label>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">반복 요일</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { idx: 0, label: '일' },
+                  { idx: 1, label: '월' },
+                  { idx: 2, label: '화' },
+                  { idx: 3, label: '수' },
+                  { idx: 4, label: '목' },
+                  { idx: 5, label: '금' },
+                  { idx: 6, label: '토' },
+                ].map((d) => {
+                  const active = (template.recurrenceDays || []).includes(d.idx);
+                  return (
+                    <button
+                      key={d.idx}
+                      type="button"
+                      disabled={!template.autoGenerateEnabled}
+                      onClick={() => {
+                        const cur = new Set(template.recurrenceDays || []);
+                        if (cur.has(d.idx)) cur.delete(d.idx); else cur.add(d.idx);
+                        setTemplate({ ...template, recurrenceDays: Array.from(cur).sort() });
+                      }}
+                      className={`px-3 py-1 rounded-full text-sm border ${active ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      {d.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">생성 시각 (선택)</label>
+              <input
+                type="time"
+                disabled={!template.autoGenerateEnabled}
+                value={template.generationTime || ''}
+                onChange={(e) => setTemplate({ ...template, generationTime: e.target.value })}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
+            </div>
+
+            <p className="text-xs text-gray-500">저장 버튼을 눌러야 설정이 반영됩니다. 시각 미설정 시 기본 00:05에 생성됩니다.</p>
+          </div>
         </div>
       </div>
     </div>

@@ -58,7 +58,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { content, workplace, category, timeSlot, isActive, selectedTags } = await req.json();
+    const { content, workplace, category, timeSlot, isActive, selectedTags, autoGenerateEnabled, recurrenceDays, generationTime } = await req.json();
     const { id: checklistId } = await params;
 
     // 관리자 인증 확인
@@ -124,6 +124,9 @@ export async function PUT(
         isActive: isActive !== undefined ? isActive : existingChecklist.isActive,
         inputter: employee.name,
         inputDate: new Date(),
+        autoGenerateEnabled: !!autoGenerateEnabled,
+        recurrenceDays: Array.isArray(recurrenceDays) ? recurrenceDays : [],
+        generationTime: generationTime || null,
       },
     });
 

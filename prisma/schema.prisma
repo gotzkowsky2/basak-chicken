@@ -116,21 +116,25 @@ model Employee {
 }
 
 model ChecklistTemplate {
-  id           String                         @id @default(cuid())
-  content      String
-  inputter     String
-  inputDate    DateTime                       @default(now())
-  workplace    Workplace
-  category     Category
-  timeSlot     TimeSlot
-  isActive     Boolean                        @default(true)
-  createdAt    DateTime                       @default(now())
-  updatedAt    DateTime                       @updatedAt
-  name         String                         @default("")
-  instances    ChecklistInstance[]
-  items        ChecklistItem[]
-  tagRelations ChecklistTemplateTagRelation[]
-  tags         Tag[]                          @relation("ChecklistTemplateTags")
+  id                  String                         @id @default(cuid())
+  content             String
+  inputter            String
+  inputDate           DateTime                       @default(now())
+  workplace           Workplace
+  category            Category
+  timeSlot            TimeSlot
+  isActive            Boolean                        @default(true)
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+  name                String                         @default("")
+  instances           ChecklistInstance[]
+  items               ChecklistItem[]
+  tagRelations        ChecklistTemplateTagRelation[]
+  tags                Tag[]                          @relation("ChecklistTemplateTags")
+  // 반복 생성 설정
+  autoGenerateEnabled Boolean                        @default(false)
+  recurrenceDays      Int[]                          @default([])
+  generationTime      String? // HH:mm (선택)
 }
 
 model ChecklistInstance {
@@ -159,7 +163,8 @@ model ChecklistInstance {
   checklistItemProgresses ChecklistItemProgress[] @relation("ChecklistInstanceProgress")
   connectedItemsProgress  ConnectedItemProgress[]
 
-  @@unique([workplace, timeSlot, date])
+  // 템플릿별로 하루에 1개만 허용 (서로 다른 템플릿은 같은 날 여러 개 가능)
+  @@unique([templateId, date])
 }
 
 model ConnectedItemProgress {
