@@ -158,14 +158,15 @@ export async function POST(request: NextRequest) {
     const generatedSubmissions = [];
     
     for (const template of templates) {
-      // 기존 인스턴스가 있는지 확인
-      const existingInstance = await prisma.checklistInstance.findUnique({
+      // 기존 인스턴스가 있는지 확인 (템플릿+날짜 기준)
+      const base = new Date(targetDate);
+      const startOfDay = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+
+      const existingInstance = await prisma.checklistInstance.findFirst({
         where: {
-          workplace_timeSlot_date: {
-            workplace: template.workplace,
-            timeSlot: template.timeSlot,
-            date: new Date(targetDate)
-          }
+          templateId: template.id,
+          date: { gte: startOfDay, lt: endOfDay }
         }
       });
 

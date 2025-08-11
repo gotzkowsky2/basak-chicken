@@ -155,9 +155,13 @@ export async function GET(req: NextRequest) {
     const workplace = searchParams.get("workplace") || "";
     const category = searchParams.get("category") || "";
     const timeSlot = searchParams.get("timeSlot") || "";
+    const status = (searchParams.get("status") || "ACTIVE").toUpperCase(); // ACTIVE | INACTIVE | ALL
 
     // 필터 조건 구성
-    const where: any = { isActive: true };
+    const where: any = {};
+    if (status === 'ACTIVE') where.isActive = true;
+    else if (status === 'INACTIVE') where.isActive = false;
+    // ALL이면 isActive 필터 미적용
 
     if (search) {
       where.name = { contains: search, mode: "insensitive" };
@@ -197,6 +201,9 @@ export async function GET(req: NextRequest) {
       isActive: template.isActive,
       itemCount: template._count.items,
       items: template.items,
+      autoGenerateEnabled: template.autoGenerateEnabled,
+      recurrenceDays: template.recurrenceDays,
+      generationTime: template.generationTime,
     }));
 
     return NextResponse.json(transformedTemplates);

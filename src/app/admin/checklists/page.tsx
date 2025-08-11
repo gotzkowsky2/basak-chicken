@@ -13,6 +13,9 @@ interface ChecklistTemplate {
   inputDate: string;
   isActive: boolean;
   itemCount: number; // 연결된 체크리스트 항목 수
+  autoGenerateEnabled?: boolean;
+  recurrenceDays?: number[];
+  generationTime?: string | null;
 }
 
 const workplaceOptions = [
@@ -52,15 +55,20 @@ export default function ChecklistsPage() {
   const [filterWorkplace, setFilterWorkplace] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterTimeSlot, setFilterTimeSlot] = useState("");
+  const [filterStatus, setFilterStatus] = useState<'ACTIVE'|'INACTIVE'|'ALL'>(
+    'ACTIVE'
+  );
 
   useEffect(() => {
     fetchTemplates();
-  }, []);
+  }, [filterStatus]);
 
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/checklists", {
+      const params = new URLSearchParams();
+      params.set('status', filterStatus);
+      const response = await fetch(`/api/admin/checklists?${params.toString()}` , {
         credentials: "include",
       });
 
@@ -169,6 +177,49 @@ export default function ChecklistsPage() {
     return matchesSearch && matchesWorkplace && matchesCategory && matchesTimeSlot;
   });
 
+  // 시각적 구분을 위한 색상 팔레트 (템플릿별 고정 배정)
+  const colorPalette = [
+    { bg: 'bg-blue-600', text: 'text-white', border: 'border-blue-600' },
+    { bg: 'bg-green-600', text: 'text-white', border: 'border-green-600' },
+    { bg: 'bg-amber-600', text: 'text-white', border: 'border-amber-600' },
+    { bg: 'bg-purple-600', text: 'text-white', border: 'border-purple-600' },
+    { bg: 'bg-rose-600', text: 'text-white', border: 'border-rose-600' },
+    { bg: 'bg-indigo-600', text: 'text-white', border: 'border-indigo-600' },
+    { bg: 'bg-emerald-600', text: 'text-white', border: 'border-emerald-600' },
+    { bg: 'bg-cyan-600', text: 'text-white', border: 'border-cyan-600' },
+    { bg: 'bg-orange-600', text: 'text-white', border: 'border-orange-600' },
+  ] as const;
+
+  const colorIndexFor = (id: string) => {
+    let sum = 0;
+    for (let i = 0; i < id.length; i++) sum = (sum + id.charCodeAt(i)) % 9973;
+    return sum % colorPalette.length;
+  };
+
+  // 오늘 생성된 인스턴스 빠른 관리(간단 기능)
+  const [todayInstances, setTodayInstances] = useState<any[]>([]);
+  const [loadingInstances, setLoadingInstances] = useState(false);
+  const loadTodayInstances = async () => {
+    try {
+      setLoadingInstances(true);
+      const res = await fetch('/api/admin/checklist-instances', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setTodayInstances(data.instances || []);
+      }
+    } finally {
+      setLoadingInstances(false);
+    }
+  };
+
+  const deleteInstance = async (id: string) => {
+    if (!confirm('해당 인스턴스를 삭제하시겠습니까?')) return;
+    const res = await fetch(`/api/admin/checklist-instances?id=${id}`, { method: 'DELETE', credentials: 'include' });
+    if (res.ok) {
+      setTodayInstances(prev => prev.filter(i => i.id !== id));
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -210,7 +261,7 @@ export default function ChecklistsPage() {
 
         {/* 필터 */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">검색</label>
               <input
@@ -266,6 +317,18 @@ export default function ChecklistsPage() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">상태</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              >
+                <option value="ACTIVE">활성</option>
+                <option value="INACTIVE">비활성</option>
+                <option value="ALL">전체</option>
+              </select>
+            </div>
             <div className="flex items-end">
               <button
                 onClick={clearFilters}
@@ -274,6 +337,53 @@ export default function ChecklistsPage() {
                 필터 초기화
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* 주간 요약 (월~일) */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">요일별 반복 등록 요약</h2>
+          {/* 데스크톱 */}
+          <div className="hidden md:grid grid-cols-7 gap-2">
+            {['월','화','수','목','금','토','일'].map((d, i) => (
+              <div key={i} className="border rounded p-2 min-h-[100px]">
+                <div className="text-sm font-medium text-gray-700 mb-2 text-center">{d}</div>
+                <div className="space-y-1">
+                  {templates
+                    .filter(t => t.autoGenerateEnabled && (t.recurrenceDays || []).includes((i+1)%7))
+                    .map(t => {
+                      const ci = colorIndexFor(t.id);
+                      const c = colorPalette[ci];
+                      return (
+                        <div key={`${t.id}-${i}`} className={`text-xs ${c.bg} ${c.text} rounded px-2 py-1 truncate shadow`} title={t.name}>
+                          {t.name}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* 모바일 */}
+          <div className="md:hidden space-y-2">
+            {['월','화','수','목','금','토','일'].map((d, i) => (
+              <div key={i} className="border rounded p-2">
+                <div className="text-sm font-medium text-gray-700 mb-1">{d}</div>
+                <div className="flex flex-wrap gap-1">
+                  {templates
+                    .filter(t => t.autoGenerateEnabled && (t.recurrenceDays || []).includes((i+1)%7))
+                    .map(t => {
+                      const ci = colorIndexFor(t.id);
+                      const c = colorPalette[ci];
+                      return (
+                        <span key={`${t.id}-m-${i}`} className={`text-xs ${c.bg} ${c.text} rounded px-2 py-1 shadow`} title={t.name}>
+                          {t.name}
+                        </span>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -368,6 +478,31 @@ export default function ChecklistsPage() {
                     <span>{new Date(template.inputDate).toLocaleDateString()}</span>
                   </div>
 
+                  {/* 반복 요일 배지 */}
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {template.autoGenerateEnabled ? (
+                      (template.recurrenceDays || []).length > 0 ? (
+                        ['일','월','화','수','목','금','토'].map((label, idx) => {
+                          const active = (template.recurrenceDays || []).includes(idx);
+                          const ci = colorIndexFor(template.id);
+                          const c = colorPalette[ci];
+                          return (
+                            <span
+                              key={idx}
+                              className={`px-2 py-0.5 rounded-full text-xs border ${active ? `${c.bg} ${c.text} ${c.border}` : 'text-gray-500 border-gray-300'}`}
+                            >
+                              {label}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-xs text-gray-500">반복 요일 없음</span>
+                      )
+                    ) : (
+                      <span className="text-xs text-gray-400">자동 생성 비활성화</span>
+                    )}
+                  </div>
+
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <Link
                       href={`/admin/checklists/${template.id}/items`}
@@ -381,6 +516,31 @@ export default function ChecklistsPage() {
             ))}
           </div>
         )}
+
+        {/* 오늘 생성된 인스턴스(빠른 관리) */}
+        <div className="bg-white rounded-lg shadow p-4 mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-900">오늘 생성된 인스턴스</h2>
+            <button onClick={loadTodayInstances} className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200">새로고침</button>
+          </div>
+          {loadingInstances ? (
+            <p className="text-sm text-gray-500">불러오는 중...</p>
+          ) : todayInstances.length === 0 ? (
+            <p className="text-sm text-gray-500">오늘 생성된 인스턴스가 없습니다.</p>
+          ) : (
+            <div className="space-y-2">
+              {todayInstances.map((inst: any) => (
+                <div key={inst.id} className="flex items-center justify-between border rounded px-3 py-2">
+                  <div className="text-sm text-gray-800 truncate">
+                    <span className="font-medium mr-2">{inst.template?.name || inst.templateId}</span>
+                    <span className="text-gray-500">[{inst.workplace}/{inst.timeSlot}]</span>
+                  </div>
+                  <button onClick={() => deleteInstance(inst.id)} className="text-red-600 hover:bg-red-50 px-2 py-1 rounded text-sm">삭제</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {/* 복사 모달 */}
       {isCopying && (
