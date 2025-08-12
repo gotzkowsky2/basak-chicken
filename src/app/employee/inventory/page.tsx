@@ -408,8 +408,18 @@ export default function EmployeeInventoryPage() {
                   ))}
                 </div>
                 {filters.selectedTags.length > 0 && (
-                  <div className="mt-3 text-sm text-gray-600">
-                    선택된 태그: {filters.selectedTags.length}개
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      선택된 태그: {filters.selectedTags.length}개
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFilters(prev => ({ ...prev, selectedTags: [] }))}
+                      className="text-xs px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 active:scale-95"
+                      title="선택한 태그 필터 초기화"
+                    >
+                      선택 초기화
+                    </button>
                   </div>
                 )}
               </div>
