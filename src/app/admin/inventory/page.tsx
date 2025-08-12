@@ -131,6 +131,14 @@ export default function InventoryPage() {
     { value: '병', label: '병' }
   ];
 
+  // 기존 단위 + 현재 등록된 아이템의 단위를 합쳐서 제안 목록 구성
+  const suggestedUnitOptions = Array.from(
+    new Set<string>([
+      ...unitOptions.map((u) => u.value),
+      ...inventoryItems.map((i) => i.unit).filter((u) => !!u),
+    ])
+  ).map((u) => ({ value: u, label: u }));
+
   const statusOptions = [
     { value: 'ALL', label: '전체' },
     { value: 'PENDING', label: '대기중' },
@@ -643,19 +651,21 @@ export default function InventoryPage() {
                     <label className="block text-sm font-medium text-gray-900 mb-1">
                       단위 *
                     </label>
-                    <select
+                    <input
+                      type="text"
+                      list="unit-list"
                       value={formData.unit}
-                      onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      onChange={(e) => setFormData((prev) => ({ ...prev, unit: e.target.value }))}
+                      placeholder="예: kg, L, 개, 박스 ... (직접 입력 가능)"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
                       required
-                    >
-                      <option value="">단위 선택</option>
-                      {unitOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
+                    />
+                    <datalist id="unit-list">
+                      {suggestedUnitOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
-                    </select>
+                    </datalist>
+                    <p className="mt-1 text-xs text-gray-500">목록에 없는 단위는 직접 입력할 수 있습니다.</p>
                   </div>
                 </div>
 
