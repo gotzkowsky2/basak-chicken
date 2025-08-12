@@ -4,6 +4,17 @@ import { cookies } from 'next/headers';
 
 const prisma = new PrismaClient();
 
+function isOriginAllowed(request: NextRequest): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) return true;
+  try {
+    const host = new URL(origin).hostname;
+    return host.endsWith('basak-chicken.com') || host === 'localhost';
+  } catch {
+    return false;
+  }
+}
+
 // 관리자 인증 확인 함수
 async function verifyAdminAuth() {
   const cookieStore = await cookies();
@@ -30,6 +41,9 @@ async function verifyAdminAuth() {
 // POST: 새 메뉴얼 생성
 export async function POST(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+    }
     await verifyAdminAuth();
 
     const body = await request.json();
@@ -240,6 +254,9 @@ export async function GET(request: NextRequest) {
 // PUT: 메뉴얼 수정
 export async function PUT(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+    }
     await verifyAdminAuth();
 
     const body = await request.json();
@@ -371,6 +388,9 @@ export async function PUT(request: NextRequest) {
 // DELETE: 메뉴얼 삭제 (실제 삭제)
 export async function DELETE(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+    }
     await verifyAdminAuth();
 
     const { searchParams } = new URL(request.url);

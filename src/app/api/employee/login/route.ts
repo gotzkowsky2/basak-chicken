@@ -4,21 +4,65 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// 간단 레이트 리밋 및 Origin 검사
+const LOGIN_WINDOW_MS = 60_000; // 1분
+const LOGIN_MAX = 30; // 분당 30회(IP 기준)
+const ipToLoginTimestamps: Map<string, number[]> = new Map();
+
+function getClientIp(request: NextRequest): string {
+  const xff = request.headers.get('x-forwarded-for');
+  if (xff) {
+    const ip = xff.split(',')[0]?.trim();
+    if (ip) return ip;
+  }
+  // @ts-ignore
+  return (request as any).ip || 'unknown';
+}
+
+function isRateLimited(request: NextRequest): boolean {
+  const ip = getClientIp(request);
+  const now = Date.now();
+  const win = now - LOGIN_WINDOW_MS;
+  const list = (ipToLoginTimestamps.get(ip) || []).filter(t => t > win);
+  if (list.length >= LOGIN_MAX) {
+    ipToLoginTimestamps.set(ip, list);
+    return true;
+  }
+  list.push(now);
+  ipToLoginTimestamps.set(ip, list);
+  return false;
+}
+
+function isOriginAllowed(request: NextRequest): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) return true; // 앱 내 요청(SSR 등)
+  try {
+    const url = new URL(origin);
+    const host = url.hostname;
+    return host.endsWith('basak-chicken.com') || host === 'localhost';
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: "허용되지 않은 Origin입니다." }, { status: 403 });
+    }
+    if (isRateLimited(request)) {
+      return NextResponse.json({ error: "요청이 너무 많습니다. 잠시 후 다시 시도하세요." }, { status: 429 });
+    }
     const { employeeId, password } = await request.json();
     if (!employeeId || !password) {
       return NextResponse.json({ error: "아이디와 비밀번호를 입력하세요." }, { status: 400 });
     }
 
     const employee = await prisma.employee.findUnique({ where: { employeeId } });
-    if (!employee) {
-      return NextResponse.json({ error: "존재하지 않는 직원 ID입니다." }, { status: 401 });
-    }
 
-    const isPasswordValid = await bcrypt.compare(password, employee.password);
-    if (!isPasswordValid) {
-      return NextResponse.json({ error: "비밀번호가 일치하지 않습니다." }, { status: 401 });
+    // 통합 에러 메시지로 사용자 열거 방지
+    if (!employee || !(await bcrypt.compare(password, employee.password))) {
+      return NextResponse.json({ error: "아이디 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
     }
 
     const isProd = process.env.NODE_ENV === "production";

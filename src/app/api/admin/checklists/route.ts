@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+// @ts-ignore - Prisma types are available at runtime
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -29,6 +30,15 @@ function generateDefaultName(workplace: string, category: string, timeSlot: stri
 // POST: 새 템플릿 생성
 export async function POST(req: NextRequest) {
   try {
+    const origin = req.headers.get('origin');
+    if (origin) {
+      try {
+        const host = new URL(origin).hostname;
+        if (!(host.endsWith('basak-chicken.com') || host === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     // 인증 확인
     const adminAuth = req.cookies.get("admin_auth")?.value;
     const employeeAuth = req.cookies.get("employee_auth")?.value;

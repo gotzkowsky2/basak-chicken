@@ -9,6 +9,16 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    // 간단 Origin 검사 + 레이트 리밋
+    const origin = req.headers.get('origin');
+    if (origin) {
+      try {
+        const { hostname } = new URL(origin);
+        if (!(hostname.endsWith('basak-chicken.com') || hostname === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     const { employeeId, email } = await req.json();
     if (!employeeId || !email) {
       return NextResponse.json({ error: "직원 아이디와 이메일을 입력하세요." }, { status: 400 });

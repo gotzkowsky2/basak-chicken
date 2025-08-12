@@ -3,6 +3,17 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+function isOriginAllowed(request: NextRequest): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) return true;
+  try {
+    const host = new URL(origin).hostname;
+    return host.endsWith('basak-chicken.com') || host === 'localhost';
+  } catch {
+    return false;
+  }
+}
+
 // 관리자 인증 확인 함수
 async function verifyAdminAuth(request: NextRequest) {
   const adminAuth = request.cookies.get('admin_auth')?.value;
@@ -28,6 +39,9 @@ async function verifyAdminAuth(request: NextRequest) {
 // POST: 새 재고 아이템 생성
 export async function POST(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+    }
     await verifyAdminAuth(request);
 
     const body = await request.json();
@@ -208,6 +222,9 @@ export async function GET(request: NextRequest) {
 // PUT: 재고 아이템 수정
 export async function PUT(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+    }
     await verifyAdminAuth(request);
 
     const body = await request.json();
@@ -292,6 +309,9 @@ export async function PUT(request: NextRequest) {
 // DELETE: 재고 아이템 삭제 (실제 삭제)
 export async function DELETE(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+    }
     await verifyAdminAuth(request);
 
     const { searchParams } = new URL(request.url);
@@ -318,11 +338,16 @@ export async function DELETE(request: NextRequest) {
 
     // 관련 데이터 먼저 삭제
     await prisma.inventoryItemTagRelation.deleteMany({
-      where: { inventoryItemId: id }
+      where: { itemId: id }
+    });
+
+    // 구매요청 항목에 참조된 경우도 제거
+    await prisma.purchaseRequestItem.deleteMany({
+      where: { itemId: id }
     });
 
     await prisma.inventoryCheck.deleteMany({
-      where: { inventoryItemId: id }
+      where: { itemId: id }
     });
 
     // 체크리스트 연결에서도 제거

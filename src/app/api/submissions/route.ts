@@ -4,6 +4,53 @@ import { SubmissionFilter } from '@/types/submission';
 
 const prisma = new PrismaClient();
 
+// 간단한 IP 기반 레이트 리밋 (읽기 전용 보호)
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1분
+const RATE_LIMIT_MAX = 60; // 분당 60회
+const ipToRequestTimestamps: Map<string, number[]> = new Map();
+
+function getClientIp(request: NextRequest): string {
+  const xff = request.headers.get('x-forwarded-for');
+  if (xff) {
+    const ip = xff.split(',')[0]?.trim();
+    if (ip) return ip;
+  }
+  // @ts-ignore - NextRequest may have ip in some runtimes
+  return (request as any).ip || 'unknown';
+}
+
+function isRateLimited(request: NextRequest): boolean {
+  const ip = getClientIp(request);
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  const timestamps = (ipToRequestTimestamps.get(ip) || []).filter((t) => t > windowStart);
+  if (timestamps.length >= RATE_LIMIT_MAX) {
+    ipToRequestTimestamps.set(ip, timestamps);
+    return true;
+  }
+  timestamps.push(now);
+  ipToRequestTimestamps.set(ip, timestamps);
+  return false;
+}
+
+// 쿼리 파라미터 검증 유틸
+const ALLOWED_WORKPLACES = ['HALL', 'KITCHEN', 'COMMON'] as const;
+const ALLOWED_TIMESLOTS = ['PREPARATION', 'IN_PROGRESS', 'CLOSING', 'COMMON'] as const;
+
+function isValidDateYMD(value: string | null): boolean {
+  if (!value) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const t = Date.parse(value);
+  return !Number.isNaN(t);
+}
+
+function parseBooleanParam(value: string | null): boolean | undefined {
+  if (value == null) return undefined;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}
+
 // 관리자 인증 확인 함수
 async function verifyAdminAuth(request: NextRequest) {
   const adminAuth = request.cookies.get('admin_auth')?.value;
@@ -29,29 +76,91 @@ async function verifyAdminAuth(request: NextRequest) {
 // GET: 제출내역 조회
 export async function GET(request: NextRequest) {
   try {
+    // 레이트 리밋 체크
+    if (isRateLimited(request)) {
+      return NextResponse.json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' }, { status: 429 });
+    }
+
     const employee = await verifyAdminAuth(request);
     const { searchParams } = new URL(request.url);
     
-    console.log('제출내역 조회 요청:', { employee: employee.name, isSuperAdmin: employee.isSuperAdmin });
-    
-    // 필터 파라미터 파싱
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('제출내역 조회 요청:', { employee: employee.name, isSuperAdmin: employee.isSuperAdmin });
+    }
+
+    // 필터 파라미터 파싱 + 검증
     const filter: SubmissionFilter = {};
-    if (searchParams.get('employeeId')) filter.employeeId = searchParams.get('employeeId')!;
-    if (searchParams.get('date')) filter.date = searchParams.get('date')!;
-    if (searchParams.get('startDate')) filter.startDate = searchParams.get('startDate')!;
-    if (searchParams.get('endDate')) filter.endDate = searchParams.get('endDate')!;
-    if (searchParams.get('templateId')) filter.templateId = searchParams.get('templateId')!;
-    if (searchParams.get('workplace')) filter.workplace = searchParams.get('workplace')!;
-    if (searchParams.get('timeSlot')) filter.timeSlot = searchParams.get('timeSlot')!;
-    if (searchParams.get('isCompleted')) filter.isCompleted = searchParams.get('isCompleted') === 'true';
-    if (searchParams.get('isSubmitted')) filter.isSubmitted = searchParams.get('isSubmitted') === 'true';
+    const employeeIdParam = searchParams.get('employeeId');
+    const templateIdParam = searchParams.get('templateId');
+    const dateParam = searchParams.get('date');
+    const startParam = searchParams.get('startDate');
+    const endParam = searchParams.get('endDate');
+    const workplaceParam = searchParams.get('workplace');
+    const timeSlotParam = searchParams.get('timeSlot');
+    const isCompletedParam = searchParams.get('isCompleted');
+    const isSubmittedParam = searchParams.get('isSubmitted');
+
+    if (employeeIdParam) {
+      if (employeeIdParam.length > 100) {
+        return NextResponse.json({ error: 'employeeId 길이가 너무 깁니다.' }, { status: 400 });
+      }
+      filter.employeeId = employeeIdParam;
+    }
+    if (templateIdParam) {
+      if (templateIdParam.length > 100) {
+        return NextResponse.json({ error: 'templateId 길이가 너무 깁니다.' }, { status: 400 });
+      }
+      filter.templateId = templateIdParam;
+    }
+    if (dateParam) {
+      if (!isValidDateYMD(dateParam)) {
+        return NextResponse.json({ error: 'date 형식이 올바르지 않습니다. (YYYY-MM-DD)' }, { status: 400 });
+      }
+      filter.date = dateParam;
+    }
+    if (startParam) {
+      if (!isValidDateYMD(startParam)) {
+        return NextResponse.json({ error: 'startDate 형식이 올바르지 않습니다. (YYYY-MM-DD)' }, { status: 400 });
+      }
+      filter.startDate = startParam;
+    }
+    if (endParam) {
+      if (!isValidDateYMD(endParam)) {
+        return NextResponse.json({ error: 'endDate 형식이 올바르지 않습니다. (YYYY-MM-DD)' }, { status: 400 });
+      }
+      filter.endDate = endParam;
+    }
+    if (workplaceParam) {
+      if (!ALLOWED_WORKPLACES.includes(workplaceParam as any)) {
+        return NextResponse.json({ error: '허용되지 않는 workplace 값입니다.' }, { status: 400 });
+      }
+      filter.workplace = workplaceParam as any;
+    }
+    if (timeSlotParam) {
+      if (!ALLOWED_TIMESLOTS.includes(timeSlotParam as any)) {
+        return NextResponse.json({ error: '허용되지 않는 timeSlot 값입니다.' }, { status: 400 });
+      }
+      filter.timeSlot = timeSlotParam as any;
+    }
+    const boolCompleted = parseBooleanParam(isCompletedParam);
+    if (boolCompleted !== undefined) filter.isCompleted = boolCompleted;
+    else if (isCompletedParam !== null) {
+      return NextResponse.json({ error: 'isCompleted 값은 true/false 여야 합니다.' }, { status: 400 });
+    }
+    const boolSubmitted = parseBooleanParam(isSubmittedParam);
+    if (boolSubmitted !== undefined) filter.isSubmitted = boolSubmitted;
+    else if (isSubmittedParam !== null) {
+      return NextResponse.json({ error: 'isSubmitted 값은 true/false 여야 합니다.' }, { status: 400 });
+    }
 
     // 관리자가 아닌 경우: 기본적으로 본인 데이터만 보이도록 강제
     if (!employee.isSuperAdmin && !searchParams.get('employeeId')) {
       filter.employeeId = employee.id;
     }
 
-    console.log('적용된 필터:', filter);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('적용된 필터:', filter);
+    }
 
     // 날짜 필터 처리
     const dateFilter: any = {};
@@ -258,7 +367,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`조회된 인스턴스 수: ${instances.length}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`조회된 인스턴스 수: ${instances.length}`);
+    }
 
     // 응답 데이터 변환
     const submissions = await Promise.all(instances.map(async (instance) => {

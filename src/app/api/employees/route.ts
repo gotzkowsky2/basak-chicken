@@ -1,15 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 
-// 디버깅: 실제로 읽히는 DATABASE_URL을 콘솔에 출력
-console.log('DEBUG DATABASE_URL:', process.env.DATABASE_URL);
-
 const prisma = new PrismaClient();
+
+function isOriginAllowed(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return true; // SSR/내부 호출
+  try {
+    const url = new URL(origin);
+    const host = url.hostname;
+    return host.endsWith("basak-chicken.com") || host === "localhost";
+  } catch {
+    return false;
+  }
+}
+
+// 슈퍼관리자 인증 확인
+async function verifyAdminAuth() {
+  const cookieStore = await cookies();
+  const adminAuth = cookieStore.get("admin_auth")?.value;
+  const employeeAuth = cookieStore.get("employee_auth")?.value;
+
+  if (!adminAuth && !employeeAuth) {
+    throw new Error("관리자 인증이 필요합니다.");
+  }
+
+  const authId = adminAuth || employeeAuth;
+  const employee = await prisma.employee.findUnique({
+    where: { id: authId! },
+    select: { id: true, isSuperAdmin: true },
+  });
+
+  if (!employee || !employee.isSuperAdmin) {
+    throw new Error("관리자 권한이 필요합니다.");
+  }
+
+  return employee;
+}
 
 export async function GET() {
   try {
+    await verifyAdminAuth();
     const employees = await prisma.employee.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -32,6 +66,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: "허용되지 않은 Origin입니다." }, { status: 403 });
+    }
+    await verifyAdminAuth();
     const body = await request.json();
     
     // 필수 필드 검증
@@ -132,6 +170,10 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    if (!isOriginAllowed(request)) {
+      return NextResponse.json({ error: "허용되지 않은 Origin입니다." }, { status: 403 });
+    }
+    await verifyAdminAuth();
     const body = await request.json();
     // 필수 필드 검증
     if (!body.id) {

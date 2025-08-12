@@ -11,14 +11,17 @@ export default function EmployeesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'ACTIVE'|'INACTIVE'|'ALL'>('ACTIVE');
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [statusFilter]);
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch("/api/employees");
+      const params = new URLSearchParams();
+      params.set('status', statusFilter);
+      const response = await fetch(`/api/admin/employees?${params.toString()}`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setEmployees(data);
@@ -59,11 +62,12 @@ export default function EmployeesPage() {
     if (!editingEmployee) return;
 
     try {
-      const response = await fetch(`/api/employees/${editingEmployee.id}`, {
+      const response = await fetch(`/api/admin/employees/${editingEmployee.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
@@ -87,8 +91,9 @@ export default function EmployeesPage() {
     }
 
     try {
-      const response = await fetch(`/api/employees/${id}`, {
+      const response = await fetch(`/api/admin/employees/${id}`, {
         method: "DELETE",
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -134,6 +139,18 @@ export default function EmployeesPage() {
             >
               <PlusIcon className="h-5 w-5" />
             </button>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <label className="text-sm text-gray-600">상태</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+            >
+              <option value="ACTIVE">활성</option>
+              <option value="INACTIVE">비활성</option>
+              <option value="ALL">전체</option>
+            </select>
           </div>
         </div>
 

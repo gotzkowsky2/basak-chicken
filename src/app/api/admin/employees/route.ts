@@ -30,15 +30,26 @@ export async function GET(request: NextRequest) {
   try {
     await verifyAdminAuth(request);
 
+    const { searchParams } = new URL(request.url);
+    const status = (searchParams.get('status') || 'ACTIVE').toUpperCase(); // ACTIVE | INACTIVE | ALL
+
+    const where: any = {};
+    if (status === 'ACTIVE') where.isActive = true;
+    else if (status === 'INACTIVE') where.isActive = false;
+    // ALL이면 isActive 조건 미적용
+
     const employees = await prisma.employee.findMany({
-      where: {
-        isActive: true
-      },
+      where,
       select: {
         id: true,
+        employeeId: true,
         name: true,
         email: true,
+        phone: true,
+        address: true,
         department: true,
+        position: true,
+        isActive: true,
         isSuperAdmin: true,
         createdAt: true
       },

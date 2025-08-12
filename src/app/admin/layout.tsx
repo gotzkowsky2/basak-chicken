@@ -25,6 +25,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (response.ok) {
           const data = await response.json();
           setEmployee(data);
+        } else if (response.status === 401) {
+          setEmployee(null);
+          if (typeof window !== 'undefined') {
+            window.location.href = "/employee/login";
+          }
         }
       } catch (error) {
         console.error("관리자 정보 조회 실패:", error);
@@ -60,8 +65,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        {/* 홈 아이콘 */}
+        {/* 홈/메뉴 섹션: 로그인된 경우에만 표시 */}
         <div className="flex items-center gap-3">
+          {employee && (
+            <>
           <Link href="/admin" className="home-icon flex items-center gap-2 text-blue-700 hover:text-blue-900 active:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-1 -m-1 font-bold text-lg transition-all duration-150">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125h3.375a1.125 1.125 0 001.125-1.125V16.5a1.125 1.125 0 011.125-1.125h2.25A1.125 1.125 0 0115.75 16.5v3.375c0 .621.504 1.125 1.125 1.125h3.375a1.125 1.125 0 001.125-1.125V9.75" />
@@ -175,6 +182,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
         
         <div className="flex items-center gap-4">
@@ -203,15 +212,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           )}
           
-          <button
-            onClick={handleLogout}
-            className="p-3 text-gray-600 hover:text-red-600 hover:bg-red-50 active:text-red-700 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg transition-all duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            title="로그아웃"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
-          </button>
+          {employee && (
+            <button
+              onClick={handleLogout}
+              className="p-3 text-gray-600 hover:text-red-600 hover:bg-red-50 active:text-red-700 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg transition-all duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="로그아웃"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          )}
         </div>
       </header>
       

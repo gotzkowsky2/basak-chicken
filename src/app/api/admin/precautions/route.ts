@@ -8,6 +8,15 @@ export const runtime = "nodejs";
 // 주의사항 생성
 export async function POST(req: NextRequest) {
   try {
+    const origin = req.headers.get('origin');
+    if (origin) {
+      try {
+        const host = new URL(origin).hostname;
+        if (!(host.endsWith('basak-chicken.com') || host === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     const { title, content, workplace, timeSlot, priority, tags } = await req.json();
     
     // 필수 필드 검증
@@ -171,6 +180,15 @@ export async function GET(req: NextRequest) {
 // 주의사항 수정
 export async function PUT(req: NextRequest) {
   try {
+    const origin = req.headers.get('origin');
+    if (origin) {
+      try {
+        const host = new URL(origin).hostname;
+        if (!(host.endsWith('basak-chicken.com') || host === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     const { id, title, content, workplace, timeSlot, priority, tags } = await req.json();
     
     // 필수 필드 검증
@@ -256,6 +274,15 @@ export async function PUT(req: NextRequest) {
 // 주의사항 삭제 (실제 삭제)
 export async function DELETE(req: NextRequest) {
   try {
+    const origin = req.headers.get('origin');
+    if (origin) {
+      try {
+        const host = new URL(origin).hostname;
+        if (!(host.endsWith('basak-chicken.com') || host === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 

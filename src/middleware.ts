@@ -11,13 +11,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // 인증이 필요 없는 경로는 예외 처리
+  // 인증이 필요 없는 경로는 예외 처리 (최소화)
   if (
-    pathname.startsWith("/api") ||
+    pathname.startsWith("/api/employee/login") ||
+    pathname.startsWith("/api/employee/forgot-password") ||
+    pathname.startsWith("/api/employee/change-password") ||
     pathname.startsWith("/employee/login") ||
     pathname.startsWith("/employee/forgot-password") ||
     pathname.startsWith("/employee/change-password") ||
-    pathname === "/employee" ||
     pathname.startsWith("/admin/login") ||
     pathname === "/"
   ) {
@@ -47,11 +48,17 @@ export function middleware(request: NextRequest) {
     const loginUrl = new URL("/employee/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
+
+  // 관리자 전용 경로 보호: /admin/* 진입 시 관리자 권한 필요
+  if (pathname.startsWith("/admin") && !adminAuth && !superAdminAuth) {
+    const loginUrl = new URL("/employee/login", request.url);
+    return NextResponse.redirect(loginUrl);
+  }
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
   ],
-}; 
+};

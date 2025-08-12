@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+// @ts-ignore - Prisma types available at runtime
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -10,6 +11,15 @@ export async function DELETE(
 ) {
   const resolvedParams = await params;
   try {
+    const origin = request.headers.get('origin');
+    if (origin) {
+      try {
+        const host = new URL(origin).hostname;
+        if (!(host.endsWith('basak-chicken.com') || host === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     // 인증 확인
     const adminAuth = request.cookies.get("admin_auth")?.value;
     if (!adminAuth) {

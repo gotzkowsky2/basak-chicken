@@ -8,6 +8,16 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    // 간단 Origin 검사
+    const origin = req.headers.get('origin');
+    if (origin) {
+      try {
+        const { hostname } = new URL(origin);
+        if (!(hostname.endsWith('basak-chicken.com') || hostname === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     const { password } = await req.json();
     if (!password || password.length < 6) {
       return NextResponse.json({ error: "새 비밀번호는 6자 이상이어야 합니다." }, { status: 400 });

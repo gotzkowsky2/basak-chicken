@@ -61,25 +61,49 @@ export async function POST(req: NextRequest) {
     // TAR 파일 저장
     await writeFile(tarFilePath, buffer);
 
-    // TAR 파일 추출
+    // TAR 파일 안의 파일 목록 확인 (추출 전 검증)
+    const { stdout: fileListRaw } = await execAsync(`tar -tf "${tarFilePath}"`);
+    const fileList = fileListRaw.split('\n').filter(Boolean);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TAR 파일 내용(미리보기):', fileList.slice(0, 20));
+    }
+
+    // 경로 안전성 검증: 절대경로/경로 역참조/드라이브 레터/백슬래시 금지
+    const isUnsafePath = (p: string) => {
+      return (
+        p.startsWith('/') ||
+        p.includes('..') ||
+        p.includes('\\') ||
+        /^[A-Za-z]:/.test(p) ||
+        p.startsWith('-')
+      );
+    };
+
+    for (const entry of fileList) {
+      if (isUnsafePath(entry)) {
+        return NextResponse.json({ error: '압축 파일에 허용되지 않는 경로가 포함되어 있습니다.' }, { status: 400 });
+      }
+    }
+
+    // CSV 파일만 허용 + 최대 파일 수 제한
+    const allCsvFiles = fileList.filter((p) => p.toLowerCase().endsWith('.csv'));
+    const MAX_FILES = 50;
+    if (allCsvFiles.length === 0) {
+      return NextResponse.json({ error: 'CSV 파일을 찾을 수 없습니다.' }, { status: 400 });
+    }
+    if (allCsvFiles.length > MAX_FILES) {
+      return NextResponse.json({ error: `CSV 파일이 너무 많습니다. 최대 ${MAX_FILES}개까지 허용됩니다.` }, { status: 400 });
+    }
+
+    // 안전한 경로만 지정 추출
     await mkdir(extractDir, { recursive: true });
-    await execAsync(`tar -xf "${tarFilePath}" -C "${extractDir}"`);
+    const quotedCsv = allCsvFiles.map((p) => `'${p.replace(/'/g, "'\\''")}'`).join(' ');
+    await execAsync(`tar -xf "${tarFilePath}" -C "${extractDir}" -- ${quotedCsv}`);
 
-    // TAR 파일 안의 모든 파일 목록 확인
-    const { stdout: fileList } = await execAsync(`tar -tf "${tarFilePath}"`);
-    console.log('TAR 파일 내용:', fileList);
-
-    // 모든 CSV 파일 찾기 (독일 세무사용)
-    const allCsvFiles = fileList.split('\n').filter(file => 
-      file.trim() && file.toLowerCase().endsWith('.csv')
-    );
-    
-    console.log('전체 발견된 CSV 파일들:', allCsvFiles);
-    
-    // 모든 CSV 파일 처리
     const csvFiles = allCsvFiles;
-    
-    console.log('처리할 모든 파일들:', csvFiles);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('처리할 CSV 파일들:', csvFiles);
+    }
     
     // CSV 파일이 없으면 에러
     if (csvFiles.length === 0) {
@@ -88,13 +112,8 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     
-    console.log('처리할 핵심 CSV 파일들:', csvFiles);
-    console.log('전체 발견된 CSV 파일들:', allCsvFiles);
-
     if (csvFiles.length === 0) {
-      return NextResponse.json({ 
-        error: '분석 가능한 CSV 파일을 찾을 수 없습니다.' 
-      }, { status: 400 });
+      return NextResponse.json({ error: '분석 가능한 CSV 파일을 찾을 수 없습니다.' }, { status: 400 });
     }
 
     // 모든 CSV 파일을 읽어서 통합 데이터 생성
@@ -105,9 +124,10 @@ export async function POST(req: NextRequest) {
       try {
         const csvFilePath = join(extractDir, csvFile);
         const fileContent = await readFile(csvFilePath, 'utf-8');
-        
-        console.log(`${csvFile} 파일 내용 길이:`, fileContent.length);
-        console.log(`${csvFile} 파일 첫 200자:`, fileContent.substring(0, 200));
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`${csvFile} 파일 내용 길이:`, fileContent.length);
+          console.log(`${csvFile} 샘플(첫 200자):`, fileContent.substring(0, 200));
+        }
         
         // 먼저 세미콜론으로 파싱 시도
         let parseResult = Papa.parse(fileContent, {
@@ -137,14 +157,11 @@ export async function POST(req: NextRequest) {
         });
 
         // 실제 컬럼명들 출력
-        if (parseResult.data.length > 0 && parseResult.data[0]) {
-          console.log(`${csvFile} 실제 컬럼명들:`, Object.keys(parseResult.data[0] as any));
-          console.log(`${csvFile} 첫 번째 데이터:`, parseResult.data[0]);
-          console.log(`${csvFile} 전체 데이터 수:`, parseResult.data.length);
-          
-          // 처음 3개 레코드 모두 출력
-          for (let i = 0; i < Math.min(3, parseResult.data.length); i++) {
-            console.log(`${csvFile} 레코드 ${i + 1}:`, parseResult.data[i]);
+        if (process.env.NODE_ENV !== 'production') {
+          if (parseResult.data.length > 0 && parseResult.data[0]) {
+            console.log(`${csvFile} 실제 컬럼명들:`, Object.keys(parseResult.data[0] as any));
+            console.log(`${csvFile} 첫 번째 데이터:`, parseResult.data[0]);
+            console.log(`${csvFile} 전체 데이터 수:`, parseResult.data.length);
           }
         }
 
@@ -180,11 +197,13 @@ export async function POST(req: NextRequest) {
     }
 
     const totalRecordCount = allRecords.length;
-    console.log('통합 결과:', {
-      totalFiles: csvFiles.length,
-      totalRecords: totalRecordCount,
-      fileInfo: fileInfo
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('통합 결과:', {
+        totalFiles: csvFiles.length,
+        totalRecords: totalRecordCount,
+        fileInfo: fileInfo
+      });
+    }
 
     if (totalRecordCount === 0) {
       return NextResponse.json({ 

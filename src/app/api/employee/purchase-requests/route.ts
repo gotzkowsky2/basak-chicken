@@ -29,6 +29,15 @@ async function verifyEmployeeAuth() {
 // POST: 구매 요청 생성
 export async function POST(request: NextRequest) {
   try {
+    const origin = request.headers.get('origin');
+    if (origin) {
+      try {
+        const host = new URL(origin).hostname;
+        if (!(host.endsWith('basak-chicken.com') || host === 'localhost')) {
+          return NextResponse.json({ error: '허용되지 않은 Origin입니다.' }, { status: 403 });
+        }
+      } catch {}
+    }
     const employee = await verifyEmployeeAuth();
 
     const body = await request.json();
