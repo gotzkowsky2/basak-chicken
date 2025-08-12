@@ -35,6 +35,7 @@ interface Tag {
 export default function EmployeeInventoryPage() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagSearch, setTagSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -213,10 +214,9 @@ export default function EmployeeInventoryPage() {
   // 카테고리 라벨
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
-      'INGREDIENTS': '식자재',
-      'SUPPLIES': '부대용품',
-      'HYGIENE': '위생용품',
-      'COMMON': '공통'
+      'INGREDIENTS': '재료',
+      'SUPPLIES': '용품',
+      'COMMON': '기타'
     };
     return labels[category] || category;
   };
@@ -341,17 +341,16 @@ export default function EmployeeInventoryPage() {
               />
             </div>
 
-            {/* 카테고리 */}
+            {/* 카테고리 (관리자와 동일한 분류) */}
             <select
               value={filters.category}
               onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
               className="px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent font-bold text-gray-900 text-sm sm:text-base"
             >
-              <option value="ALL">전체 카테고리</option>
-              <option value="INGREDIENTS">식자재</option>
-              <option value="SUPPLIES">부대용품</option>
-              <option value="HYGIENE">위생용품</option>
-              <option value="COMMON">공통</option>
+              <option value="ALL">전체</option>
+              <option value="INGREDIENTS">재료</option>
+              <option value="SUPPLIES">용품</option>
+              <option value="COMMON">기타</option>
             </select>
 
             {/* 부족 재고만 보기 */}
@@ -381,8 +380,19 @@ export default function EmployeeInventoryPage() {
             
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showTagFilter ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    value={tagSearch}
+                    onChange={(e) => setTagSearch(e.target.value)}
+                    placeholder="태그 검색..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
+                  />
+                </div>
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                  {tags.map((tag) => (
+                  {tags
+                    .filter((tag) => tag.name.toLowerCase().includes(tagSearch.toLowerCase()))
+                    .map((tag) => (
                     <button
                       key={tag.id}
                       onClick={() => toggleTag(tag.id)}

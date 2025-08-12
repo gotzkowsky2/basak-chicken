@@ -14,26 +14,42 @@ function isOriginAllowed(request: NextRequest): boolean {
   }
 }
 
-// 관리자 인증 확인 함수
+// 관리자 또는 최고관리자 인증 확인 함수
 async function verifyAdminAuth(request: NextRequest) {
+  const superAdminAuth = request.cookies.get('superadmin_auth')?.value;
   const adminAuth = request.cookies.get('admin_auth')?.value;
   const employeeAuth = request.cookies.get('employee_auth')?.value;
-  
-  if (!adminAuth && !employeeAuth) {
+
+  // 어떤 관리자 쿠키도 없는 경우 거부
+  if (!superAdminAuth && !adminAuth) {
     throw new Error('관리자 인증이 필요합니다.');
   }
 
-  const authId = adminAuth || employeeAuth;
-  const employee = await prisma.employee.findUnique({ 
-    where: { id: authId },
-    select: { name: true, isSuperAdmin: true }
-  });
-
-  if (!employee || !employee.isSuperAdmin) {
-    throw new Error('관리자 권한이 필요합니다.');
+  // 최고관리자 쿠키가 있으면 최고관리자 여부 확인
+  if (superAdminAuth) {
+    const superAdmin = await prisma.employee.findUnique({
+      where: { id: superAdminAuth },
+      select: { name: true, isSuperAdmin: true },
+    });
+    if (!superAdmin || !superAdmin.isSuperAdmin) {
+      throw new Error('최고관리자 권한이 필요합니다.');
+    }
+    return superAdmin;
   }
 
-  return employee;
+  // 일반 관리자 쿠키가 있으면 통과 (employee_auth 동기화는 미들웨어에서 처리됨)
+  if (adminAuth || employeeAuth) {
+    const admin = await prisma.employee.findUnique({
+      where: { id: (adminAuth || employeeAuth) as string },
+      select: { name: true, isSuperAdmin: true },
+    });
+    if (!admin) {
+      throw new Error('관리자 정보를 찾을 수 없습니다.');
+    }
+    return admin;
+  }
+
+  throw new Error('관리자 인증이 필요합니다.');
 }
 
 // POST: 새 재고 아이템 생성

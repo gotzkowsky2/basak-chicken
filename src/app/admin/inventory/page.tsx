@@ -110,6 +110,7 @@ export default function InventoryPage() {
 
   // 태그 관련 상태
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagSearch, setTagSearch] = useState("");
   const [showTagModal, setShowTagModal] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3B82F6');
@@ -916,9 +917,21 @@ export default function InventoryPage() {
                   
                   {!isTagFilterCollapsed && (
                     <div className="p-3 bg-gray-50 rounded-lg">
+                      {/* 태그 검색 */}
+                      <div className="mb-3">
+                        <input
+                          type="text"
+                          value={tagSearch}
+                          onChange={(e) => setTagSearch(e.target.value)}
+                          placeholder="태그 검색..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
+                        />
+                      </div>
                       {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {tags.map((tag) => (
+                          {tags
+                            .filter((tag) => tag.name.toLowerCase().includes(tagSearch.toLowerCase()))
+                            .map((tag) => (
                             <button
                               key={tag.id}
                               type="button"
