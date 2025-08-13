@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { serialize } from "cookie";
 
 export const runtime = "nodejs";
 
@@ -8,6 +9,7 @@ export async function POST(req: NextRequest) {
     headers: {
       "Cache-Control": "no-store",
       "Content-Type": "application/json; charset=utf-8",
+      "Clear-Site-Data": '"cookies"',
     }
   });
 
@@ -19,22 +21,40 @@ export async function POST(req: NextRequest) {
     "crew.basak-chicken.com",
     ".crew.basak-chicken.com",
   ];
+  const pathVariants: string[] = ["/", "/employee", "/admin"];
   const secureVariants: boolean[] = [true, false];
 
   for (const name of names) {
     for (const d of domainVariants) {
-      for (const s of secureVariants) {
-        resp.cookies.set(name, "", {
-          httpOnly: true,
-          path: "/",
-          sameSite: "lax",
-          ...(d ? { domain: d } : {}),
-          secure: s,
-          expires: new Date(0),
-          maxAge: 0,
-        });
+      for (const p of pathVariants) {
+        for (const s of secureVariants) {
+          const cookieStr = serialize(name, "", {
+            httpOnly: true,
+            path: p,
+            sameSite: "lax",
+            ...(d ? { domain: d } : {}),
+            secure: s,
+            expires: new Date(0),
+            maxAge: 0,
+          });
+          resp.headers.append("Set-Cookie", cookieStr);
+        }
       }
     }
+  }
+
+  // 호스트 전용 보안 쿠키 삭제 (__Host-*)
+  const hostOnly = ["__Host-employee", "__Host-admin"];
+  for (const n of hostOnly) {
+    const cookieStr = serialize(n, "", {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: true,
+      expires: new Date(0),
+      maxAge: 0,
+    });
+    resp.headers.append("Set-Cookie", cookieStr);
   }
 
   return resp;

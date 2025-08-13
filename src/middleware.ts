@@ -13,8 +13,8 @@ export function middleware(request: NextRequest) {
   ]);
   if (publicPaths.has(pathname)) return NextResponse.next();
 
-  const employeeAuth = request.cookies.get("employee_auth")?.value;
-  const adminAuth = request.cookies.get("admin_auth")?.value;
+  const employeeAuth = request.cookies.get("employee_auth")?.value || request.cookies.get("__Host-employee")?.value;
+  const adminAuth = request.cookies.get("admin_auth")?.value || request.cookies.get("__Host-admin")?.value;
   const superAdminAuth = request.cookies.get("superadmin_auth")?.value;
 
   // 관리자 영역 보호

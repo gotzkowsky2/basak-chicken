@@ -58,6 +58,20 @@ export async function POST(request: NextRequest) {
     // 임시비밀번호 쿠키 제거
     response.cookies.set("temp_pw_auth", "", { ...commonCookie, maxAge: -1, expires: new Date(0) });
 
+    // 호스트 전용 보안 쿠키(근본적 정리: 도메인 지정 없음, path=/, secure)
+    const hostOnly: any = {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax" as const,
+      secure: isProd,
+    };
+    response.cookies.set("__Host-employee", "1", hostOnly);
+    if ((employee as any).isSuperAdmin) {
+      response.cookies.set("__Host-admin", "1", hostOnly);
+    } else {
+      response.cookies.set("__Host-admin", "", { ...hostOnly, maxAge: -1, expires: new Date(0) });
+    }
+
     return response;
   } catch (error) {
     console.error("직원 로그인 오류:", error);
