@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     }
 
     const isProd = process.env.NODE_ENV === "production";
-    const domain = "crew.basak-chicken.com";
+    // 쿠키 도메인 통일: 서브도메인 포함 범위로 설정해 중복/불일치 방지
+    const domain = ".crew.basak-chicken.com";
     const commonCookie = {
       httpOnly: true,
       path: "/",

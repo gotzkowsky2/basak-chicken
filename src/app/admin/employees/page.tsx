@@ -11,14 +11,15 @@ export default function EmployeesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [includeInactive, setIncludeInactive] = useState(true);
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [includeInactive]);
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch("/api/employees");
+      const response = await fetch(`/api/employees?includeInactive=${includeInactive}`);
       if (response.ok) {
         const data = await response.json();
         setEmployees(data);
@@ -135,6 +136,19 @@ export default function EmployeesPage() {
               <PlusIcon className="h-5 w-5" />
             </button>
           </div>
+        </div>
+
+        {/* 필터 */}
+        <div className="mb-4 flex items-center gap-3">
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={includeInactive}
+              onChange={(e) => setIncludeInactive(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            비활성 포함
+          </label>
         </div>
 
         {/* 직원 목록 */}

@@ -12,6 +12,7 @@ interface EmployeeListProps {
 
 export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: EmployeeListProps) {
   const [expandedEmails, setExpandedEmails] = useState<Set<string>>(new Set());
+  const [showInactive, setShowInactive] = useState<boolean>(true);
 
   const toggleEmailExpansion = (id: string) => {
     const newExpanded = new Set(expandedEmails);
@@ -83,7 +84,9 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
     }
   };
 
-  if (employees.length === 0) {
+  const visibleEmployees = employees.filter(e => showInactive ? true : e.isActive);
+
+  if (visibleEmployees.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-400 mb-4">
@@ -106,7 +109,7 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
     <div className="space-y-4">
       {/* 모바일에서는 카드 형태, 데스크톱에서는 테이블 형태 */}
       <div className="block lg:hidden">
-        {employees.map((employee) => (
+        {visibleEmployees.map((employee) => (
           <div
             key={employee.id}
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3"
@@ -209,7 +212,7 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {employees.map((employee) => (
+              {visibleEmployees.map((employee) => (
                 <tr key={employee.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>

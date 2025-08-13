@@ -13,15 +13,24 @@ export async function POST(req: NextRequest) {
   });
 
   const names = ["employee_auth", "admin_auth", "superadmin_auth", "temp_pw_auth"];
+  const variants: Array<{ domain?: string }> = isProd ? [
+    {},
+    { domain },
+    { domain: `.${domain}` },
+  ] : [{}];
+
   for (const name of names) {
-    resp.cookies.set(name, "", {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      secure: isProd,
-      ...(isProd ? { domain } : {}),
-      expires: new Date(0)
-    });
+    for (const v of variants) {
+      resp.cookies.set(name, "", {
+        httpOnly: true,
+        path: "/",
+        sameSite: "lax",
+        secure: isProd,
+        ...(v.domain ? { domain: v.domain } : {}),
+        expires: new Date(0),
+        maxAge: 0,
+      });
+    }
   }
 
   return resp;

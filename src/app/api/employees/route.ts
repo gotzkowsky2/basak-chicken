@@ -8,9 +8,12 @@ console.log('DEBUG DATABASE_URL:', process.env.DATABASE_URL);
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const url = new URL(request.url);
+    const includeInactive = url.searchParams.get("includeInactive") === "true";
     const employees = await prisma.employee.findMany({
+      where: includeInactive ? {} : { isActive: true },
       orderBy: { createdAt: "desc" },
     });
 
