@@ -3,6 +3,50 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { name, color } = await req.json();
+
+    if (!name && !color) {
+      return NextResponse.json(
+        { error: "수정할 항목이 없습니다." },
+        { status: 400 }
+      );
+    }
+
+    // 이름 변경 시 중복 확인
+    if (name && name.trim() !== "") {
+      const existing = await prisma.tag.findUnique({ where: { name: name.trim() } });
+      if (existing && existing.id !== id) {
+        return NextResponse.json(
+          { error: "이미 존재하는 태그 이름입니다." },
+          { status: 400 }
+        );
+      }
+    }
+
+    const updated = await prisma.tag.update({
+      where: { id },
+      data: {
+        ...(name && name.trim() !== "" ? { name: name.trim() } : {}),
+        ...(color ? { color } : {}),
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("태그 수정 오류:", error);
+    return NextResponse.json(
+      { error: "태그 수정 중 오류가 발생했습니다." },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

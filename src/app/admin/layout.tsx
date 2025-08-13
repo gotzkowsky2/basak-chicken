@@ -54,7 +54,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = useCallback(async () => {
     await fetch("/api/admin/logout", { method: "POST", credentials: "include", keepalive: true });
-    window.location.href = "/employee/login";
+    // 로그아웃 직후 상단 메뉴/사용자 정보가 보이지 않도록 즉시 UI 초기화
+    setEmployee(null);
+    setShowMenu(false);
+    window.location.replace("/employee/login");
   }, []);
 
   return (

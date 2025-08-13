@@ -25,13 +25,14 @@ echo "✅ 최신 CSS: $LATEST_CSS"
 
 ensure_file_for() {
   local rel_path="$1" # e.g., /_next/static/css/abc.css
-  local local_path=".${rel_path}"
-  if [ -f "$local_path" ]; then
-    echo "✔ 존재: $rel_path"
+  # Next.js는 URL '/_next'를 로컬 '.next' 디렉터리에서 서빙함
+  local mapped_path=".next${rel_path#/_next}"
+  if [ -f "$mapped_path" ]; then
+    echo "✔ 존재(.next): $rel_path"
   else
-    echo "➕ 생성: $rel_path → 최신 CSS로 복제"
-    mkdir -p "$(dirname "$local_path")"
-    cp -f "$LATEST_CSS" "$local_path"
+    echo "➕ 생성(.next): $rel_path → 최신 CSS로 복제"
+    mkdir -p "$(dirname "$mapped_path")"
+    cp -f "$LATEST_CSS" "$mapped_path"
   fi
 }
 

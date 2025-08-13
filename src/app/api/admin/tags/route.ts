@@ -4,9 +4,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // 태그 목록 조회
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const q = (searchParams.get('q') || '').trim().toLowerCase();
     const tags = await prisma.tag.findMany({
+      where: q ? { name: { contains: q, mode: 'insensitive' } } : undefined,
       orderBy: { name: 'asc' }
     });
     

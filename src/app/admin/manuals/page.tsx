@@ -1039,8 +1039,9 @@ export default function ManualsPage() {
                                 <button 
                                   className="text-blue-600 hover:text-blue-800 text-xs mt-1"
                                   onClick={() => {
-                                    // 전체 내용 보기 기능 (추후 구현)
-                                    alert('전체 내용 보기 기능은 추후 구현 예정입니다.');
+                                    setSelectedPrecaution(null);
+                                    setIsModalOpen(true);
+                                    setSelectedManual(manual);
                                   }}
                                 >
                                   전체 내용 보기
