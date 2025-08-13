@@ -30,10 +30,19 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        // HTML 페이지: 강제 최신(캐시 금지)
+        source: '/((?!_next/static|_next/image|favicon.ico|.*\..*).*)',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        // 정적 해시 자원은 기존대로 캐시 허용(immutable)
+        source: '/_next/static/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, immutable, max-age=31536000' },
         ],
       },
     ];
