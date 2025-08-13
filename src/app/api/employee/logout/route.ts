@@ -21,23 +21,26 @@ export async function POST(req: NextRequest) {
     "crew.basak-chicken.com",
     ".crew.basak-chicken.com",
   ];
-  const pathVariants: string[] = ["/", "/employee", "/admin"];
+  const pathVariants: string[] = ["/", "/employee", "/admin", "/api"];
   const secureVariants: boolean[] = [true, false];
+  const sameSiteVariants: Array<"lax"|"none"|"strict"> = ["lax", "none", "strict"];
 
   for (const name of names) {
     for (const d of domainVariants) {
       for (const p of pathVariants) {
         for (const s of secureVariants) {
-          const cookieStr = serialize(name, "", {
-            httpOnly: true,
-            path: p,
-            sameSite: "lax",
-            ...(d ? { domain: d } : {}),
-            secure: s,
-            expires: new Date(0),
-            maxAge: 0,
-          });
-          resp.headers.append("Set-Cookie", cookieStr);
+          for (const ss of sameSiteVariants) {
+            const cookieStr = serialize(name, "", {
+              httpOnly: true,
+              path: p,
+              sameSite: ss,
+              ...(d ? { domain: d } : {}),
+              secure: s,
+              expires: new Date(0),
+              maxAge: 0,
+            });
+            resp.headers.append("Set-Cookie", cookieStr);
+          }
         }
       }
     }

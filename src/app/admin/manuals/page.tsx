@@ -53,6 +53,8 @@ export default function ManualsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedManual, setSelectedManual] = useState<Manual | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // 필터 상태
   const [filters, setFilters] = useState({
@@ -72,6 +74,7 @@ export default function ManualsPage() {
   // 태그 관련 상태
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagSearch, setTagSearch] = useState("");
   const [showTagModal, setShowTagModal] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3B82F6');
@@ -744,11 +747,22 @@ export default function ManualsPage() {
                       <span>태그 추가</span>
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg min-h-[60px]">
-                    {tags.length === 0 ? (
-                      <p className="text-gray-500 text-sm">등록된 태그가 없습니다.</p>
-                    ) : (
-                      tags.map((tag) => {
+                <div className="flex flex-col gap-2 p-3 border border-gray-300 rounded-lg min-h-[60px]">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={tagSearch}
+                      onChange={(e) => setTagSearch(e.target.value)}
+                      placeholder="태그 검색"
+                      className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                    />
+                  </div>
+                  {tags.length === 0 ? (
+                    <p className="text-gray-500 text-sm">등록된 태그가 없습니다.</p>
+                  ) : (
+                    tags
+                      .filter(t => !tagSearch || t.name.toLowerCase().includes(tagSearch.toLowerCase()))
+                      .map((tag) => {
                         const isSelected = (formData.tags || []).includes(tag.id);
                         return (
                           <button
@@ -1039,9 +1053,8 @@ export default function ManualsPage() {
                                 <button 
                                   className="text-blue-600 hover:text-blue-800 text-xs mt-1"
                                   onClick={() => {
-                                    setSelectedPrecaution(null);
-                                    setIsModalOpen(true);
                                     setSelectedManual(manual);
+                                    setIsModalOpen(true);
                                   }}
                                 >
                                   전체 내용 보기
