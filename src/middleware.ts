@@ -11,11 +11,68 @@ export function middleware(request: NextRequest) {
     "/employee/change-password",
     "/admin/login",
   ]);
+
+  // 로그인 페이지 진입 시 잔존 세션 쿠키 강제 만료 처리
+  if (pathname === "/employee/login" || pathname === "/admin/login") {
+    const host = (request.headers.get("host") || "crew.basak-chicken.com").split(":")[0];
+    const resp = NextResponse.next();
+    resp.headers.set("Cache-Control", "no-store");
+    resp.headers.set("Clear-Site-Data", '"cookies"');
+    const names = [
+      "employee_auth",
+      "admin_auth",
+      "superadmin_auth",
+      "temp_pw_auth",
+      "__Host-employee_auth",
+      "__Host-admin_auth",
+      "__Host-temp_pw_auth",
+      "__Host-superadmin_auth",
+      // 레거시 호스트 전용 쿠키명까지 제거
+      "__Host-employee",
+      "__Host-admin",
+      // 안전망: 단일 언더스코어 표기까지 제거 시도
+      "_Host-employee",
+      "_Host-admin",
+    ];
+    const domainVariants: Array<string | undefined> = [
+      undefined,
+      host,
+      `.${host}`,
+      "crew.basak-chicken.com",
+      ".crew.basak-chicken.com",
+    ];
+    const pathVariants: string[] = ["/", "/employee", "/admin", "/api"];
+    const secureVariants: boolean[] = [true, false];
+    const sameSiteVariants: Array<"lax" | "none" | "strict"> = ["lax", "none", "strict"];
+
+    for (const name of names) {
+      for (const d of domainVariants) {
+        for (const p of pathVariants) {
+          for (const s of secureVariants) {
+            for (const ss of sameSiteVariants) {
+              resp.cookies.set(name, "", {
+                httpOnly: true,
+                path: p,
+                sameSite: ss,
+                ...(d ? { domain: d } : {}),
+                secure: s,
+                expires: new Date(0),
+                maxAge: 0,
+              });
+            }
+          }
+        }
+      }
+    }
+    return resp;
+  }
+
   if (publicPaths.has(pathname)) return NextResponse.next();
 
-  const employeeAuth = request.cookies.get("employee_auth")?.value || request.cookies.get("__Host-employee")?.value;
-  const adminAuth = request.cookies.get("admin_auth")?.value || request.cookies.get("__Host-admin")?.value;
-  const superAdminAuth = request.cookies.get("superadmin_auth")?.value;
+  // 인증 쿠키 확인 시 __Host-* 우선 확인
+  const employeeAuth = request.cookies.get("__Host-employee_auth")?.value || request.cookies.get("employee_auth")?.value;
+  const adminAuth = request.cookies.get("__Host-admin_auth")?.value || request.cookies.get("admin_auth")?.value;
+  const superAdminAuth = request.cookies.get("__Host-superadmin_auth")?.value || request.cookies.get("superadmin_auth")?.value;
 
   // 관리자 영역 보호
   if (pathname.startsWith("/admin")) {

@@ -35,6 +35,7 @@ interface Tag {
 export default function EmployeeInventoryPage() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagFilterSearch, setTagFilterSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -215,7 +216,6 @@ export default function EmployeeInventoryPage() {
     const labels: Record<string, string> = {
       'INGREDIENTS': '식자재',
       'SUPPLIES': '부대용품',
-      'HYGIENE': '위생용품',
       'COMMON': '공통'
     };
     return labels[category] || category;
@@ -341,7 +341,7 @@ export default function EmployeeInventoryPage() {
               />
             </div>
 
-            {/* 카테고리 */}
+            {/* 카테고리 (관리자와 동일 옵션) */}
             <select
               value={filters.category}
               onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
@@ -350,7 +350,6 @@ export default function EmployeeInventoryPage() {
               <option value="ALL">전체 카테고리</option>
               <option value="INGREDIENTS">식자재</option>
               <option value="SUPPLIES">부대용품</option>
-              <option value="HYGIENE">위생용품</option>
               <option value="COMMON">공통</option>
             </select>
 
@@ -381,8 +380,17 @@ export default function EmployeeInventoryPage() {
             
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showTagFilter ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    value={tagFilterSearch}
+                    onChange={(e) => setTagFilterSearch(e.target.value)}
+                    placeholder="태그 검색"
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-gray-900 placeholder-gray-600"
+                  />
+                </div>
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                  {tags.map((tag) => (
+                  {tags.filter(t => !tagFilterSearch || t.name.toLowerCase().includes(tagFilterSearch.toLowerCase())).map((tag) => (
                     <button
                       key={tag.id}
                       onClick={() => toggleTag(tag.id)}

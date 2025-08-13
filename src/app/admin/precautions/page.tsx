@@ -373,9 +373,10 @@ export default function PrecautionsPage() {
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-8">주의사항 관리</h1>
-
-        {/* 주의사항 등록 폼 */}
-        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* 좌측: 주의사항 등록 폼 */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">새 주의사항 등록</h2>
           
           {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
@@ -467,7 +468,7 @@ export default function PrecautionsPage() {
             </div>
 
             <div>
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <label className="block text-sm font-medium text-gray-700">
                   태그
                 </label>
@@ -482,38 +483,42 @@ export default function PrecautionsPage() {
                   <span>태그 추가</span>
                 </button>
               </div>
-            <div className="flex flex-col gap-2 p-2 sm:p-3 border border-gray-300 rounded-lg min-h-[52px]">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={tagPickerSearch}
-                  onChange={(e) => setTagPickerSearch(e.target.value)}
-                  placeholder="태그 검색"
-                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                />
-              </div>
+              <div className="p-2 sm:p-3 border border-gray-300 rounded-lg min-h-[52px]">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={tagPickerSearch}
+                    onChange={(e) => setTagPickerSearch(e.target.value)}
+                    placeholder="태그 검색"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                  />
+                </div>
                 {tags.length === 0 ? (
-                <p className="text-gray-500 text-xs sm:text-sm">등록된 태그가 없습니다.</p>
+                  <p className="text-gray-500 text-xs sm:text-sm">등록된 태그가 없습니다.</p>
                 ) : (
-                  tags.filter(t => !tagPickerSearch || t.name.toLowerCase().includes(tagPickerSearch.toLowerCase())).map((tag) => (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        onClick={() => handleTagToggle(tag.id)}
-                    className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-all ${
-                          selectedTags.includes(tag.id)
-                            ? 'text-white shadow-md'
-                            : 'hover:shadow-md'
-                        }`}
-                        style={{
-                          backgroundColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}20`,
-                          color: selectedTags.includes(tag.id) ? 'white' : tag.color,
-                          border: selectedTags.includes(tag.id) ? `2px solid ${tag.color}` : `1px solid ${tag.color}40`
-                        }}
-                      >
-                        {tag.name}
-                      </button>
-                  ))
+                  <div className="flex flex-wrap gap-1">
+                    {tags
+                      .filter(t => !tagPickerSearch || t.name.toLowerCase().includes(tagPickerSearch.toLowerCase()))
+                      .map((tag) => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => handleTagToggle(tag.id)}
+                          className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                            selectedTags.includes(tag.id)
+                              ? 'text-white shadow-md'
+                              : 'hover:shadow-md'
+                          }`}
+                          style={{
+                            backgroundColor: selectedTags.includes(tag.id) ? tag.color : `${tag.color}20`,
+                            color: selectedTags.includes(tag.id) ? 'white' : tag.color,
+                            border: selectedTags.includes(tag.id) ? `2px solid ${tag.color}` : `1px solid ${tag.color}40`
+                          }}
+                        >
+                          {tag.name}
+                        </button>
+                      ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -529,10 +534,12 @@ export default function PrecautionsPage() {
               {submitting ? "등록 중..." : "주의사항 등록"}
             </button>
           </form>
-        </div>
+            </div>
+          </div>
 
-        {/* 필터 및 검색 */}
-        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          {/* 우측: 필터/목록 */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-800">등록된 주의사항 목록</h2>
             <div className="flex gap-2">
@@ -658,10 +665,10 @@ export default function PrecautionsPage() {
               </div>
             </div>
           )}
-        </div>
+            </div>
 
-        {/* 주의사항 목록 */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
+            {/* 주의사항 목록 */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-800">등록된 주의사항 목록</h2>
             <span className="text-sm text-gray-600">
@@ -896,6 +903,8 @@ export default function PrecautionsPage() {
               ))}
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
 

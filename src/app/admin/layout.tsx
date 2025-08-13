@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 interface Employee {
   name: string;
@@ -14,6 +15,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/admin/login";
 
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -60,6 +63,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     window.location.replace("/employee/login");
   }, []);
 
+  // 로그인 페이지에서는 상단 메뉴/헤더를 완전히 숨김
+  if (isLoginPage) {
+    return <main>{children}</main>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
@@ -72,6 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
           
           {/* 대시보드 메뉴 드롭다운 */}
+          {!!employee && (
           <div className="relative">
             <button
               ref={menuButtonRef}
@@ -178,6 +187,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             )}
           </div>
+          )}
         </div>
         
         <div className="flex items-center gap-4">
@@ -206,15 +216,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           )}
           
-          <button
-            onClick={handleLogout}
-            className="p-3 text-gray-600 hover:text-red-600 hover:bg-red-50 active:text-red-700 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg transition-all duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            title="로그아웃"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
-          </button>
+          {!!employee && (
+            <button
+              onClick={handleLogout}
+              className="p-3 text-gray-600 hover:text-red-600 hover:bg-red-50 active:text-red-700 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg transition-all duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="로그아웃"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          )}
         </div>
       </header>
       

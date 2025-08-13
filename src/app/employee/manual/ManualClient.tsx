@@ -70,6 +70,7 @@ export default function ManualClient() {
   const [filterTimeSlot, setFilterTimeSlot] = useState('ALL');
   const [filterCategory, setFilterCategory] = useState('ALL');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagFilterSearch, setTagFilterSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
   // 관리자 입력 기준과 동일한 구분 사용
@@ -424,12 +425,21 @@ export default function ManualClient() {
                 </div>
               </div>
 
-              {/* 태그 필터 */}
+              {/* 태그 필터 + 검색 */}
               {tags.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">태그 필터</label>
+                  <div className="mb-2">
+                    <input
+                      type="text"
+                      value={tagFilterSearch}
+                      onChange={(e) => setTagFilterSearch(e.target.value)}
+                      placeholder="태그 검색"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-gray-900 placeholder-gray-600"
+                    />
+                  </div>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                    {tags.map((tag) => (
+                    {tags.filter(t => !tagFilterSearch || t.name.toLowerCase().includes(tagFilterSearch.toLowerCase())).map((tag) => (
                       <button
                         key={tag.id}
                         type="button"

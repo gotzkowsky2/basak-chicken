@@ -65,11 +65,15 @@ export async function POST(request: NextRequest) {
       sameSite: "lax" as const,
       secure: isProd,
     };
-    response.cookies.set("__Host-employee", "1", hostOnly);
+    // 구 쿠키명 제거
+    response.cookies.set("__Host-employee", "", { ...hostOnly, maxAge: -1, expires: new Date(0) });
+    response.cookies.set("__Host-admin", "", { ...hostOnly, maxAge: -1, expires: new Date(0) });
+    // 신 쿠키명 발급
+    response.cookies.set("__Host-employee_auth", employee.id, hostOnly);
     if ((employee as any).isSuperAdmin) {
-      response.cookies.set("__Host-admin", "1", hostOnly);
+      response.cookies.set("__Host-admin_auth", employee.id, hostOnly);
     } else {
-      response.cookies.set("__Host-admin", "", { ...hostOnly, maxAge: -1, expires: new Date(0) });
+      response.cookies.set("__Host-admin_auth", "", { ...hostOnly, maxAge: -1, expires: new Date(0) });
     }
 
     return response;

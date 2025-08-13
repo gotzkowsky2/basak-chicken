@@ -11,7 +11,9 @@ import {
   VideoCameraIcon,
   BuildingOfficeIcon,
   ClockIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  XMarkIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 
 interface Manual {
@@ -38,6 +40,11 @@ interface Manual {
     timeSlot: string;
     priority: number;
     order: number;
+    tags?: Array<{
+      id: string;
+      name: string;
+      color: string;
+    }>;
   }>;
 }
 
@@ -45,6 +52,20 @@ interface Tag {
   id: string;
   name: string;
   color: string;
+}
+
+interface PrecautionItem {
+  id: string;
+  title: string;
+  content: string;
+  workplace: string;
+  timeSlot: string;
+  priority: number;
+  tags?: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
 }
 
 export default function ManualsPage() {
@@ -55,6 +76,7 @@ export default function ManualsPage() {
   const [success, setSuccess] = useState('');
   const [selectedManual, setSelectedManual] = useState<Manual | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expandedViewPrecautions, setExpandedViewPrecautions] = useState<Set<number>>(new Set());
   
   // 필터 상태
   const [filters, setFilters] = useState({
@@ -80,17 +102,24 @@ export default function ManualsPage() {
   const [newTagColor, setNewTagColor] = useState('#3B82F6');
 
   // 주의사항 관련 상태
-  const [precautions, setPrecautions] = useState<any[]>([]);
+  const [precautions, setPrecautions] = useState<PrecautionItem[]>([]);
   const [showPrecautionModal, setShowPrecautionModal] = useState(false);
   const [loadingPrecautions, setLoadingPrecautions] = useState(false);
   const [showNewPrecautionModal, setShowNewPrecautionModal] = useState(false);
-  const [newPrecautionData, setNewPrecautionData] = useState({
+  const [newPrecautionData, setNewPrecautionData] = useState<{
+    title: string;
+    content: string;
+    workplace: string;
+    timeSlot: string;
+    priority: number;
+    tags: string[];
+  }>({
     title: '',
     content: '',
     workplace: 'COMMON',
     timeSlot: 'COMMON',
     priority: 1,
-    tags: []
+    tags: [] as string[]
   });
   const [precautionSearchTerm, setPrecautionSearchTerm] = useState('');
   const [precautionFilterWorkplace, setPrecautionFilterWorkplace] = useState('ALL');
@@ -453,6 +482,24 @@ export default function ManualsPage() {
     return option ? option.label : category;
   };
 
+  const getPriorityLabel = (priority: number) => {
+    switch (priority) {
+      case 1: return '높음';
+      case 2: return '보통';
+      case 3: return '낮음';
+      default: return `우선순위 ${priority}`;
+    }
+  };
+
+  const getPriorityColor = (priority: number) => {
+    switch (priority) {
+      case 1: return 'bg-red-200 text-red-800';
+      case 2: return 'bg-yellow-200 text-yellow-800';
+      case 3: return 'bg-green-200 text-green-800';
+      default: return 'bg-gray-200 text-gray-800';
+    }
+  };
+
   const getFileIcon = (mediaUrls: string[]) => {
     if (!mediaUrls || mediaUrls.length === 0) return <DocumentTextIcon className="w-4 h-4" />;
     
@@ -566,8 +613,8 @@ export default function ManualsPage() {
     const matchesWorkplace = precautionFilterWorkplace === 'ALL' || precaution.workplace === precautionFilterWorkplace;
     const matchesTimeSlot = precautionFilterTimeSlot === 'ALL' || precaution.timeSlot === precautionFilterTimeSlot;
     const matchesTag = precautionFilterTags.length === 0 || 
-      (precaution.tags && precautionFilterTags.every(selectedTagId => 
-        precaution.tags.some(tag => tag.id === selectedTagId)
+      ((precaution.tags ?? []).length > 0 && precautionFilterTags.every(selectedTagId => 
+        (precaution.tags ?? []).some(tag => tag.id === selectedTagId)
       ));
     
     return matchesSearch && matchesWorkplace && matchesTimeSlot && matchesTag;
@@ -748,7 +795,37 @@ export default function ManualsPage() {
                     </button>
                   </div>
                 <div className="flex flex-col gap-2 p-3 border border-gray-300 rounded-lg min-h-[60px]">
-                  <div className="flex items-center gap-2">
+                  {/* 선택된 태그 */}
+                  {(formData.tags && formData.tags.length > 0) ? (
+                    <div className="mb-2">
+                      <p className="text-xs text-gray-500 mb-1">선택된 태그:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {formData.tags.map((tagId) => {
+                          const tag = tags.find(t => t.id === tagId);
+                          return tag ? (
+                            <span
+                              key={tag.id}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                              style={{ backgroundColor: `${tag.color}20`, color: tag.color, border: `1px solid ${tag.color}30` }}
+                            >
+                              {tag.name}
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, tags: (prev.tags || []).filter(id => id !== tag.id) }))}
+                                className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                  {/* 태그 검색 및 선택 */}
+                  <div className="flex items-center gap-2 mb-2">
                     <input
                       type="text"
                       value={tagSearch}
@@ -760,31 +837,32 @@ export default function ManualsPage() {
                   {tags.length === 0 ? (
                     <p className="text-gray-500 text-sm">등록된 태그가 없습니다.</p>
                   ) : (
-                    tags
-                      .filter(t => !tagSearch || t.name.toLowerCase().includes(tagSearch.toLowerCase()))
-                      .map((tag) => {
-                        const isSelected = (formData.tags || []).includes(tag.id);
-                        return (
-                          <button
-                            key={tag.id}
-                            type="button"
-                            onClick={() => handleEditTagToggle(tag.id)}
-                            className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-                              isSelected
-                                ? 'text-white shadow-md'
-                                : 'hover:shadow-md'
-                            }`}
-                            style={{
-                              backgroundColor: isSelected ? tag.color : `${tag.color}20`,
-                              color: isSelected ? 'white' : tag.color,
-                              border: isSelected ? `2px solid ${tag.color}` : `1px solid ${tag.color}40`
-                            }}
-                          >
-                            {tag.name}
-                          </button>
-                        );
-                      })
-                    )}
+                    <div className="flex flex-wrap gap-1">
+                      {tags
+                        .filter((t: Tag) => !tagSearch || t.name.toLowerCase().includes(tagSearch.toLowerCase()))
+                        .map((tag: Tag) => {
+                          const isSelected = (formData.tags || []).includes(tag.id);
+                          return (
+                            <button
+                              key={tag.id}
+                              type="button"
+                              onClick={() => handleEditTagToggle(tag.id)}
+                              disabled={isSelected}
+                              className={`px-2 py-1 rounded-full text-xs font-medium transition-all ${
+                                isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+                              }`}
+                              style={{
+                                backgroundColor: `${tag.color}20`,
+                                color: tag.color,
+                                border: `1px solid ${tag.color}40`
+                              }}
+                            >
+                              {tag.name}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
                   </div>
                 </div>
 
@@ -1049,7 +1127,7 @@ export default function ManualsPage() {
                               <p className="line-clamp-3 whitespace-pre-wrap">
                                 {manual.content}
                               </p>
-                              {manual.content.length > 200 && (
+                  {manual.content && manual.content.length > 0 && (
                                 <button 
                                   className="text-blue-600 hover:text-blue-800 text-xs mt-1"
                                   onClick={() => {
@@ -1065,7 +1143,7 @@ export default function ManualsPage() {
                             {/* 태그 표시 */}
                             {manual.tags && manual.tags.length > 0 && (
                               <div className="flex flex-wrap gap-2 mb-3">
-                                {manual.tags.map((tag) => (
+                                {manual.tags.map((tag: Tag) => (
                                   <span
                                     key={tag.id}
                                     className="px-2 py-1 rounded-full text-xs font-medium text-white"
@@ -1255,6 +1333,143 @@ export default function ManualsPage() {
       )}
 
       {/* 주의사항 선택 모달 */}
+      {/* 전체 내용 보기 모달 (직원 페이지 스타일 반영) */}
+      {isModalOpen && selectedManual && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* 배경 오버레이 */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={() => { setIsModalOpen(false); setSelectedManual(null); }}
+          ></div>
+
+          {/* 모달 컨테이너 */}
+          <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+            <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <DocumentTextIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                    {selectedManual.title}
+                  </h2>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0">
+                    v{selectedManual.version}
+                  </span>
+                </div>
+                <button
+                  onClick={() => { setIsModalOpen(false); setSelectedManual(null); }}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* 모달 내용 */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+                {/* 태그 표시 */}
+                {selectedManual.tags && selectedManual.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {selectedManual.tags.map((tag: Tag) => (
+                      <span
+                        key={tag.id}
+                        className="px-2 py-1 rounded-full text-xs font-medium text-white"
+                        style={{ backgroundColor: tag.color }}
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* 전체 내용 */}
+                <div className="prose max-w-none mb-6">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
+                      {selectedManual.content}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 연결된 주의사항 (직원 페이지와 동일한 구성) */}
+                {selectedManual.precautions && selectedManual.precautions.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <h3 className="text-lg font-semibold text-gray-900">연결된 주의사항</h3>
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        {selectedManual.precautions.length}개
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {selectedManual.precautions.map((precaution, index) => {
+                        const isExpanded = expandedViewPrecautions.has(index);
+                        return (
+                          <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-semibold text-red-900 text-sm sm:text-base truncate pr-2">{precaution.title}</h4>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getPriorityColor(precaution.priority)}`}>
+                                {getPriorityLabel(precaution.priority)}
+                              </span>
+                            </div>
+                            <div className="mb-3">
+                              <p className="text-red-800 text-sm whitespace-pre-wrap leading-relaxed">
+                                {isExpanded ? precaution.content : (precaution.content.length > 80 ? precaution.content.substring(0, 80) + '...' : precaution.content)}
+                              </p>
+                              {precaution.content.length > 80 && (
+                                <button
+                                  onClick={() => {
+                                    setExpandedViewPrecautions(prev => {
+                                      const next = new Set(prev);
+                                      if (next.has(index)) next.delete(index); else next.add(index);
+                                      return next;
+                                    });
+                                  }}
+                                  className="mt-2 flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors shadow-sm active:scale-95"
+                                >
+                                  <EyeIcon className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                  {isExpanded ? '내용 접기' : '전체 내용 보기'}
+                                </button>
+                              )}
+                            </div>
+                            {precaution.tags && precaution.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {precaution.tags.map((tag: any) => (
+                                  <span key={tag.id} className="px-2 py-1 rounded-full text-xs font-medium text-white" style={{ backgroundColor: tag.color }}>
+                                    {tag.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs text-red-700">
+                              <span>근무처: {getWorkplaceLabel(precaution.workplace)}</span>
+                              <span>시간대: {getTimeSlotLabel(precaution.timeSlot)}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 메타 정보 */}
+                <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600 border-t border-gray-200 pt-4">
+                  <span className="inline-flex items-center gap-1">
+                    <BuildingOfficeIcon className="w-3.5 h-3.5" /> {getWorkplaceLabel(selectedManual.workplace)}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <ClockIcon className="w-3.5 h-3.5" /> {getTimeSlotLabel(selectedManual.timeSlot)}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <CalendarDaysIcon className="w-3.5 h-3.5" /> {new Date(selectedManual.createdAt).toLocaleDateString('ko-KR')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showPrecautionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4">
@@ -1333,7 +1548,7 @@ export default function ManualsPage() {
                   <div className="mt-2 p-3 border border-gray-300 rounded-lg bg-white">
                     <div className="max-h-32 overflow-y-auto">
                       <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
+                        {tags.map((tag: Tag) => (
                           <button
                             key={tag.id}
                             type="button"
@@ -1569,7 +1784,7 @@ export default function ManualsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">태그</label>
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
+                  {tags.map((tag: Tag) => (
                     <button
                       key={tag.id}
                       type="button"
@@ -1706,7 +1921,7 @@ export default function ManualsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">태그</label>
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
+                  {tags.map((tag: Tag) => (
                     <button
                       key={tag.id}
                       type="button"

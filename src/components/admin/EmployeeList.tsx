@@ -108,7 +108,8 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
   return (
     <div className="space-y-4">
       {/* 모바일에서는 카드 형태, 데스크톱에서는 테이블 형태 */}
-      <div className="block lg:hidden">
+      {/* 임시 조치: 데스크톱에서도 카드 레이아웃 노출 (테이블 가려서 공백 문제 방지) */}
+      <div className="block">
         {visibleEmployees.map((employee) => (
           <div
             key={employee.id}
@@ -189,7 +190,8 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
       </div>
 
       {/* 데스크톱 테이블 */}
-      <div className="hidden lg:block">
+      {/* 임시 비활성화: 원인 규명 전까지 테이블 레이아웃 숨김 */}
+      <div className="hidden">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

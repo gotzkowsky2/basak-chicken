@@ -13,7 +13,12 @@ export async function POST(req: NextRequest) {
     }
   });
 
-  const names = ["employee_auth", "admin_auth", "superadmin_auth", "temp_pw_auth"];
+  const names = [
+    "employee_auth",
+    "admin_auth",
+    "superadmin_auth",
+    "temp_pw_auth",
+  ];
   const domainVariants: Array<string | undefined> = [
     undefined,
     host,
@@ -47,7 +52,17 @@ export async function POST(req: NextRequest) {
   }
 
   // 호스트 전용 보안 쿠키 삭제 (__Host-*)
-  const hostOnly = ["__Host-employee", "__Host-admin"];
+  const hostOnly = [
+    "__Host-employee_auth",
+    "__Host-admin_auth",
+    "__Host-temp_pw_auth",
+    "__Host-superadmin_auth",
+    // 레거시 명칭 호환 제거
+    "__Host-employee",
+    "__Host-admin",
+    "_Host-employee",
+    "_Host-admin",
+  ];
   for (const n of hostOnly) {
     const cookieStr = serialize(n, "", {
       httpOnly: true,
