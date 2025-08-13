@@ -59,6 +59,8 @@ export default function PrecautionsPage() {
 
   // 태그 관련 상태
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagPickerSearch, setTagPickerSearch] = useState("");
+  const [tagFilterSearch, setTagFilterSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showTagModal, setShowTagModal] = useState(false);
   const [newTagName, setNewTagName] = useState('');
@@ -480,11 +482,20 @@ export default function PrecautionsPage() {
                   <span>태그 추가</span>
                 </button>
               </div>
-            <div className="flex flex-wrap gap-2 p-2 sm:p-3 border border-gray-300 rounded-lg min-h-[52px]">
+            <div className="flex flex-col gap-2 p-2 sm:p-3 border border-gray-300 rounded-lg min-h-[52px]">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={tagPickerSearch}
+                  onChange={(e) => setTagPickerSearch(e.target.value)}
+                  placeholder="태그 검색"
+                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                />
+              </div>
                 {tags.length === 0 ? (
                 <p className="text-gray-500 text-xs sm:text-sm">등록된 태그가 없습니다.</p>
                 ) : (
-                  tags.map((tag) => (
+                  tags.filter(t => !tagPickerSearch || t.name.toLowerCase().includes(tagPickerSearch.toLowerCase())).map((tag) => (
                       <button
                         key={tag.id}
                         type="button"
@@ -564,6 +575,35 @@ export default function PrecautionsPage() {
                   placeholder="제목 또는 내용으로 검색..."
                   className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 text-sm"
                 />
+              </div>
+
+              {/* 태그 필터(검색/선택) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">태그</label>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={tagFilterSearch}
+                    onChange={(e) => setTagFilterSearch(e.target.value)}
+                    placeholder="태그 검색"
+                    className="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
+                  {tags.filter(t => !tagFilterSearch || t.name.toLowerCase().includes(tagFilterSearch.toLowerCase())).map(tag => (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => handleTagToggle(tag.id)}
+                      className={`px-2 py-1 rounded-full text-xs font-medium transition ${
+                        selectedTags.includes(tag.id) ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      style={{ backgroundColor: selectedTags.includes(tag.id) ? undefined : `${tag.color}20`, color: selectedTags.includes(tag.id) ? undefined : tag.color }}
+                    >
+                      {tag.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* 필터 옵션들 */}

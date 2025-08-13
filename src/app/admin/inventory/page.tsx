@@ -110,6 +110,8 @@ export default function InventoryPage() {
 
   // 태그 관련 상태
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagPickerSearch, setTagPickerSearch] = useState("");
+  const [tagFilterSearch, setTagFilterSearch] = useState("");
   const [showTagModal, setShowTagModal] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3B82F6');
@@ -752,9 +754,18 @@ export default function InventoryPage() {
                   </div>
                   {tags.length > 0 && (
                     <div className="mt-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={tagPickerSearch}
+                          onChange={(e) => setTagPickerSearch(e.target.value)}
+                          placeholder="태그 검색"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
                       <p className="text-xs text-gray-500 mb-1">사용 가능한 태그:</p>
                       <div className="flex flex-wrap gap-1">
-                        {tags.map((tag) => (
+                        {tags.filter(t => !tagPickerSearch || t.name.toLowerCase().includes(tagPickerSearch.toLowerCase())).map((tag) => (
                           <button
                             key={tag.id}
                             type="button"
@@ -767,7 +778,7 @@ export default function InventoryPage() {
                               }
                             }}
                             disabled={formData.selectedTags.includes(tag.id)}
-                            className={`px-2 py-1 rounded-full text-xs font-medium transition ${
+                             className={`px-2 py-1 rounded-full text-xs font-medium transition ${
                               formData.selectedTags.includes(tag.id)
                                 ? 'opacity-50 cursor-not-allowed'
                                 : 'hover:bg-gray-100 cursor-pointer'
@@ -906,14 +917,23 @@ export default function InventoryPage() {
                   
                   {!isTagFilterCollapsed && (
                     <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={tagFilterSearch}
+                          onChange={(e) => setTagFilterSearch(e.target.value)}
+                          placeholder="태그 검색"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
                       {tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {tags.map((tag) => (
+                          {tags.filter(t => !tagFilterSearch || t.name.toLowerCase().includes(tagFilterSearch.toLowerCase())).map((tag) => (
                             <button
                               key={tag.id}
                               type="button"
                               onClick={() => handleTagFilterToggle(tag.id)}
-                              className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                              className={`px-2 py-1 rounded-full text-xs font-medium transition ${
                                 inventoryFilters.selectedTags.includes(tag.id)
                                   ? 'ring-2 ring-blue-500'
                                   : 'hover:bg-gray-200'
