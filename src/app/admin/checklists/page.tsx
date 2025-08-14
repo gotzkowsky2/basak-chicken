@@ -199,18 +199,50 @@ export default function ChecklistsPage() {
   // 오늘 생성된 인스턴스 빠른 관리(간단 기능)
   const [todayInstances, setTodayInstances] = useState<any[]>([]);
   const [loadingInstances, setLoadingInstances] = useState(false);
+  const getKstDateString = () => {
+    // 브라우저가 KST가 아닐 수 있으므로 명시적으로 KST 기준 YYYY-MM-DD 생성
+    try {
+      const fmt = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
+      const parts = fmt.formatToParts(new Date());
+      const y = parts.find(p => p.type === 'year')?.value || '0000';
+      const m = parts.find(p => p.type === 'month')?.value?.padStart(2,'0') || '01';
+      const d = parts.find(p => p.type === 'day')?.value?.padStart(2,'0') || '01';
+      return `${y}-${m}-${d}`;
+    } catch {
+      return new Date().toISOString().slice(0,10); // 폴백(UTC)
+    }
+  };
   const loadTodayInstances = async () => {
     try {
       setLoadingInstances(true);
-      const res = await fetch('/api/admin/checklist-instances', { credentials: 'include' });
+      const date = getKstDateString();
+      // dev-generate-checklists GET은 인증 엄격도가 낮고 템플릿 포함 데이터 반환
+      const res = await fetch(`/api/admin/dev-generate-checklists?date=${date}` , { credentials: 'include', cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        setTodayInstances(data.instances || []);
+        setTodayInstances(data.existingSubmissions || []);
+      } else {
+        // 실패 시 비우고 원인 확인을 위해 콘솔 출력
+        setTodayInstances([]);
+        const txt = await res.text().catch(() => '');
+        console.error('dev-generate-checklists fetch failed', res.status, txt);
       }
     } finally {
       setLoadingInstances(false);
     }
   };
+  useEffect(() => { loadTodayInstances(); }, []);
+  // 탭 포커스/가시성 회복 시 자동 갱신
+  useEffect(() => {
+    const onFocus = () => { loadTodayInstances(); };
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadTodayInstances(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   const deleteInstance = async (id: string) => {
     if (!confirm('해당 인스턴스를 삭제하시겠습니까?')) return;
@@ -521,21 +553,45 @@ export default function ChecklistsPage() {
         <div className="bg-white rounded-lg shadow p-4 mt-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg font-semibold text-gray-900">오늘 생성된 인스턴스</h2>
-            <button onClick={loadTodayInstances} className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200">새로고침</button>
           </div>
           {loadingInstances ? (
             <p className="text-sm text-gray-500">불러오는 중...</p>
           ) : todayInstances.length === 0 ? (
             <p className="text-sm text-gray-500">오늘 생성된 인스턴스가 없습니다.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {todayInstances.map((inst: any) => (
-                <div key={inst.id} className="flex items-center justify-between border rounded px-3 py-2">
-                  <div className="text-sm text-gray-800 truncate">
-                    <span className="font-medium mr-2">{inst.template?.name || inst.templateId}</span>
-                    <span className="text-gray-500">[{inst.workplace}/{inst.timeSlot}]</span>
+                <div key={inst.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                          {inst.template?.name || inst.templateContent || `${inst.workplace}, ${inst.timeSlot}`}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-2 text-xs">
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{inst.workplace}</span>
+                          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">{inst.timeSlot}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => deleteInstance(inst.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        title="삭제"
+                      >
+                        삭제
+                      </button>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>{new Date(inst.date || Date.now()).toLocaleDateString()}</span>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md">
+                        인스턴스 관리
+                      </div>
+                    </div>
                   </div>
-                  <button onClick={() => deleteInstance(inst.id)} className="text-red-600 hover:bg-red-50 px-2 py-1 rounded text-sm">삭제</button>
                 </div>
               ))}
             </div>

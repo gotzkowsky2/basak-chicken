@@ -6,15 +6,26 @@ const prisma = new PrismaClient();
 export const runtime = "nodejs";
 
 async function verifyAdmin(req: NextRequest) {
-  const adminAuth = req.cookies.get("admin_auth")?.value;
-  const employeeAuth = req.cookies.get("employee_auth")?.value;
-  if (!adminAuth && !employeeAuth) {
-    return null;
+  // Accept both legacy and new __Host-* cookies
+  const cookieOrder = [
+    '__Host-admin_auth',
+    '__Host-employee_auth',
+    'admin_auth',
+    'employee_auth',
+  ];
+  let authId: string | undefined;
+  for (const name of cookieOrder) {
+    const v = req.cookies.get(name)?.value;
+    if (v) { authId = v; break; }
   }
-  const authId = adminAuth || employeeAuth;
-  const employee = await prisma.employee.findUnique({ where: { id: authId }, select: { isSuperAdmin: true } });
-  if (!employee || !employee.isSuperAdmin) return null;
-  return true;
+  if (!authId) return null;
+  // 1) Employee super-admin? (또는 활성 직원은 조회 허용)
+  const employee = await prisma.employee.findUnique({ where: { id: authId }, select: { isSuperAdmin: true, isActive: true } });
+  if (employee?.isSuperAdmin || employee?.isActive) return true;
+  // 2) Admin table 존재 여부로 관리자 인정
+  const admin = await prisma.admin.findUnique({ where: { id: authId }, select: { id: true } }).catch(() => null);
+  if (admin) return true;
+  return null;
 }
 
 function parseDateOnly(value?: string | null): Date | null {

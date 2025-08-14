@@ -1701,10 +1701,7 @@ export default function ChecklistPage() {
     }
   };
 
-  // 상태 정보 가져오기 (유틸리티 함수 사용)
-  const getStatusInfo = (status: string) => {
-    return getStatusInfo(status);
-  };
+  // 상태 정보 가져오기: 사용되지 않는 재귀 함수 제거
 
   const handleChecklistSelect = (checklist: ChecklistTemplate) => {
     // 연결항목 캐시 초기화 (체크리스트 전환 시 최신화)

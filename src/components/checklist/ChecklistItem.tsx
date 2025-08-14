@@ -89,23 +89,20 @@ function ChecklistItem({
 
   // 팝업 열기
   const openDetailModal = async (itemData: { itemType: string; itemId: string }) => {
-    console.log('팝업 열기 시작:', itemData);
     
     // 최신 데이터 가져오기
     try {
       const url = `/api/employee/connected-items?type=${itemData.itemType}&id=${itemData.itemId}`;
-      console.log('API 호출 URL:', url);
       
       const response = await fetch(url, {
         credentials: 'include',
         cache: 'no-store'
       });
       
-      console.log('API 응답 상태:', response.status);
+      
       
       if (response.ok) {
         const latestData = await response.json();
-        console.log('최신 데이터:', latestData);
         
         setSelectedItem({
           ...latestData,
@@ -514,19 +511,10 @@ function ChecklistItem({
                                     if (e.key === 'Enter') {
                                       e.preventDefault();
                                       const newStock = parseInt(e.currentTarget.value) || 0;
-                                      console.log('재고 Enter 키 입력:', { 
-                                        itemId: connectionDetails.id, 
-                                        newStock, 
-                                        parentItemId: item.id,
-                                        inputValue: e.currentTarget.value,
-                                        onInventoryUpdate: !!onInventoryUpdate,
-                                        connectionDetails: !!connectionDetails
-                                      });
                                       if (onInventoryUpdate && connectionDetails) {
-                                        console.log('재고 업데이트 함수 호출 시작');
+                                       
                                         try {
                                           await onInventoryUpdate(connectionDetails.id, newStock);
-                                          console.log('재고 업데이트 함수 호출 완료');
                                         } catch (error) {
                                           console.error('재고 업데이트 함수 호출 실패:', error);
                                         }
@@ -546,18 +534,9 @@ function ChecklistItem({
                                     const input = document.querySelector(`input[data-inventory-id="${connectionDetails.id}"]`) as HTMLInputElement;
                                     if (input && onInventoryUpdate && connectionDetails) {
                                       const newStock = parseInt(input.value) || 0;
-                                      console.log('재고 입력 버튼 클릭:', { 
-                                        itemId: connectionDetails.id, 
-                                        newStock, 
-                                        parentItemId: item.id,
-                                        inputValue: input.value,
-                                        onInventoryUpdate: !!onInventoryUpdate,
-                                        connectionDetails: !!connectionDetails
-                                      });
-                                      console.log('재고 업데이트 함수 호출 시작');
+                                       
                                       try {
-                                        await onInventoryUpdate(connectionDetails.id, newStock);
-                                        console.log('재고 업데이트 함수 호출 완료');
+                                         await onInventoryUpdate(connectionDetails.id, newStock);
                                       } catch (error) {
                                         console.error('재고 업데이트 함수 호출 실패:', error);
                                       }

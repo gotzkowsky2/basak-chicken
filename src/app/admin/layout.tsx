@@ -233,7 +233,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* 드롭다운 메뉴 외부 클릭 시 닫기 */}
       {/* 외부 클릭 감지는 useEffect에서 처리하므로 이 부분은 삭제 */}
       
-      <main>{children}</main>
+      <main>
+        {children}
+        <div className="text-center text-xs text-gray-400 py-6">Build: {new Date().toLocaleString('ko-KR')}</div>
+      </main>
     </div>
   );
 } 
