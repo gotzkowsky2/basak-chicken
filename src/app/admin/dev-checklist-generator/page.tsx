@@ -97,14 +97,7 @@ export default function DevChecklistGeneratorPage() {
         const templates = (Array.isArray(data) ? data : [])
           .filter((template: any) => template.isActive) // 활성화된 템플릿만 선택
           .map((template: any) => {
-            console.log('처리 중인 템플릿:', template);
-            
-            // 템플릿 이름을 올바른 형태로 변환
-            const workplaceLabel = getWorkplaceLabel(template.workplace);
-            const timeSlotLabel = getTimeSlotLabel(template.timeSlot);
-            template.name = `${workplaceLabel}, ${timeSlotLabel}`;
-            console.log('변환된 이름:', template.name);
-            
+            // 이름은 그대로 유지, 표시용 라벨은 렌더링 단계에서 조합
             return template;
           });
         
@@ -184,6 +177,9 @@ export default function DevChecklistGeneratorPage() {
     groups[workplace].push(template);
     return groups;
   }, {} as Record<string, ChecklistTemplate[]>);
+
+  // 표시 라벨(고유 ID는 그대로 유지, 중복 합치지 않음)
+  const displayLabelFor = (t: ChecklistTemplate) => `${t.name} · ${getWorkplaceLabel(t.workplace)} · ${getTimeSlotLabel(t.timeSlot)}`;
 
   // 템플릿 그룹별로 고유한 템플릿 이름 생성
   const getUniqueTemplateGroups = () => {
@@ -467,7 +463,7 @@ export default function DevChecklistGeneratorPage() {
               </div>
             )}
 
-            {/* 템플릿 그룹별 표시 */}
+            {/* 템플릿 표시 (위치별 섹션, 개별 템플릿 단위) */}
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -475,93 +471,32 @@ export default function DevChecklistGeneratorPage() {
               </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(() => {
-                const groupedData = getGroupedTemplateGroups();
-                return Array.from(groupedData.entries()).map(([workplace, groups]) => (
-                  <div key={workplace} className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-200 pb-2">
-                      {workplace}
-                    </h3>
-                    <div className="space-y-3">
-                      {groups.map((group: { name: string; templates: ChecklistTemplate[]; totalItems: number; totalConnectedItems: number }) => (
-                        <div 
-                          key={group.name} 
-                          className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                            isTemplateGroupSelected(group.name)
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
-                          }`}
-                          onClick={() => handleTemplateGroupToggle(group.name)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <input
-                                  type="checkbox"
-                                  checked={isTemplateGroupSelected(group.name)}
-                                  onChange={() => handleTemplateGroupToggle(group.name)}
-                                  className="mt-1 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <div className="font-bold text-gray-800">
-                                  {group.name}
-                                </div>
-                                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                                  {group.templates.length}개 항목
-                                </span>
-                              </div>
-                              
-                              {/* 템플릿 이름 표시 */}
-                              <div className="text-xs text-gray-600 ml-6 mb-2">
-                                {group.templates.map((template, index) => (
-                                  <div key={template.id} className="text-gray-700 font-medium">
-                                    {template.name}
-                                    {template.isActive ? ' (활성)' : ' (비활성)'}
-                                  </div>
-                                ))}
-                              </div>
-                              
-                              {/* 포함된 템플릿들 미리보기 (최대 3개) */}
-                              <div className="text-sm text-gray-600 ml-6 mb-2">
-                                {group.templates.slice(0, 3).map((template, index) => (
-                                  <div key={template.id} className="text-gray-500">
-                                    • {template.name}
-                                  </div>
-                                ))}
-                                {group.templates.length > 3 && (
-                                  <div className="text-gray-400 text-xs">
-                                    ... 외 {group.templates.length - 3}개 템플릿
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="flex gap-2 ml-6">
-                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                                  {getWorkplaceLabel(group.templates[0].workplace)}
-                                </span>
-                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                                  {getTimeSlotLabel(group.templates[0].timeSlot)}
-                                </span>
-                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                                  {group.totalItems}개 항목
-                                </span>
-                                <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                                  {group.totalConnectedItems}개 연결항목
-                                </span>
-                              </div>
-                            </div>
-                            
-                            {isTemplateGroupPartiallySelected(group.name) && (
-                              <div className="text-xs text-blue-600 font-medium">
-                                일부 선택됨
-                              </div>
-                            )}
+              {Object.entries(groupedTemplates).map(([workplace, templates]) => (
+                <div key={workplace} className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-200 pb-2">{workplace}</h3>
+                  <div className="space-y-3">
+                    {templates.map((template) => (
+                      <label key={template.id} className={`border-2 rounded-lg p-4 flex items-start gap-3 cursor-pointer transition-all ${selectedTemplates.includes(template.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedTemplates.includes(template.id)}
+                          onChange={() => handleTemplateToggle(template.id)}
+                          className="mt-1 w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-gray-800 truncate" title={displayLabelFor(template)}>
+                            {displayLabelFor(template)}
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1 flex gap-2">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">{getTimeSlotLabel(template.timeSlot)}</span>
+                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded">{template.items?.length || 0}개 항목</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </label>
+                    ))}
                   </div>
-                ));
-              })()}
+                </div>
+              ))}
             </div>
             )}
 

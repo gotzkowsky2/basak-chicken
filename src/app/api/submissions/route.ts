@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
   try {
     const employee = await verifyAdminAuth(request);
     const { searchParams } = new URL(request.url);
+    const adminAll = searchParams.get('adminAll') === 'true';
     
     console.log('제출내역 조회 요청:', { employee: employee.name, isSuperAdmin: employee.isSuperAdmin });
     
@@ -220,12 +221,13 @@ export async function GET(request: NextRequest) {
         ...dateFilter
       };
 
-      if (!employee.isSuperAdmin) {
+      // SuperAdmin이라도 기본은 본인 범위. 전체 조회가 필요하면 adminAll=true 또는 employeeId 전달
+      if (!employee.isSuperAdmin || !adminAll) {
         instances = await prisma.checklistInstance.findMany({
           where: {
             ...baseWhere,
             OR: [
-              { employeeId: employee.id },
+              { AND: [ { employeeId: employee.id }, { isSubmitted: true } ] },
               { checklistItemProgresses: { some: { completedBy: { contains: employee.name } } } },
               { connectedItemsProgress: { some: { completedBy: { contains: employee.name } } } }
             ]
@@ -337,6 +339,7 @@ export async function GET(request: NextRequest) {
         
         return {
           id: connection.id,
+          itemId: connection.itemId,
           parentItemId: parentItemId,
           type: type,
           title: title,

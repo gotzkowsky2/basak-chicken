@@ -32,6 +32,7 @@ export interface SubmissionHistory {
     }>;
     connectedItems: Array<{
       id: string;
+      itemId: string;
       parentItemId: string | null;
       type: 'inventory' | 'precaution' | 'manual';
       title: string;

@@ -570,26 +570,24 @@ export default function ChecklistPage() {
         const instances = await response.json();
         console.log('조회된 체크리스트 인스턴스:', instances);
         
-        // 템플릿 그룹별로 그룹화
+        // 템플릿 그룹별로 그룹화 (고유 템플릿 ID 기준으로 분리)
         const templateGroups = new Map<string, any[]>();
         
         instances.forEach((instance: any) => {
-          // 템플릿 이름 생성 (위치, 시간대 형태)
-          const templateName = `${getWorkplaceLabel(instance.workplace)}, ${getTimeSlotLabel(instance.timeSlot)}`;
-          
-          if (!templateGroups.has(templateName)) {
-            templateGroups.set(templateName, []);
+          const groupKey = String(instance.template?.id || instance.id);
+          if (!templateGroups.has(groupKey)) {
+            templateGroups.set(groupKey, []);
           }
-          templateGroups.get(templateName)!.push(instance);
+          templateGroups.get(groupKey)!.push(instance);
         });
         
         // 그룹화된 데이터를 체크리스트 형태로 변환
-        const checklistsData = Array.from(templateGroups.entries()).map(([templateName, groupInstances]) => {
+        const checklistsData = Array.from(templateGroups.entries()).map(([groupKey, groupInstances]) => {
           // 첫 번째 인스턴스를 기준으로 템플릿 정보 생성
           const firstInstance = groupInstances[0];
           
           dbg('=== 그룹 처리 중 ===');
-          dbg('템플릿 이름:', templateName);
+          dbg('그룹 키:', groupKey);
           dbg('그룹 인스턴스 수:', groupInstances.length);
           dbg('첫 번째 인스턴스:', firstInstance);
           dbg('첫 번째 인스턴스 template:', firstInstance.template);
@@ -611,10 +609,12 @@ export default function ChecklistPage() {
           
           dbg('중복 제거된 항목들:', uniqueItems);
           
+          const displayName = `${getWorkplaceLabel(firstInstance.workplace)}, ${getTimeSlotLabel(firstInstance.timeSlot)}`;
+          
           return {
-            id: templateName, // 템플릿 그룹 ID로 사용
-            name: templateName, // 템플릿 그룹 이름
-            content: templateName, // 템플릿 그룹 이름 (호환성)
+            id: groupKey, // 고유 템플릿 ID로 그룹 식별
+            name: displayName, // 표시용 이름은 위치/시간대 라벨 유지
+            content: displayName, // 호환성 유지
             workplace: firstInstance.workplace,
             category: firstInstance.template.category,
             timeSlot: firstInstance.timeSlot,

@@ -1,5 +1,42 @@
 # 현재 상태 및 작업 기록
 
+## 2025-08-14 작업 기록 ✅
+
+### 오늘 완료 사항
+- 직원 제출내역 팝업 고도화
+  - 제출내역 모달 내 메인 항목 제목 클릭 시 상세 팝업 표시(완료자/시간/메모)
+  - 연결 항목 클릭 시 유형별 상세 팝업:
+    - 매뉴얼: 본문 + 연결된 주의사항 목록 포함
+    - 주의사항: 전문 표시
+  - 연결 항목 데이터에 실제 `itemId` 포함하도록 `/api/submissions` 응답 확장
+
+- 그룹핑/노출 로직 수정
+  - 직원 체크리스트 화면: 템플릿 고유 ID 기준 그룹핑(동일 위치/시간대라도 합치지 않음)
+  - 개발용 생성기: 템플릿을 개별 ID 기준으로 선택/표시(합치지 않음)
+  - 제출내역 기본 조회: 비관리자는 “내가 제출 완료했거나, 내가 실제 체크한 인스턴스”만 노출 (슈퍼관리자 `adminAll=true`로 전체 조회 가능)
+
+- 관리자 템플릿 항목 관리 UX
+  - 항목 액션을 ⋯ 액션시트로 통합
+  - 연결 항목 칩 UI 적용
+  - 순서 저장 디바운스(낙관적 업데이트 후 일괄 저장)
+
+- 빌드/배포 안정화
+  - `SubmissionModal.tsx` JSX 루트 정리로 빌드 오류 해결
+  - 정적 CSS 404 점검 및 PM2 모드 `cluster` → `fork` 전환으로 정적 서빙 안정화
+
+### 수정된 주요 파일
+- `src/components/submissions/SubmissionModal.tsx`
+- `src/app/api/submissions/route.ts`
+- `src/types/submission.ts`
+- `src/app/employee/checklist/page.tsx`
+- `src/app/admin/dev-checklist-generator/page.tsx`
+- `src/app/admin/checklists/[id]/items/page.tsx`
+- `ecosystem.config.js`
+
+### 확인 사항
+- 직원 > 내 제출내역: 메인/연결 항목 클릭 시 상세 팝업 정상 표출(매뉴얼은 주의사항 포함)
+- CSS 깨짐 현상 재발 없는지 확인(정적 CSS 200 응답)
+
 ## 2025-07-31 작업 완료 ✅
 
 ### 주요 개선사항

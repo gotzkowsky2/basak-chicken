@@ -19,6 +19,14 @@ interface SubmissionModalProps {
 
 export default function SubmissionModal({ submission, isOpen, onClose }: SubmissionModalProps) {
   const [currentUser, setCurrentUser] = useState<string>('');
+  // 상세 보기용 뷰어 상태 (메뉴얼/주의사항/메인 항목)
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerType, setViewerType] = useState<'manual' | 'precaution' | 'main' | null>(null);
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
+  const [viewerData, setViewerData] = useState<any>(null);
+  const [viewerTitle, setViewerTitle] = useState<string>('');
+  const [viewerContent, setViewerContent] = useState<string>('');
 
   // 현재 로그인한 사용자 정보 가져오기
   useEffect(() => {
@@ -96,7 +104,50 @@ export default function SubmissionModal({ submission, isOpen, onClose }: Submiss
     }
   };
 
+  // 연결 항목(메뉴얼/주의사항) 상세 보기
+  const openConnectedItemViewer = async (itemType: 'manual' | 'precaution', id: string) => {
+    try {
+      setViewerLoading(true);
+      setViewerOpen(true);
+      setViewerType(itemType);
+      setViewerId(id);
+      setViewerData(null);
+      setViewerTitle('');
+      setViewerContent('');
+      const res = await fetch(`/api/employee/connected-items?type=${itemType}&id=${id}`, { credentials: 'include', cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setViewerData(data);
+        setViewerTitle(data.title || data.name || '');
+        setViewerContent(data.content || '');
+      } else {
+        setViewerData(null);
+      }
+    } catch (e) {
+      console.error('연결 항목 조회 오류:', e);
+      setViewerData(null);
+    } finally {
+      setViewerLoading(false);
+    }
+  };
+
+  // 메인 항목 상세 보기 (간단 포맷)
+  const openMainItemViewer = (item: { id: string; content: string; isCompleted: boolean; completedAt: string; notes: string; completedBy?: string; }) => {
+    setViewerOpen(true);
+    setViewerType('main');
+    setViewerId(item.id);
+    setViewerTitle(item.content);
+    setViewerContent('');
+    setViewerData({
+      isCompleted: item.isCompleted,
+      completedAt: item.completedAt,
+      completedBy: item.completedBy,
+      notes: item.notes
+    });
+  };
+
   return (
+    <>
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* 배경 오버레이 */}
       <div 
@@ -197,7 +248,11 @@ export default function SubmissionModal({ submission, isOpen, onClose }: Submiss
                         {getStatusIcon(item.isCompleted)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-2 break-words">
+                        <h3
+                          className="text-sm sm:text-lg font-semibold text-gray-900 mb-2 break-words cursor-pointer hover:underline"
+                          title="상세 보기"
+                          onClick={() => openMainItemViewer(item)}
+                        >
                           {index + 1}. {item.content}
                         </h3>
                         
@@ -246,7 +301,15 @@ export default function SubmissionModal({ submission, isOpen, onClose }: Submiss
                             {submission.details.connectedItems
                               .filter(connected => connected.parentItemId === item.id)
                               .map((connectedItem) => (
-                                <div key={connectedItem.id} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                                <div
+                                  key={connectedItem.id}
+                                  className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                                  onClick={() => {
+                                    if (connectedItem.type === 'manual' || connectedItem.type === 'precaution') {
+                                      openConnectedItemViewer(connectedItem.type, connectedItem.itemId);
+                                    }
+                                  }}
+                                >
                                   <div className="flex-shrink-0 mt-1">
                                     {getStatusIcon(connectedItem.isCompleted)}
                                   </div>
@@ -316,5 +379,72 @@ export default function SubmissionModal({ submission, isOpen, onClose }: Submiss
         </div>
       </div>
     </div>
+    {viewerOpen && (
+      <div className="fixed inset-0 z-[60]">
+        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setViewerOpen(false)} />
+        <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+          <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${viewerType==='manual' ? 'bg-purple-500 text-white' : viewerType==='precaution' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
+                  {viewerType === 'manual' ? 'M' : viewerType === 'precaution' ? 'P' : 'C'}
+                </span>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                  {viewerType === 'main' ? (viewerTitle || '체크리스트 항목') : (viewerTitle || '제목 없음')}
+                </h2>
+              </div>
+              <button onClick={() => setViewerOpen(false)} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded">
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+              {viewerLoading ? (
+                <div className="text-center text-sm text-gray-500">불러오는 중...</div>
+              ) : viewerType === 'main' ? (
+                <div className="space-y-3">
+                  <div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-gray-800 text-sm">
+                    {viewerTitle}
+                  </div>
+                  {viewerData?.notes && (
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-gray-800">
+                      <div className="font-medium text-blue-700 mb-1">메모</div>
+                      <div className="whitespace-pre-wrap">{viewerData.notes}</div>
+                    </div>
+                  )}
+                  {(viewerData?.completedBy || viewerData?.completedAt) && (
+                    <div className="text-xs text-gray-600">
+                      {viewerData?.completedBy && <div>✅ 완료자: <span className="font-medium text-green-700">{viewerData.completedBy}</span></div>}
+                      {viewerData?.completedAt && <div>⏰ 완료시간: {new Date(viewerData.completedAt).toLocaleString('ko-KR')}</div>}
+                    </div>
+                  )}
+                </div>
+              ) : viewerType === 'manual' || viewerType === 'precaution' ? (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-gray-800 text-sm">
+                    {viewerContent || '내용이 없습니다.'}
+                  </div>
+                  {viewerType === 'manual' && viewerData?.precautions && (
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold text-gray-800">연결된 주의사항</div>
+                      {viewerData.precautions.length > 0 ? viewerData.precautions.map((p: any, idx: number) => (
+                        <div key={idx} className="bg-red-50 border border-red-200 rounded p-3">
+                          <div className="text-red-900 text-sm font-medium mb-1">{p.title}</div>
+                          <div className="text-red-800 text-xs whitespace-pre-wrap">{p.content}</div>
+                        </div>
+                      )) : (
+                        <div className="text-xs text-gray-500">연결된 주의사항이 없습니다.</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-sm text-gray-500">데이터가 없습니다.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 } 

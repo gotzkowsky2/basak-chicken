@@ -5,7 +5,7 @@ module.exports = {
     args: 'start -H 0.0.0.0 -p 3001',
     cwd: '/root/basak-chicken-app',
     instances: 1,
-    exec_mode: 'cluster',
+    exec_mode: 'fork',
     env: {
       NODE_ENV: 'production',
       PORT: 3001,

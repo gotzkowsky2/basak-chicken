@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Edit, Trash2, Link, X } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Link, X, ChevronUp, ChevronDown, MoreVertical } from 'lucide-react';
 import ItemAddModal from '@/components/ItemAddModal';
 import PrecautionQuickPicker from '@/components/PrecautionQuickPicker';
 
@@ -64,6 +64,11 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
   const [viewerEditTitle, setViewerEditTitle] = useState('');
   const [viewerEditContent, setViewerEditContent] = useState('');
   const [showPrecautionPicker, setShowPrecautionPicker] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  // 액션시트(⋯) 오픈 대상
+  const [openActionForItemId, setOpenActionForItemId] = useState<string | null>(null);
+  // 순서 저장 디바운스 타이머
+  const orderSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -317,6 +322,35 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
     }
   };
 
+  const applyNewOrder = async (reordered: ChecklistItem[]) => {
+    // 1) 낙관적 업데이트
+    setItems(reordered.map((it, idx) => ({ ...it, order: idx + 1 })));
+    // 2) 디바운스하여 서버 반영 (마지막 변경만 저장)
+    if (orderSaveTimer.current) {
+      clearTimeout(orderSaveTimer.current);
+    }
+    orderSaveTimer.current = setTimeout(async () => {
+      try {
+        await Promise.all(
+          reordered.map((it, idx) => fetch(`/api/admin/checklists/${templateId}/items/${it.id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order: idx + 1 })
+          }))
+        );
+      } catch (e) {
+        console.error('순서 저장 실패:', e);
+        await fetchItems(templateId);
+      }
+    }, 600);
+  };
+
+  const moveItem = async (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return;
+    const reordered = Array.from(items);
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
+    await applyNewOrder(reordered);
+  };
+
   if (loading) {
     return <div className="p-6">로딩 중...</div>;
   }
@@ -393,8 +427,15 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
           <h2 className="text-lg font-semibold text-gray-900">체크리스트 항목</h2>
         </div>
         <div className="divide-y">
-          {items.map((item) => (
-            <div key={item.id} className="p-6">
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className={`p-6 ${dragIndex === index ? 'bg-blue-50' : ''}`}
+              draggable
+              onDragStart={(e)=>{ setDragIndex(index); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', item.id); }}
+              onDragOver={(e)=>{ e.preventDefault(); }}
+              onDrop={async (e)=>{ e.preventDefault(); if (dragIndex !== null) { await moveItem(dragIndex, index); } setDragIndex(null); }}
+            >
               {/* 메인 항목 */}
               <div className="flex flex-col mb-3">
                 <div className="flex-1 min-w-0 pr-2">
@@ -407,72 +448,73 @@ export default function ChecklistItemsPage({ params }: { params: Promise<{ id: s
                     </p>
                   )}
                 </div>
-                {/* 모바일: 아이콘을 하단으로 내려 가로 폭 확보 */}
-                <div className="mt-2 flex items-center gap-2 justify-end sm:justify-end">
-                  {/* 연결 관리, 수정, 삭제 순서 */}
+                {/* 모바일: 액션을 ⋯ 액션시트로 통합 */}
+                <div className="mt-2 flex items-center gap-2 justify-end sm:justify-end relative">
                   <button
-                    onClick={() => handleOpenConnectionModal(item)}
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 px-1 py-0.5 rounded hover:bg-blue-50 text-xs sm:text-sm"
-                    title="연결 관리"
+                    onClick={() => setOpenActionForItemId(prev => prev === item.id ? null : item.id)}
+                    className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
+                    title="메뉴"
                   >
-                    <Link size={14} />
+                    <MoreVertical size={16} />
                   </button>
-                  <button
-                    onClick={() => handleEditStart(item)}
-                    className="flex items-center gap-1 text-gray-700 hover:text-gray-900 px-1 py-0.5 rounded hover:bg-gray-100 text-xs sm:text-sm"
-                    title="수정"
-                  >
-                    <Edit size={14} />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteItem(item.id)}
-                    className="text-red-600 hover:text-red-800 px-1 py-0.5 rounded hover:bg-red-50 text-xs sm:text-sm"
-                    title="삭제"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {openActionForItemId === item.id && (
+                    <div className="absolute right-0 top-8 z-10 w-36 bg-white border border-gray-200 rounded-md shadow-lg py-1">
+                      <button
+                        onClick={() => { setOpenActionForItemId(null); handleOpenConnectionModal(item); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 hover:bg-blue-50"
+                      >
+                        <Link size={14} /> 연결 관리
+                      </button>
+                      <button
+                        onClick={() => { setOpenActionForItemId(null); handleEditStart(item); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <Edit size={14} /> 수정
+                      </button>
+                      <button
+                        onClick={() => { setOpenActionForItemId(null); handleDeleteItem(item.id); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 size={14} /> 삭제
+                      </button>
+                      <div className="border-t my-1" />
+                      <div className="flex sm:hidden items-center justify-between px-2 py-1">
+                        <button onClick={()=>{ setOpenActionForItemId(null); moveItem(index, index-1); }} className="px-2 py-1 rounded hover:bg-gray-100 text-gray-600" title="위로"><ChevronUp size={14} /></button>
+                        <button onClick={()=>{ setOpenActionForItemId(null); moveItem(index, index+1); }} className="px-2 py-1 rounded hover:bg-gray-100 text-gray-600" title="아래로"><ChevronDown size={14} /></button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* 연결된 항목들 */}
+              {/* 연결된 항목들 - 칩 UI */}
               {item.connectedItems.length > 0 && (
-                <div className="ml-6 border-l-2 border-gray-200 pl-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                    연결된 항목들:
-                  </h4>
-                  <div className="space-y-2">
+                <div className="mt-3 ml-1">
+                  <div className="flex flex-wrap gap-2">
                     {item.connectedItems.map((connection) => (
-                      <div
+                      <button
                         key={connection.id}
-                        className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded"
+                        type="button"
                         onClick={() => openConnectedItemViewer(connection.connectedItem.type as 'manual'|'precaution', connection.connectedItem.id)}
+                        className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full border text-xs hover:shadow-sm transition ${
+                          connection.connectedItem.type === 'inventory' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                          connection.connectedItem.type === 'precaution' ? 'bg-red-50 border-red-200 text-red-700' :
+                          'bg-purple-50 border-purple-200 text-purple-700'
+                        }`}
+                        title={`${connection.connectedItem.type === 'inventory' ? '재고' : connection.connectedItem.type === 'precaution' ? '주의사항' : '메뉴얼'} 열기`}
                       >
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          connection.connectedItem.type === 'inventory' 
-                            ? 'bg-green-100 text-green-800'
-                            : connection.connectedItem.type === 'precaution'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-blue-100 text-blue-800'
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                          connection.connectedItem.type === 'inventory' ? 'bg-blue-200 text-blue-800' :
+                          connection.connectedItem.type === 'precaution' ? 'bg-red-200 text-red-800' :
+                          'bg-purple-200 text-purple-800'
                         }`}>
-                          {connection.connectedItem.type === 'inventory' ? '재고' :
-                           connection.connectedItem.type === 'precaution' ? '주의사항' : '메뉴얼'}
+                          {connection.connectedItem.type === 'inventory' ? '재고' : connection.connectedItem.type === 'precaution' ? '주의' : '매뉴얼'}
                         </span>
-                        <span className="text-gray-900">
-                          {connection.connectedItem.name}
-                        </span>
+                        <span className="truncate max-w-[160px] text-left">{connection.connectedItem.name}</span>
                         {connection.connectedItem.tags.length > 0 && (
-                          <div className="flex gap-1">
-                            {connection.connectedItem.tags.map((tag, index) => (
-                              <span
-                                key={index}
-                                className="px-1 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
+                          <span className="hidden sm:inline text-[10px] text-gray-500">+{connection.connectedItem.tags.length}</span>
                         )}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
