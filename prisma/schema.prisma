@@ -113,6 +113,7 @@ model Employee {
   purchasedItems     PurchaseRequestItem[]
   lockedTimeSlots    TimeSlotChecklistStatus[]
   favorites          Favorite[]
+  notices            Notice[]
 }
 
 model ChecklistTemplate {
@@ -364,6 +365,20 @@ model Favorite {
 
   @@unique([employeeId, targetType, targetId])
   @@index([employeeId, targetType])
+}
+
+// 공지사항
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String
+  author    Employee @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([isActive, createdAt])
 }
 
 enum Workplace {

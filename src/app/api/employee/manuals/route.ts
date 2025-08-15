@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
+    const manualId = searchParams.get('manualId');
     const workplace = searchParams.get('workplace');
     const timeSlot = searchParams.get('timeSlot');
     const category = searchParams.get('category');
@@ -45,6 +46,31 @@ export async function GET(req: NextRequest) {
         { title: { contains: search, mode: 'insensitive' } },
         { content: { contains: search, mode: 'insensitive' } }
       ];
+    }
+
+    if (manualId) {
+      const m = await prisma.manual.findUnique({
+        where: { id: manualId },
+        include: {
+          tagRelations: { include: { tag: true } },
+          precautionRelations: { include: { precaution: { include: { tagRelations: { include: { tag: true } } } } } }
+        }
+      });
+      if (!m) return NextResponse.json({ error: '메뉴얼을 찾을 수 없습니다.' }, { status: 404 });
+      const fm = {
+        ...m,
+        tags: m.tagRelations.map((r:any)=>({ id:r.tag.id, name:r.tag.name, color:r.tag.color })),
+        precautions: m.precautionRelations.map((r:any)=>({
+          id: r.precaution.id,
+          title: r.precaution.title,
+          content: r.precaution.content,
+          workplace: r.precaution.workplace,
+          timeSlot: r.precaution.timeSlot,
+          priority: r.precaution.priority,
+          tags: r.precaution.tagRelations.map((tr:any)=>({ id: tr.tag.id, name: tr.tag.name, color: tr.tag.color }))
+        }))
+      };
+      return NextResponse.json({ manual: fm });
     }
 
     const manuals = await prisma.manual.findMany({
