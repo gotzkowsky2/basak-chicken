@@ -3,12 +3,12 @@ import React from 'react';
 
 const categoryLabel: Record<string,string> = { INGREDIENTS:'식자재', SUPPLIES:'소모품', HYGIENE:'위생', CHECKLIST:'체크리스트', PRECAUTIONS:'주의사항', COMMON:'공통', MANUAL:'메뉴얼' };
 
-export default function AdminStaleInventoryPage() {
+export default function EmployeeStaleInventoryPage() {
   const [data, setData] = React.useState<any>({ items: [], stats: { total: 0, lowStock: 0, averageDaysStale: 0 } });
   const [days, setDays] = React.useState(2);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
-  const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
+  const [localSearch, setLocalSearch] = React.useState('');
   const [sortKey, setSortKey] = React.useState<'name'|'category'|'currentStock'|'minStock'|'unit'|'lastUpdated'|'daysSinceUpdate'>('daysSinceUpdate');
   const [sortAsc, setSortAsc] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<any|null>(null);
@@ -18,7 +18,7 @@ export default function AdminStaleInventoryPage() {
 
   const load = async (d:number) => {
     setLoading(true);
-    const res = await fetch(`/api/admin/inventory/stale?days=${d}`, { credentials: 'include', cache: 'no-store' });
+    const res = await fetch(`/api/employee/inventory/stale?days=${d}`, { credentials: 'include', cache: 'no-store' });
     if (res.ok) setData(await res.json());
     setLoading(false);
   };
@@ -26,33 +26,16 @@ export default function AdminStaleInventoryPage() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/inventory', { credentials: 'include', cache: 'no-store' });
-      if (!res.ok) throw new Error('재고 조회 실패');
-      const items = await res.json();
+      const res = await fetch('/api/employee/inventory', { credentials: 'include', cache: 'no-store' });
+      const items = res.ok ? await res.json() : [];
       const mapped = (items||[]).map((i:any)=>{
         const last = i.lastUpdated || i.createdAt;
         const daysSince = Math.floor((Date.now() - new Date(last).getTime()) / (1000*60*60*24));
-        return {
-          id: i.id,
-          name: i.name,
-          category: i.category,
-          currentStock: i.currentStock,
-          minStock: i.minStock,
-          unit: i.unit,
-          supplier: i.supplier,
-          lastUpdated: i.lastUpdated,
-          lastCheckedBy: i.lastCheckedBy,
-          createdAt: i.createdAt,
-          tags: (i.tagRelations||[]).map((tr:any)=>({ id: tr.tag.id, name: tr.tag.name, color: tr.tag.color })),
-          daysSinceUpdate: daysSince,
-          isLowStock: i.currentStock <= i.minStock
-        };
+        return { ...i, daysSinceUpdate: daysSince, isLowStock: i.currentStock <= i.minStock };
       });
       const stats = { total: mapped.length, lowStock: mapped.filter((x:any)=>x.isLowStock).length, averageDaysStale: mapped.length? Math.round(mapped.reduce((s:any,x:any)=>s+x.daysSinceUpdate,0)/mapped.length):0 };
       setData({ items: mapped, stats });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   React.useEffect(()=>{ load(days); },[]);
@@ -60,10 +43,6 @@ export default function AdminStaleInventoryPage() {
   const filtered = data.items.filter((i:any)=>{
     const keyword = search.trim();
     if (keyword && !(i.name.includes(keyword) || (i.supplier||'').includes(keyword))) return false;
-    if (selectedTags.length>0) {
-      const names = (i.tags||[]).map((t:any)=>t.name);
-      return selectedTags.every(t=>names.includes(t));
-    }
     return true;
   }).sort((a:any,b:any)=>{
     const dir = sortAsc?1:-1;
@@ -102,9 +81,15 @@ export default function AdminStaleInventoryPage() {
           <div className="bg-blue-100 rounded p-3"><div className="text-3xl font-bold text-blue-800">{data.stats.averageDaysStale}일</div><div className="text-sm text-gray-900 font-medium">평균 경과</div></div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-3">
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="단어 검색(이름/공급처)" className="flex-1 px-4 py-3 border-2 rounded text-gray-900 font-semibold placeholder-gray-700" />
-          <input onKeyDown={e=>{ if(e.key==='Enter') load(days); }} className="hidden" />
+        {/* 검색 */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-3">
+          <input value={localSearch} onChange={e=>setLocalSearch(e.target.value)} placeholder="이름/공급처 검색" className="flex-1 px-4 py-3 border-2 rounded text-gray-900 font-semibold placeholder-gray-600" />
+          <div className="flex gap-2">
+            <button onClick={()=>setSearch(localSearch)} className="px-4 py-2 bg-gray-900 text-white rounded font-semibold">검색</button>
+            {(search || localSearch) && (
+              <button onClick={()=>{ setSearch(''); setLocalSearch(''); }} className="px-4 py-2 bg-gray-600 text-white rounded font-semibold">초기화</button>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -161,8 +146,8 @@ export default function AdminStaleInventoryPage() {
                 <button disabled={saving} onClick={async()=>{
                   try {
                     setSaving(true);
-                    const res = await fetch('/api/admin/inventory', { method:'PUT', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: selectedItem.id, currentStock: updateQty })});
-                    if(res.ok){ await load(days); setSelectedItem(null);} else { const e = await res.json().catch(()=>({})); alert(e.error||'실패'); }
+                    const res = await fetch('/api/employee/inventory', { method:'PUT', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ itemId: selectedItem.id, currentStock: updateQty })});
+                    if(res.ok){ await (showAll ? loadAll() : load(days)); setSelectedItem(null);} else { const e = await res.json().catch(()=>({})); alert(e.error||'실패'); }
                   } finally { setSaving(false); }
                 }} className="px-4 py-2 bg-gray-900 text-white rounded font-semibold disabled:opacity-50">{saving? '저장 중...':'바로 업데이트'}</button>
                 <button onClick={()=>setSelectedItem(null)} className="px-4 py-2 bg-gray-600 text-white rounded">닫기</button>

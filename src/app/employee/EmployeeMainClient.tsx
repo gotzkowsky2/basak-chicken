@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React from "react";
 import { useEffect, useState } from "react";
+import EmployeeStaleInventory from "./EmployeeStaleInventory";
 
 type Feed = { notices: any[]; updatedManuals: any[]; newPrecautions: any[] };
 
@@ -12,14 +13,14 @@ export default function EmployeeMainClient() {
   const [modal, setModal] = useState<null | { type: 'notice'|'manual'|'precaution'|'inventory', data: any }>(null);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6 sm:p-8 flex flex-col gap-6 sm:gap-8">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-3 sm:p-4">
+      <div className="w-full max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-2xl shadow p-4 sm:p-6 flex flex-col gap-4 sm:gap-6">
         {feed && (feed.notices?.length || feed.updatedManuals?.length || feed.newPrecautions?.length) ? (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">최신 업데이트</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="border rounded p-3">
-                <div className="font-medium text-red-700 mb-2">공지사항</div>
+            <h2 className="flex items-center gap-2 text-base sm:text-lg font-bold text-gray-900 mb-2"><span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs">📰</span> 최신 업데이트</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="border rounded-xl p-3 hover:shadow-sm transition">
+                <div className="font-semibold text-red-700 mb-2 text-sm">공지사항</div>
                 <div className="space-y-2">
                   {feed.notices?.slice(0,3).map((n:any)=>(
                     <button key={n.id} onClick={()=>setModal({type:'notice', data:n})} className="text-left w-full text-sm hover:bg-red-50 rounded p-1">
@@ -29,8 +30,8 @@ export default function EmployeeMainClient() {
                   ))}
                 </div>
               </div>
-              <div className="border rounded p-3">
-                <div className="font-medium text-indigo-700 mb-2">업데이트된 메뉴얼</div>
+              <div className="border rounded-xl p-3 hover:shadow-sm transition">
+                <div className="font-semibold text-indigo-700 mb-2 text-sm">업데이트된 메뉴얼</div>
                 <div className="space-y-2">
                   {feed.updatedManuals?.slice(0,3).map((m:any)=>(
                     <button key={m.id} onClick={()=>setModal({type:'manual', data:m})} className="text-left w-full text-sm hover:bg-indigo-50 rounded p-1">
@@ -40,8 +41,8 @@ export default function EmployeeMainClient() {
                   ))}
                 </div>
               </div>
-              <div className="border rounded p-3">
-                <div className="font-medium text-orange-700 mb-2">새/수정 주의사항</div>
+              <div className="border rounded-xl p-3 hover:shadow-sm transition">
+                <div className="font-semibold text-orange-700 mb-2 text-sm">새/수정 주의사항</div>
                 <div className="space-y-2">
                   {feed.newPrecautions?.slice(0,3).map((p:any)=>(
                     <button key={p.id} onClick={()=>setModal({type:'precaution', data:p})} className="text-left w-full text-sm hover:bg-orange-50 rounded p-1">
@@ -51,8 +52,10 @@ export default function EmployeeMainClient() {
                   ))}
                 </div>
               </div>
-              <div className="border rounded p-3 md:col-span-3">
-                <div className="font-medium text-teal-700 mb-2">재고 업데이트 필요</div>
+              <div className="border rounded-xl p-3 md:col-span-3 hover:shadow-sm transition">
+                <Link prefetch={false} href="/employee/inventory/stale" className="font-medium text-teal-700 mb-2 inline-block hover:underline">
+                  재고 업데이트 필요
+                </Link>
                 <div className="text-sm text-gray-600 mb-2">2일 이상 미업데이트 또는 업데이트 기록 없음</div>
                 <EmployeeStaleInventory onSelect={(item:any)=>setModal({type:'inventory', data:item})} />
               </div>
@@ -60,9 +63,8 @@ export default function EmployeeMainClient() {
           </div>
         ) : null}
 
-        {/* 아래 위젯은 메인 카드 아래에서도 노출 가능 */}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {/* 하단 카드 - 모바일 최적화 */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <Link prefetch={false} href="/employee/checklist" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-green-50 active:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
             <span className="text-base sm:text-lg font-semibold text-green-700 text-center">오늘의 체크리스트</span>
             <span className="text-xs sm:text-sm text-gray-500 mt-2 text-center">준비/진행/마감, 홀/부엌</span>
@@ -78,6 +80,10 @@ export default function EmployeeMainClient() {
           <Link prefetch={false} href="/employee/inventory" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-orange-50 active:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
             <span className="text-base sm:text-lg font-semibold text-orange-700 text-center">재고관리</span>
             <span className="text-xs sm:text-sm text-gray-500 mt-2 text-center">식자재 및 부대용품 관리</span>
+          </Link>
+          <Link prefetch={false} href="/employee/inventory/stale" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-blue-50 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
+            <span className="text-base sm:text-lg font-semibold text-blue-700 text-center">재고 업데이트 필요</span>
+            <span className="text-xs sm:text-sm text-gray-500 mt-2 text-center">업데이트 필요/전체 보기</span>
           </Link>
           <Link prefetch={false} href="/employee/manual" className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg shadow border hover:bg-indigo-50 active:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-150 min-h-[100px] sm:min-h-[120px]">
             <span className="text-base sm:text-lg font-semibold text-indigo-700 text-center">메뉴얼</span>

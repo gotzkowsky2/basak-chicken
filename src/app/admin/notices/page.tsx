@@ -20,6 +20,7 @@ export default function AdminNoticesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Notice | null>(null);
   const [form, setForm] = useState({ title: '', content: '', isActive: true });
+  const [toast, setToast] = useState<string>('');
 
   const fetchList = async () => {
     setLoading(true);
@@ -45,7 +46,7 @@ export default function AdminNoticesPage() {
     const url = editing ? `/api/admin/notices/${editing.id}` : '/api/admin/notices';
     const method = editing ? 'PUT' : 'POST';
     const res = await fetch(url, { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    if (res.ok) { setShowModal(false); fetchList(); } else { const e = await res.json().catch(()=>({})); alert(e.error || '실패'); }
+    if (res.ok) { setShowModal(false); fetchList(); setToast(editing? '공지 수정 완료':'공지 생성 완료'); setTimeout(()=>setToast(''), 2000); } else { const e = await res.json().catch(()=>({})); alert(e.error || '실패'); }
   };
 
   return (
@@ -55,6 +56,7 @@ export default function AdminNoticesPage() {
           <h1 className="text-2xl font-bold text-gray-900">공지사항 관리</h1>
           <button onClick={openCreate} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">새 공지</button>
         </div>
+        {toast && (<div className="mb-3 px-4 py-2 rounded bg-green-600 text-white font-semibold">{toast}</div>)}
 
         <div className="bg-white border rounded-lg p-4 mb-4 flex flex-col sm:flex-row gap-3">
           <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&fetchList()} placeholder="검색(제목/내용)" className="flex-1 px-4 py-3 border-2 rounded text-gray-900 font-semibold placeholder-gray-700" />
@@ -98,23 +100,23 @@ export default function AdminNoticesPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl p-6">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 text-gray-900">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold">{editing ? '공지 수정' : '새 공지'}</h2>
+              <h2 className="text-lg font-bold text-gray-900">{editing ? '공지 수정' : '새 공지'}</h2>
               <button onClick={()=>setShowModal(false)} className="text-gray-500">✕</button>
             </div>
             <form onSubmit={submit} className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-1">제목</label>
-                <input value={form.title} onChange={e=>setForm(f=>({ ...f, title: e.target.value }))} className="w-full px-3 py-2 border rounded" required />
+                <label className="block text-sm font-medium mb-1 text-gray-900">제목</label>
+                <input value={form.title} onChange={e=>setForm(f=>({ ...f, title: e.target.value }))} className="w-full px-3 py-2 border-2 border-gray-400 rounded text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" placeholder="제목을 입력하세요" required />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">내용</label>
-                <textarea value={form.content} onChange={e=>setForm(f=>({ ...f, content: e.target.value }))} className="w-full px-3 py-2 border rounded h-48" required />
+                <label className="block text-sm font-medium mb-1 text-gray-900">내용</label>
+                <textarea value={form.content} onChange={e=>setForm(f=>({ ...f, content: e.target.value }))} className="w-full px-3 py-2 border-2 border-gray-400 rounded h-48 text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" placeholder="내용을 입력하세요" required />
               </div>
-              <label className="inline-flex items-center gap-2">
+              <label className="inline-flex items-center gap-2 text-gray-900">
                 <input type="checkbox" checked={form.isActive} onChange={e=>setForm(f=>({ ...f, isActive: e.target.checked }))} />
-                <span>활성화</span>
+                <span className="text-gray-900">활성화</span>
               </label>
               <div className="pt-2 flex gap-2">
                 <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded">저장</button>

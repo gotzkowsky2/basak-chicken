@@ -515,11 +515,11 @@ export default function EmployeeInventoryPage() {
 
                         {/* 마지막 업데이트 정보 */}
                         <div className={`text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 ${isUpdateOverdue(item.lastUpdated) ? 'text-red-600 font-bold' : stockStatus.status === 'low' ? 'text-red-600' : 'text-gray-500'}`}>
-                          <span>
+                          <span className="truncate">
                             마지막 업데이트: {new Date(item.lastUpdated).toLocaleString('ko-KR')}
                           </span>
                           {item.lastCheckedBy && (
-                            <span className={`font-medium ${isUpdateOverdue(item.lastUpdated) ? 'text-red-600' : stockStatus.status === 'low' ? 'text-red-600' : 'text-blue-600'}`}>
+                            <span className={`font-medium ${isUpdateOverdue(item.lastUpdated) ? 'text-red-600' : stockStatus.status === 'low' ? 'text-red-600' : 'text-blue-600'} truncate`}>
                               (👤 {item.lastCheckedBy})
                             </span>
                           )}

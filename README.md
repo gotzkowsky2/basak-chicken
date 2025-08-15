@@ -46,6 +46,34 @@
 # PM2 상태 확인: pm2 status
 # PM2 로그 확인: pm2 logs basak-chicken-app
 
+## 🚀 배포/운영 절차 요약
+
+1) 클린 빌드 (청크 누락/캐시 이슈 예방)
+```bash
+pm2 stop basak-chicken-app || true
+rm -rf .next .next/cache
+npm ci --no-audit --no-fund
+npm run build
+pm2 start npm --name basak-chicken-app -- start
+pm2 status
+```
+
+2) 헬스체크(내부)
+```bash
+curl -sI http://127.0.0.1:3001/ | cat
+curl -sI http://127.0.0.1:3001/employee | cat
+curl -sI http://127.0.0.1:3001/admin | cat
+```
+
+3) 문제 발생 시
+- `Cannot find module './XXXX.js'` → `.next` 폴더 삭제 후 재빌드/재시작
+- CSS 미적용으로 “아이콘만 큼직하게” 보일 때 → 강력 새로고침 또는 1회 자동 리로드(`CssGuard`) 동작 확인
+- 세션 이슈(로그인 유지 안됨) → `__Host-*` 쿠키 포함 확인, 브라우저 쿠키 삭제 후 재로그인
+
+4) 포트/환경
+- 반드시 3001 포트 사용 (`npm start`는 `-p 3001`)
+- 도메인 `crew.basak-chicken.com` 3001 포트 매핑
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

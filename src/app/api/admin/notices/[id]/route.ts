@@ -49,8 +49,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await verifyAdmin(request);
-    const notice = await prisma.notice.update({ where: { id: params.id }, data: { isActive: false } });
-    return NextResponse.json({ message: '삭제(비활성) 완료', notice });
+    const existing = await prisma.notice.findUnique({ where: { id: params.id } });
+    if (!existing) return NextResponse.json({ error: '공지사항을 찾을 수 없습니다.' }, { status: 404 });
+    await prisma.notice.delete({ where: { id: params.id } });
+    return NextResponse.json({ message: '공지사항이 완전히 삭제되었습니다.' });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || '삭제 실패' }, { status: 500 });
   }

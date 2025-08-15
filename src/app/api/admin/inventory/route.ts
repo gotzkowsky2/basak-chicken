@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
 // PUT: 재고 아이템 수정
 export async function PUT(request: NextRequest) {
   try {
-    await verifyAdminAuth(request);
+    const admin = await verifyAdminAuth(request);
 
     const body = await request.json();
     const { id, name, category, currentStock, minStock, unit, supplier, selectedTags } = body;
@@ -260,7 +260,8 @@ export async function PUT(request: NextRequest) {
         minStock: minStock !== undefined ? parseFloat(minStock) : existingItem.minStock,
         unit: unit || existingItem.unit,
         supplier: supplier !== undefined ? supplier : existingItem.supplier,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
+        lastCheckedBy: admin.name
       }
     });
 
@@ -318,11 +319,11 @@ export async function DELETE(request: NextRequest) {
 
     // 관련 데이터 먼저 삭제
     await prisma.inventoryItemTagRelation.deleteMany({
-      where: { inventoryItemId: id }
+      where: { itemId: id }
     });
 
     await prisma.inventoryCheck.deleteMany({
-      where: { inventoryItemId: id }
+      where: { itemId: id }
     });
 
     // 체크리스트 연결에서도 제거

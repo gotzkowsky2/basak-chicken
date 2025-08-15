@@ -4,9 +4,11 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function verifyEmployee(request: NextRequest) {
-  const employeeAuth = request.cookies.get('employee_auth')?.value;
-  if (!employeeAuth) throw new Error('로그인이 필요합니다.');
-  const employee = await prisma.employee.findUnique({ where: { id: employeeAuth }, select: { id: true, name: true } });
+  const employeeAuth = request.cookies.get('__Host-employee_auth')?.value || request.cookies.get('employee_auth')?.value;
+  const adminAuth = request.cookies.get('__Host-admin_auth')?.value || request.cookies.get('admin_auth')?.value;
+  const id = employeeAuth || adminAuth;
+  if (!id) throw new Error('로그인이 필요합니다.');
+  const employee = await prisma.employee.findUnique({ where: { id }, select: { id: true, name: true } });
   if (!employee) throw new Error('유효하지 않은 인증');
   return employee;
 }

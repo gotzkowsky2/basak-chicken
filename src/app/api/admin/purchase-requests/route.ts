@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
 // PUT: 구매 요청 상태 변경 (승인/거부)
 export async function PUT(request: NextRequest) {
   try {
-    await verifyAdminAuth(request);
+    const admin = await verifyAdminAuth(request);
 
     const body = await request.json();
     const { id, status, approvedBy } = body;
@@ -112,7 +112,8 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: {
         status,
-        approvedBy: approvedBy || null,
+        // 프론트에서 넘기지 않아도 현재 관리자 이름으로 기록
+        approvedBy: approvedBy || admin.name,
         approvedAt: status === 'APPROVED' || status === 'REJECTED' ? new Date() : null
       }
     });

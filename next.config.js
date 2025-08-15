@@ -54,6 +54,15 @@ const nextConfig = {
   // 서버 컴포넌트 외부 패키지
   serverExternalPackages: ['bcryptjs'],
   
+  async redirects() {
+    return [
+      {
+        source: '/admin-choose',
+        destination: '/admin',
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() { return []; },
   
   // 빌드 안정성 향상

@@ -84,6 +84,7 @@ export function middleware(request: NextRequest) {
 
   // 직원 영역 보호
   if (pathname.startsWith("/employee")) {
+    // 관리자/슈퍼관리자 세션이 있으면 직원 영역 접근 허용 (헤더/메뉴 표시 보장)
     if (!employeeAuth && !adminAuth && !superAdminAuth) {
       return NextResponse.redirect(new URL("/employee/login", request.url));
     }

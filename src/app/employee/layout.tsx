@@ -15,7 +15,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const pathname = usePathname();
-  const isLoginPage = pathname === "/employee/login";
+  const isLoginPage = pathname?.startsWith("/employee/login");
 
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -23,7 +23,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const response = await fetch("/api/employee/me", { credentials: "include" });
+        const response = await fetch("/api/employee/me", { credentials: "include", cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           setEmployee(data);
@@ -142,6 +142,16 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                     </svg>
                     재고/구매관리
+                  </Link>
+                  <Link 
+                    href="/employee/inventory/stale" 
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 active:bg-blue-100 focus:outline-none focus:bg-blue-50 transition-all duration-150 cursor-pointer min-h-[44px]"
+                    onClick={() => setShowMenu(false)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5M12 3.75a8.25 8.25 0 108.25 8.25A8.25 8.25 0 0012 3.75z" />
+                    </svg>
+                    재고(업데이트 필요)
                   </Link>
                   <Link 
                     href="/employee/manual" 

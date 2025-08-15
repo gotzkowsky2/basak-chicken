@@ -46,6 +46,7 @@ interface PurchaseRequest {
   estimatedCost: number | null;
   approvedBy: string | null;
   approvedAt: string | null;
+  updatedAt?: string;
   employee: {
     name: string;
     department: string;
@@ -1020,6 +1021,13 @@ export default function InventoryPage() {
                               <span className="text-gray-400"> / 최소 {item.minStock} {item.unit}</span>
                               {item.supplier && <span className="ml-2">• {item.supplier}</span>}
                             </div>
+                            {/* 마지막 업데이트 정보 */}
+                            <div className="text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                              <span className="truncate">마지막 업데이트: {new Date(item.lastUpdated).toLocaleString('ko-KR')}</span>
+                              {item.lastCheckedBy && (
+                                <span className="font-medium text-blue-600 truncate">(👤 {item.lastCheckedBy})</span>
+                              )}
+                            </div>
                             
                             {/* 업데이트 히스토리 */}
                             {item.checks && item.checks.length > 0 && (
@@ -1158,8 +1166,13 @@ export default function InventoryPage() {
                                 {priorityOptions.find(opt => opt.value === request.priority)?.label}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {new Date(request.requestedAt).toLocaleDateString()}
+                            <div className="text-sm text-gray-500 flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                              <span className="truncate">요청일: {new Date(request.requestedAt).toLocaleDateString('ko-KR')}</span>
+                              <span className="hidden sm:inline text-gray-300">|</span>
+                              <span className="truncate">마지막 업데이트: {new Date((request.updatedAt || request.requestedAt) as string).toLocaleString('ko-KR')}</span>
+                              { (request.approvedBy || request.employee?.name) && (
+                                <span className="truncate text-blue-600 font-medium">(👤 {request.approvedBy || request.employee.name})</span>
+                              )}
                             </div>
                           </div>
                           
