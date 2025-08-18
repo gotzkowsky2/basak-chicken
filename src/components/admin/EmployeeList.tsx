@@ -86,6 +86,36 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
 
   const visibleEmployees = employees.filter(e => showInactive ? true : e.isActive);
 
+  const [messageOpenFor, setMessageOpenFor] = useState<Employee | null>(null);
+  const [subject, setSubject] = useState("");
+  const [content, setContent] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendEmail, setSendEmail] = useState(true);
+
+  const sendMessage = async () => {
+    if (!messageOpenFor) return;
+    try {
+      setSending(true);
+      const res = await fetch('/api/admin/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ recipientId: messageOpenFor.id, subject, content, sendEmail })
+      });
+      if (res.ok) {
+        alert('메시지를 보냈습니다.');
+        setMessageOpenFor(null);
+        setSubject("");
+        setContent("");
+      } else {
+        const e = await res.json().catch(()=>({}));
+        alert(e.error || '전송 실패');
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (visibleEmployees.length === 0) {
     return (
       <div className="text-center py-12">
@@ -159,18 +189,27 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
                 )}
               </div>
               
-              <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => onEdit(employee)}
-                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 sm:px-3 sm:py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  title="수정"
                 >
-                  <PencilIcon className="h-4 w-4" />
+                  <PencilIcon className="w-4 h-4" /> <span className="hidden sm:inline">수정</span>
+                </button>
+                <button
+                  onClick={() => setMessageOpenFor(employee)}
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 sm:px-3 sm:py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                  title="메시지"
+                >
+                  <span aria-hidden>✉️</span> <span className="hidden sm:inline">메시지</span>
                 </button>
                 <button
                   onClick={() => onDelete(employee.id)}
-                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 sm:px-3 sm:py-1 rounded bg-red-50 text-red-700 hover:bg-red-100"
+                  title="삭제"
                 >
-                  <TrashIcon className="h-4 w-4" />
+                  <TrashIcon className="w-4 h-4" /> <span className="hidden sm:inline">삭제</span>
                 </button>
               </div>
             </div>
@@ -188,6 +227,47 @@ export default function EmployeeList({ employees, onEdit, onDelete, onAdd }: Emp
           </div>
         ))}
       </div>
+
+      {messageOpenFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-extrabold text-gray-900">메시지 보내기 - {messageOpenFor.name}</h3>
+              <button onClick={()=> setMessageOpenFor(null)} className="text-gray-500">✕</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">제목</label>
+                <input 
+                  value={subject}
+                  onChange={e=>setSubject(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded px-3 py-2 text-gray-900 font-medium placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="제목"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">내용</label>
+                <textarea 
+                  value={content}
+                  onChange={e=>setContent(e.target.value)}
+                  className="w-full border-2 border-gray-300 rounded px-3 py-2 h-32 text-gray-900 font-medium placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="메시지 내용을 입력하세요"
+                />
+              </div>
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" checked={sendEmail} onChange={e=>setSendEmail(e.target.checked)} className="rounded" />
+                이메일로도 안내 발송
+              </label>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={()=> setMessageOpenFor(null)} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">취소</button>
+                <button onClick={sendMessage} disabled={sending || !subject.trim() || !content.trim()} className="px-3 py-2 rounded bg-indigo-600 text-white disabled:opacity-50">
+                  {sending ? '전송 중...' : '전송'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 데스크톱 테이블 */}
       {/* 임시 비활성화: 원인 규명 전까지 테이블 레이아웃 숨김 */}

@@ -114,6 +114,10 @@ model Employee {
   lockedTimeSlots    TimeSlotChecklistStatus[]
   favorites          Favorite[]
   notices            Notice[]
+  // 수신 메시지(관리자→직원)
+  messagesReceived   Message[]                 @relation("EmployeeMessagesReceived")
+  // 발신 메시지
+  messagesSent       Message[]                 @relation("EmployeeMessagesSent")
 }
 
 model ChecklistTemplate {
@@ -386,6 +390,28 @@ model Notice {
   author    Employee @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@index([isActive, createdAt])
+}
+
+// 관리자 → 직원 메시지
+model Message {
+  id          String   @id @default(cuid())
+  threadId    String?
+  senderId    String
+  recipientId String
+  subject     String
+  content     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  readAt      DateTime?
+
+  // 관계 (sender: Admin 또는 Employee를 모두 허용하기 위해 FK는 걸지 않음)
+  // 수신자만 Employee로 보장
+  recipient Employee @relation("EmployeeMessagesReceived", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender    Employee @relation("EmployeeMessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, isRead])
+  @@index([createdAt])
+  @@index([threadId])
 }
 
 enum Workplace {
