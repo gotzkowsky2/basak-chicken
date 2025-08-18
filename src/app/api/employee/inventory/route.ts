@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers';
-
-const prisma = new PrismaClient();
 
 // 직원 인증 확인 함수
 async function verifyEmployeeAuth() {
@@ -65,7 +63,7 @@ export async function GET(request: NextRequest) {
       ],
       include: {
         tagRelations: {
-          include: { tag: true }
+          select: { tag: { select: { id: true, name: true, color: true } } }
         }
       }
     });
@@ -119,16 +117,20 @@ export async function PUT(request: NextRequest) {
       }
     });
 
-    console.log('재고 업데이트 요청:', { itemId, currentStock, employeeId: employee.id });
-    console.log('기존 재고 아이템:', inventoryItem);
-    console.log('재고 변경량 계산:', {
-      previousStock: inventoryItem.currentStock,
-      newStock: currentStock,
-      calculatedChange: currentStock - inventoryItem.currentStock
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('재고 업데이트 요청:', { itemId, currentStock, employeeId: employee.id });
+      console.log('기존 재고 아이템:', inventoryItem);
+      console.log('재고 변경량 계산:', {
+        previousStock: inventoryItem.currentStock,
+        newStock: currentStock,
+        calculatedChange: currentStock - inventoryItem.currentStock
+      });
+    }
 
     if (!inventoryItem) {
-      console.error('재고 아이템을 찾을 수 없음:', itemId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('재고 아이템을 찾을 수 없음:', itemId);
+      }
       return NextResponse.json(
         { error: '재고 아이템을 찾을 수 없습니다.' },
         { status: 404 }
@@ -146,12 +148,14 @@ export async function PUT(request: NextRequest) {
       }
     });
 
-    console.log('업데이트된 재고 아이템:', updatedItem);
-    console.log('최종 응답 데이터:', {
-      previousStock: inventoryItem.currentStock,
-      currentStock: updatedItem.currentStock,
-      stockChange: currentStock - inventoryItem.currentStock
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('업데이트된 재고 아이템:', updatedItem);
+      console.log('최종 응답 데이터:', {
+        previousStock: inventoryItem.currentStock,
+        currentStock: updatedItem.currentStock,
+        stockChange: currentStock - inventoryItem.currentStock
+      });
+    }
 
     // 재고 확인 기록 생성 (InventoryCheck)
     const checkRecord = await prisma.inventoryCheck.create({

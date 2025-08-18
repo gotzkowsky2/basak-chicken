@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
 import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import Papa from 'papaparse';
-
-const prisma = new PrismaClient();
 const execAsync = promisify(exec);
 
 export async function POST(req: NextRequest) {

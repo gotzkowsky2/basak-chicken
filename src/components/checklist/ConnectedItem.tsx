@@ -27,7 +27,7 @@ function ConnectedItem({
   onNotesChange,
   isReadOnly = false
 }: ConnectedItemProps) {
-  const [showNotes, setShowNotes] = useState(false);
+  const [showNotes, setShowNotes] = useState(!notes || notes.trim() === "");
   const [localNotes, setLocalNotes] = useState(notes || "");
 
   const handleCheckboxChange = () => {
@@ -40,6 +40,14 @@ function ConnectedItem({
     if (onNotesChange) {
       onNotesChange(connection.id, localNotes);
       setShowNotes(false);
+    }
+  };
+
+  const handleNotesDelete = () => {
+    if (onNotesChange) {
+      onNotesChange(connection.id, "");
+      setLocalNotes("");
+      setShowNotes(true);
     }
   };
 
@@ -198,6 +206,14 @@ function ConnectedItem({
                         >
                           취소
                         </button>
+                        {Boolean(notes && notes.trim()) && (
+                          <button
+                            onClick={handleNotesDelete}
+                            className="px-2 sm:px-3 py-1 text-[11px] sm:text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            삭제
+                          </button>
+                        )}
                       </div>
                     </div>
                   ) : (

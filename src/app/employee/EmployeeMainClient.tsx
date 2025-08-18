@@ -110,10 +110,14 @@ export default function EmployeeMainClient() {
               <button onClick={()=>setModal(null)} className="text-gray-500">✕</button>
             </div>
 
-            {modal.type!=='inventory' ? (
-              <ManualLikeDetail id={modal.data.id} fallback={modal.data} />
-            ) : (
+            {modal.type==='inventory' ? (
               <InventoryQuickUpdate item={modal.data} onDone={()=>setModal(null)} />
+            ) : modal.type==='manual' ? (
+              <ManualLikeDetail id={modal.data.id} fallback={modal.data} />
+            ) : modal.type==='notice' ? (
+              <NoticeDetail fallback={modal.data} />
+            ) : (
+              <PrecautionDetail id={modal.data.id} fallback={modal.data} />
             )}
           </div>
         </div>
@@ -171,6 +175,47 @@ function ManualLikeDetail({ id, fallback }: { id: string, fallback: any }) {
         </div>
       )}
     </div>
+  );
+}
+
+function NoticeDetail({ fallback }: { fallback: any }) {
+  const data = fallback;
+  if (!data) return null;
+  return (
+    <article className="prose prose-sm sm:prose max-w-none">
+      <h4 className="!m-0 text-lg sm:text-xl font-extrabold text-gray-900">{data.title}</h4>
+      <div className="text-xs sm:text-sm text-gray-500 mt-1">{new Date(data.createdAt).toLocaleString('ko-KR')} • 작성자 {data.author?.name || ''}</div>
+      <div className="mt-3 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="whitespace-pre-wrap text-gray-900 leading-relaxed text-sm sm:text-base">{data.content}</div>
+      </div>
+    </article>
+  );
+}
+
+function PrecautionDetail({ id, fallback }: { id: string, fallback: any }) {
+  const [data, setData] = useState<any>(fallback);
+  useEffect(()=>{ (async()=>{ try{ const r=await fetch(`/api/employee/precautions?id=${id}`,{credentials:'include',cache:'no-store'}); if(r.ok){ const d=await r.json(); setData(d.precaution); } }catch(e){ console.log('precaution detail err', e)} })() },[id]);
+  if (!data) return null;
+  return (
+    <article className="prose prose-sm sm:prose max-w-none">
+      <div className="flex items-center gap-2">
+        <h4 className="!m-0 text-lg sm:text-xl font-extrabold text-gray-900">{data.title}</h4>
+        <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">우선순위 {data.priority}</span>
+      </div>
+      <div className="text-xs sm:text-sm text-gray-500 mt-1">{new Date(data.updatedAt || data.createdAt).toLocaleString('ko-KR')}</div>
+      <div className="mt-3 p-3 sm:p-4 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="whitespace-pre-wrap text-gray-900 leading-relaxed text-sm sm:text-base">{data.content}</div>
+      </div>
+      {Array.isArray(data.tags) && data.tags.length>0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {data.tags.map((t:any)=> (
+            <span key={t.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs text-white" style={{backgroundColor: t.color||'#999'}}>
+              #{t.name}
+            </span>
+          ))}
+        </div>
+      )}
+    </article>
   );
 }
 

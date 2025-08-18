@@ -134,19 +134,28 @@ export default function SubmissionDetailView({ submission, onBack }: SubmissionD
             <div className="mt-4">
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="font-medium">전체 진행률</span>
-                <span className="text-gray-600">
-                  {submission.progress.mainItems}/{submission.progress.totalMainItems} 항목 완료
-                </span>
+                {(() => {
+                  const totalCount = (submission.progress.totalMainItems || 0) + (submission.progress.totalConnectedItems || 0);
+                  const totalCompleted = (submission.progress.mainItems || 0) + (submission.progress.connectedItems || 0);
+                  return (
+                    <span className="text-gray-600">
+                      {totalCompleted}/{totalCount} 항목 완료
+                    </span>
+                  );
+                })()}
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ 
-                    width: `${submission.progress.totalMainItems > 0 
-                      ? Math.round((submission.progress.mainItems / submission.progress.totalMainItems) * 100) 
-                      : 0}%` 
-                  }}
-                ></div>
+                {(() => {
+                  const totalCount = (submission.progress.totalMainItems || 0) + (submission.progress.totalConnectedItems || 0);
+                  const totalCompleted = (submission.progress.mainItems || 0) + (submission.progress.connectedItems || 0);
+                  const rate = totalCount > 0 ? Math.round((totalCompleted / totalCount) * 100) : 0;
+                  return (
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${rate}%` }}
+                    ></div>
+                  );
+                })()}
               </div>
             </div>
           </div>

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 export const runtime = "nodejs";
 
@@ -18,11 +16,38 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id') || searchParams.get('precautionId');
     const workplace = searchParams.get('workplace');
     const timeSlot = searchParams.get('timeSlot');
     const search = searchParams.get('search');
 
-    // 필터 조건 구성
+    // 단건 조회 지원
+    if (id) {
+      const p = await prisma.precaution.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          workplace: true,
+          timeSlot: true,
+          priority: true,
+          createdAt: true,
+          updatedAt: true,
+          tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } }
+        }
+      });
+      if (!p) {
+        return NextResponse.json({ error: '주의사항을 찾을 수 없습니다.' }, { status: 404 });
+      }
+      const formatted = {
+        ...p,
+        tags: p.tagRelations.map((r: any) => ({ id: r.tag.id, name: r.tag.name, color: r.tag.color }))
+      };
+      return NextResponse.json({ precaution: formatted });
+    }
+
+    // 목록 조회 - 필터 조건 구성
     const where: any = {
       isActive: true
     };
@@ -44,17 +69,17 @@ export async function GET(req: NextRequest) {
 
     const precautions = await prisma.precaution.findMany({
       where,
-      include: {
-        tagRelations: {
-          include: {
-            tag: true
-          }
-        }
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        workplace: true,
+        timeSlot: true,
+        priority: true,
+        createdAt: true,
+        tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } }
       },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: [ { priority: 'desc' }, { createdAt: 'desc' } ]
     });
 
     // 태그 데이터 구조 변환

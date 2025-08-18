@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 async function verifyEmployee(request: NextRequest) {
   const employeeAuth = request.cookies.get('__Host-employee_auth')?.value || request.cookies.get('employee_auth')?.value;
@@ -25,9 +23,24 @@ export async function GET(request: NextRequest) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const [notices, manuals, precautions] = await Promise.all([
-      prisma.notice.findMany({ where: { isActive: true }, include: { author: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: noticeLimit }),
-      prisma.manual.findMany({ where: { isActive: true, updatedAt: { gte: sevenDaysAgo } }, orderBy: { updatedAt: 'desc' }, take: manualLimit }),
-      prisma.precaution.findMany({ where: { isActive: true, OR: [{ createdAt: { gte: sevenDaysAgo } }, { updatedAt: { gte: sevenDaysAgo } }] }, orderBy: { updatedAt: 'desc' }, take: precautionLimit }),
+      prisma.notice.findMany({
+        where: { isActive: true },
+        select: { id: true, title: true, content: true, createdAt: true, author: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: noticeLimit,
+      }),
+      prisma.manual.findMany({
+        where: { isActive: true, updatedAt: { gte: sevenDaysAgo } },
+        select: { id: true, title: true, version: true, updatedAt: true },
+        orderBy: { updatedAt: 'desc' },
+        take: manualLimit,
+      }),
+      prisma.precaution.findMany({
+        where: { isActive: true, OR: [{ createdAt: { gte: sevenDaysAgo } }, { updatedAt: { gte: sevenDaysAgo } }] },
+        select: { id: true, title: true, content: true, priority: true, updatedAt: true, createdAt: true },
+        orderBy: { updatedAt: 'desc' },
+        take: precautionLimit,
+      }),
     ]);
 
     return NextResponse.json({ notices, updatedManuals: manuals, newPrecautions: precautions, metadata: { cutoffDate: sevenDaysAgo.toISOString() } });

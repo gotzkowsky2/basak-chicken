@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 export const runtime = "nodejs";
 
@@ -16,9 +14,11 @@ export async function GET(req: NextRequest) {
     const adminAuth = req.cookies.get("admin_auth")?.value;
     const cookieHeader = req.headers.get('cookie') || '';
 
-    console.log('[employee/checklists] cookieHeader:', cookieHeader ? 'present' : 'empty');
-    console.log('[employee/checklists] employee_auth:', employeeAuth ? 'present' : 'missing');
-    console.log('[employee/checklists] admin_auth:', adminAuth ? 'present' : 'missing');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[employee/checklists] cookieHeader:', cookieHeader ? 'present' : 'empty');
+      console.log('[employee/checklists] employee_auth:', employeeAuth ? 'present' : 'missing');
+      console.log('[employee/checklists] admin_auth:', adminAuth ? 'present' : 'missing');
+    }
 
     const authId = employeeAuth || adminAuth;
     if (!authId) {

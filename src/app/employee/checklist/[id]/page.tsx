@@ -374,26 +374,33 @@ export default function ChecklistDetailPage() {
     }
   };
 
-  // 진행률 계산
+  // 진행률 계산 (상위+하위 합산 기준)
   const calculateProgress = () => {
     if (!checklist || !checklist.items) {
       return { completed: 0, total: 0 };
     }
 
-    const totalItems = checklist.items.length;
-    const completedItems = checklist.items.filter(item => {
-      if (item.connectedItems && item.connectedItems.length > 0) {
-        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
-        return item.connectedItems.every(connection => 
-          connectedItemsStatus[connection.id]?.isCompleted
-        );
-      } else {
-        // 연결된 항목이 없는 경우, 메인 항목만 체크
-        return checklistItems[item.id]?.isCompleted;
-      }
-    }).length;
+    let completed = 0;
+    let total = 0;
 
-    return { completed: completedItems, total: totalItems };
+    checklist.items.forEach((item) => {
+      // 상위 항목
+      total += 1;
+      if (checklistItems[item.id]?.isCompleted) {
+        completed += 1;
+      }
+
+      // 하위 항목
+      const connections = item.connectedItems || [];
+      total += connections.length;
+      connections.forEach((connection) => {
+        if (connectedItemsStatus[connection.id]?.isCompleted) {
+          completed += 1;
+        }
+      });
+    });
+
+    return { completed, total };
   };
 
   // 모든 항목 완료 여부 확인

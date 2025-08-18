@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 // PUT: 체크리스트 항목의 연결된 항목들 업데이트
 export async function PUT(

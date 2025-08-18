@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { SubmissionFilter } from '@/types/submission';
 
-const prisma = new PrismaClient();
 
 // 관리자 인증 확인 함수
 async function verifyAdminAuth(request: NextRequest) {
@@ -33,7 +32,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const adminAll = searchParams.get('adminAll') === 'true';
     
-    console.log('제출내역 조회 요청:', { employee: employee.name, isSuperAdmin: employee.isSuperAdmin });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('제출내역 조회 요청:', { employee: employee.name, isSuperAdmin: employee.isSuperAdmin });
+    }
     
     // 필터 파라미터 파싱
     const filter: SubmissionFilter = {};
@@ -52,7 +53,9 @@ export async function GET(request: NextRequest) {
       filter.employeeId = employee.id;
     }
 
-    console.log('적용된 필터:', filter);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('적용된 필터:', filter);
+    }
 
     // 날짜 필터 처리
     const dateFilter: any = {};
@@ -100,22 +103,12 @@ export async function GET(request: NextRequest) {
             }
           },
           checklistItemProgresses: {
-            include: {
-              item: {
-                select: {
-                  id: true,
-                  content: true,
-                  order: true
-                }
-              }
-            },
-            orderBy: {
-              item: {
-                order: 'asc'
-              }
-            }
+            include: { item: { select: { id: true, content: true, order: true } } },
+            orderBy: { item: { order: 'asc' } }
           },
-          connectedItemsProgress: true
+          connectedItemsProgress: {
+            select: { id: true, connectionId: true, isCompleted: true, completedAt: true, notes: true, currentStock: true, updatedStock: true, completedBy: true }
+          }
         },
         orderBy: [
           { date: 'desc' },
@@ -179,22 +172,12 @@ export async function GET(request: NextRequest) {
               }
             },
             checklistItemProgresses: {
-              include: {
-                item: {
-                  select: {
-                    id: true,
-                    content: true,
-                    order: true
-                  }
-                }
-              },
-              orderBy: {
-                item: {
-                  order: 'asc'
-                }
-              }
+              include: { item: { select: { id: true, content: true, order: true } } },
+              orderBy: { item: { order: 'asc' } }
             },
-            connectedItemsProgress: true
+            connectedItemsProgress: {
+              select: { id: true, connectionId: true, isCompleted: true, completedAt: true, notes: true, currentStock: true, updatedStock: true, completedBy: true }
+            }
           },
           orderBy: [
             { date: 'desc' },
@@ -239,7 +222,9 @@ export async function GET(request: NextRequest) {
               include: { item: { select: { id: true, content: true, order: true } } },
               orderBy: { item: { order: 'asc' } }
             },
-            connectedItemsProgress: true
+            connectedItemsProgress: {
+              select: { id: true, connectionId: true, isCompleted: true, completedAt: true, notes: true, currentStock: true, updatedStock: true, completedBy: true }
+            }
           },
           orderBy: [ { date: 'desc' }, { submittedAt: 'desc' } ]
         });
@@ -253,14 +238,18 @@ export async function GET(request: NextRequest) {
               include: { item: { select: { id: true, content: true, order: true } } },
               orderBy: { item: { order: 'asc' } }
             },
-            connectedItemsProgress: true
+            connectedItemsProgress: {
+              select: { id: true, connectionId: true, isCompleted: true, completedAt: true, notes: true, currentStock: true, updatedStock: true, completedBy: true }
+            }
           },
           orderBy: [ { date: 'desc' }, { submittedAt: 'desc' } ]
         });
       }
     }
 
-    console.log(`조회된 인스턴스 수: ${instances.length}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`조회된 인스턴스 수: ${instances.length}`);
+    }
 
     // 응답 데이터 변환
     const submissions = await Promise.all(instances.map(async (instance) => {
@@ -402,7 +391,10 @@ export async function GET(request: NextRequest) {
           mainItems: mainItems.filter(item => item.isCompleted).length,
           totalMainItems: mainItems.length,
           connectedItems: connectedItems.filter(item => item.isCompleted).length,
-          totalConnectedItems: connectedItems.length
+          totalConnectedItems: connectedItems.length,
+          // 합산 기준을 위한 필드 추가 (하위 호환 유지)
+          totalCompleted: mainItems.filter(item => item.isCompleted).length + connectedItems.filter(item => item.isCompleted).length,
+          totalCount: mainItems.length + connectedItems.length
         },
         details: {
           mainItems: mainItems.map(item => ({

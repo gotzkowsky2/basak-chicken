@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers';
-
-const prisma = new PrismaClient();
 
 // 직원 인증 확인 함수
 async function verifyEmployeeAuth() {

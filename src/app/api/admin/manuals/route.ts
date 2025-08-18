@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers';
-
-const prisma = new PrismaClient();
 
 // 관리자 인증 확인 함수
 async function verifyAdminAuth() {
@@ -33,7 +31,9 @@ export async function POST(request: NextRequest) {
     await verifyAdminAuth();
 
     const body = await request.json();
-    console.log('받은 데이터:', JSON.stringify(body, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('받은 데이터:', JSON.stringify(body, null, 2));
+    }
     
     const { title, content, workplace, timeSlot, category, version, mediaUrls, tags, precautions, selectedPrecautions } = body;
 
@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
       priority: p.priority || 1
     })) : [];
     
-    console.log('정리된 precautions:', JSON.stringify(cleanPrecautions, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('정리된 precautions:', JSON.stringify(cleanPrecautions, null, 2));
+    }
 
     // 필수 필드 검증
     if (!title || !content) {
@@ -178,29 +180,36 @@ export async function GET(request: NextRequest) {
 
     const manuals = await prisma.manual.findMany({
       where,
-      include: {
-        tagRelations: {
-          include: {
-            tag: true
-          }
-        },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        workplace: true,
+        timeSlot: true,
+        category: true,
+        version: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } },
         precautionRelations: {
-          include: {
+          select: {
+            order: true,
             precaution: {
-              include: {
-                tagRelations: {
-                  include: {
-                    tag: true
-                  }
-                }
+              select: {
+                id: true,
+                title: true,
+                content: true,
+                workplace: true,
+                timeSlot: true,
+                priority: true,
+                tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } }
               }
             }
           }
         }
       },
-      orderBy: [
-        { createdAt: 'desc' }
-      ]
+      orderBy: [ { createdAt: 'desc' } ]
     });
 
     // 태그와 주의사항 데이터 구조 변환

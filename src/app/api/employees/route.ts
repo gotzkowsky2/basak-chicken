@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from '@/lib/prisma'
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 
-// 디버깅: 실제로 읽히는 DATABASE_URL을 콘솔에 출력
-console.log('DEBUG DATABASE_URL:', process.env.DATABASE_URL);
-
-const prisma = new PrismaClient();
+// 디버깅: 실제로 읽히는 DATABASE_URL을 콘솔에 출력(프로덕션 비활성화)
+if (process.env.NODE_ENV !== 'production') {
+  console.log('DEBUG DATABASE_URL:', process.env.DATABASE_URL);
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,6 +15,21 @@ export async function GET(request: NextRequest) {
     const employees = await prisma.employee.findMany({
       where: includeInactive ? {} : { isActive: true },
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        employeeId: true,
+        name: true,
+        email: true,
+        phone: true,
+        department: true,
+        position: true,
+        isActive: true,
+        isSuperAdmin: true,
+        isTempPassword: true,
+        address: true,
+        createdAt: true,
+        updatedAt: true,
+      }
     });
 
     // 비밀번호 제외하고 반환

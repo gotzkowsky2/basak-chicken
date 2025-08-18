@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
+import { rateLimit, getClientKeyFromRequestHeaders } from '@/lib/rateLimit';
 import nodemailer from 'nodemailer';
 
-const prisma = new PrismaClient();
-
 export async function POST(request: NextRequest) {
-  console.log('=== 체크리스트 제출 API 호출됨 ===');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('=== 체크리스트 제출 API 호출됨 ===');
+  }
   
   try {
+    const key = `submit:${getClientKeyFromRequestHeaders(request.headers)}`;
+    const rl = rateLimit(key, 60, 60_000); // 1분 60회
+    if (!rl.allowed) {
+      return NextResponse.json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' }, { status: 429 });
+    }
     const body = await request.json();
     console.log('받은 데이터:', JSON.stringify(body, null, 2));
     

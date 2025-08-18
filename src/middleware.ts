@@ -34,16 +34,14 @@ export function middleware(request: NextRequest) {
       "_Host-employee",
       "_Host-admin",
     ];
+    // 실제 운영 도메인/경로 중심으로 축소
     const domainVariants: Array<string | undefined> = [
-      undefined,
-      host,
-      `.${host}`,
-      "crew.basak-chicken.com",
+      undefined, // __Host-* 쿠키 만료용(도메인 지정 금지)
       ".crew.basak-chicken.com",
     ];
-    const pathVariants: string[] = ["/", "/employee", "/admin", "/api"];
-    const secureVariants: boolean[] = [true, false];
-    const sameSiteVariants: Array<"lax" | "none" | "strict"> = ["lax", "none", "strict"];
+    const pathVariants: string[] = ["/"];
+    const secureVariants: boolean[] = [true];
+    const sameSiteVariants: Array<"lax"> = ["lax"];
 
     for (const name of names) {
       for (const d of domainVariants) {

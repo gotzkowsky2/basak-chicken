@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import Papa from 'papaparse';
 
-const prisma = new PrismaClient();
 const execAsync = promisify(exec);
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(...args);
+  }
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,14 +71,14 @@ export async function POST(req: NextRequest) {
 
     // TAR 파일 안의 모든 파일 목록 확인
     const { stdout: fileList } = await execAsync(`tar -tf "${tarFilePath}"`);
-    console.log('TAR 파일 내용:', fileList);
+    debug('TAR 파일 내용:', fileList);
 
     // 모든 CSV 파일 찾기
     const csvFiles = fileList.split('\n').filter(file => 
       file.trim() && file.toLowerCase().endsWith('.csv')
     );
     
-    console.log('발견된 CSV 파일들:', csvFiles);
+    debug('발견된 CSV 파일들:', csvFiles);
 
     if (csvFiles.length === 0) {
       return NextResponse.json({ 
@@ -91,8 +95,8 @@ export async function POST(req: NextRequest) {
         const csvFilePath = join(extractDir, csvFile);
         const fileContent = await readFile(csvFilePath, 'utf-8');
         
-        console.log(`${csvFile} 파일 내용 길이:`, fileContent.length);
-        console.log(`${csvFile} 파일 첫 200자:`, fileContent.substring(0, 200));
+        debug(`${csvFile} 파일 내용 길이:`, fileContent.length);
+        debug(`${csvFile} 파일 첫 200자:`, fileContent.substring(0, 200));
         
         const parseResult = Papa.parse(fileContent, {
           header: true,
@@ -101,7 +105,7 @@ export async function POST(req: NextRequest) {
           quoteChar: '"'
         });
 
-        console.log(`${csvFile} 파싱 결과:`, {
+        debug(`${csvFile} 파싱 결과:`, {
           errors: parseResult.errors,
           dataLength: parseResult.data.length,
           firstRow: parseResult.data[0]
@@ -180,7 +184,7 @@ export async function POST(req: NextRequest) {
     }
 
     const totalRecordCount = allRecords.length;
-    console.log('통합 결과:', {
+    debug('통합 결과:', {
       totalFiles: csvFiles.length,
       totalRecords: totalRecordCount,
       fileInfo: fileInfo

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from '@/lib/prisma'
 import { UpdateEmployeeData } from "@/types/employee";
-
-const prisma = new PrismaClient();
 
 // 직원 수정 (PUT)
 export async function PUT(

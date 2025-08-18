@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
+    // 경량 레이트리밋(관리자 검색 남용 방지)
+    // 관리자 영역이므로 넉넉하게 1분 120회
+    const { headers } = req;
+    const key = `admin-search:${headers.get('x-forwarded-for') || headers.get('x-real-ip') || 'unknown'}`;
+    // 단순 키 생성(유틸 미사용: 의존 최소화)
+    (global as any).__rl = (global as any).__rl || new Map<string, { c: number; r: number }>();
+    const store: Map<string, { c: number; r: number }> = (global as any).__rl;
+    const now = Date.now();
+    const w = 60_000;
+    const bucket = store.get(key);
+    if (!bucket || now > bucket.r) {
+      store.set(key, { c: 1, r: now + w });
+    } else if (bucket.c >= 120) {
+      return NextResponse.json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' }, { status: 429 });
+    } else {
+      bucket.c += 1;
+    }
     const { searchParams } = new URL(req.url);
     const query = searchParams.get('query') || searchParams.get('q');
     const type = searchParams.get('type') || 'all';
@@ -189,7 +204,9 @@ export async function GET(req: NextRequest) {
       }))
     ];
 
-    console.log(`검색 결과: 재고 ${inventoryItems.length}개, 주의사항 ${precautions.length}개, 메뉴얼 ${manuals.length}개`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`검색 결과: 재고 ${inventoryItems.length}개, 주의사항 ${precautions.length}개, 메뉴얼 ${manuals.length}개`);
+    }
 
     return NextResponse.json({ 
       results: results

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers';
 import nodemailer from 'nodemailer';
-
-const prisma = new PrismaClient();
+import { rateLimit, getClientKeyFromRequestHeaders } from '@/lib/rateLimit';
 
 // 직원 또는 관리자 인증 확인 함수
 async function verifyEmployeeAuth() {
@@ -103,25 +102,29 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log('=== API 응답 데이터 ===');
-    console.log('조회된 인스턴스 수:', instances.length);
-    instances.forEach((instance, index) => {
-      console.log(`인스턴스 ${index + 1}:`, {
-        id: instance.id,
-        templateId: instance.templateId,
-        template: {
-          id: instance.template.id,
-          name: instance.template.name,
-          content: instance.template.content,
-          itemsCount: instance.template.items?.length || 0
-        }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('=== API 응답 데이터 ===');
+      console.log('조회된 인스턴스 수:', instances.length);
+      instances.forEach((instance, index) => {
+        console.log(`인스턴스 ${index + 1}:`, {
+          id: instance.id,
+          templateId: instance.templateId,
+          template: {
+            id: instance.template.id,
+            name: instance.template.name,
+            content: instance.template.content,
+            itemsCount: instance.template.items?.length || 0
+          }
+        });
       });
-    });
+    }
 
     // 템플릿에 items가 없는 경우, 직접 조회
     const instancesWithItems = await Promise.all(instances.map(async (instance) => {
       if (!instance.template.items || instance.template.items.length === 0) {
-        console.log(`템플릿 ${instance.templateId}에 items가 없음, 직접 조회 시도`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`템플릿 ${instance.templateId}에 items가 없음, 직접 조회 시도`);
+        }
         
         // 해당 템플릿의 items를 직접 조회
         const templateWithItems = await prisma.checklistTemplate.findUnique({
@@ -147,7 +150,9 @@ export async function GET(request: NextRequest) {
         });
         
         if (templateWithItems) {
-          console.log(`템플릿 ${instance.templateId}에서 ${templateWithItems.items.length}개 items 조회됨`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`템플릿 ${instance.templateId}에서 ${templateWithItems.items.length}개 items 조회됨`);
+          }
           return {
             ...instance,
             template: templateWithItems
@@ -211,22 +216,35 @@ export async function GET(request: NextRequest) {
 // POST: 체크리스트 진행 상태 저장/업데이트
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== 체크리스트 진행 상태 저장 시작 ===');
-    console.log('요청 URL:', request.url);
-    console.log('요청 메서드:', request.method);
+    const key = `chk-update:${getClientKeyFromRequestHeaders(request.headers)}`;
+    const rl = rateLimit(key, 60, 60_000); // 1분 60회
+    if (!rl.allowed) {
+      return NextResponse.json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' }, { status: 429 });
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('=== 체크리스트 진행 상태 저장 시작 ===');
+      console.log('요청 URL:', request.url);
+      console.log('요청 메서드:', request.method);
+    }
     
     const employee = await verifyEmployeeAuth();
-    console.log('인증된 직원:', employee);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('인증된 직원:', employee);
+    }
     
     const body = await request.json();
-    console.log('요청 본문:', JSON.stringify(body, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('요청 본문:', JSON.stringify(body, null, 2));
+    }
     
     const { templateId, isCompleted, notes, connectedItemsProgress, completedBy, completedAt, sendEmail, checklistItemsProgress } = body;
 
-    console.log('=== POST 요청 데이터 ===');
-    console.log('templateId:', templateId);
-    console.log('isCompleted:', isCompleted);
-    console.log('connectedItemsProgress:', connectedItemsProgress);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('=== POST 요청 데이터 ===');
+      console.log('templateId:', templateId);
+      console.log('isCompleted:', isCompleted);
+      console.log('connectedItemsProgress:', connectedItemsProgress);
+    }
 
     if (!templateId) {
       return NextResponse.json(
@@ -247,13 +265,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('템플릿 정보:', {
-      id: template.id,
-      name: template.name,
-      workplace: template.workplace,
-      timeSlot: template.timeSlot,
-      category: template.category
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('템플릿 정보:', {
+        id: template.id,
+        name: template.name,
+        workplace: template.workplace,
+        timeSlot: template.timeSlot,
+        category: template.category
+      });
+    }
 
     // 오늘 날짜 (시간 제외)
     const today = new Date();
@@ -270,7 +290,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('기존 인스턴스:', instance);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('기존 인스턴스:', instance);
+    }
 
     if (instance) {
       // 기존 인스턴스 업데이트
@@ -317,7 +339,9 @@ export async function POST(request: NextRequest) {
       //   createData.completedAt = completedAt ? new Date(completedAt) : null;
       // }
       
-      console.log('새 인스턴스 생성 데이터:', createData);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('새 인스턴스 생성 데이터:', createData);
+      }
       
       instance = await prisma.checklistInstance.create({
         data: createData,
@@ -397,7 +421,9 @@ export async function POST(request: NextRequest) {
           return itemData;
         });
 
-        console.log('개별 항목 데이터:', checklistItemsData);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('개별 항목 데이터:', checklistItemsData);
+        }
     
         await prisma.checklistItemProgress.createMany({
           data: checklistItemsData
@@ -430,15 +456,19 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('업데이트된 인스턴스:', updatedInstance);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('업데이트된 인스턴스:', updatedInstance);
+    }
 
     // 이메일 발송이 요청된 경우
     if (sendEmail && checklistItemsProgress) {
       try {
-        console.log('=== 이메일 발송 시작 ===');
-        console.log('templateId:', templateId);
-        console.log('checklistItemsProgress:', checklistItemsProgress);
-        console.log('connectedItemsProgress:', connectedItemsProgress);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('=== 이메일 발송 시작 ===');
+          console.log('templateId:', templateId);
+          console.log('checklistItemsProgress:', checklistItemsProgress);
+          console.log('connectedItemsProgress:', connectedItemsProgress);
+        }
         
         // 템플릿 정보 가져오기
         const templateWithItems = await prisma.checklistTemplate.findUnique({
@@ -452,19 +482,27 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        console.log('템플릿 조회 결과:', templateWithItems ? '성공' : '실패');
-        console.log('템플릿 이름:', templateWithItems?.name);
-        console.log('템플릿 항목 수:', templateWithItems?.items?.length);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('템플릿 조회 결과:', templateWithItems ? '성공' : '실패');
+          console.log('템플릿 이름:', templateWithItems?.name);
+          console.log('템플릿 항목 수:', templateWithItems?.items?.length);
+        }
 
         if (templateWithItems) {
           // 이메일 내용 생성
-          console.log('이메일 내용 생성 시작...');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('이메일 내용 생성 시작...');
+          }
           const emailContent = await generateEmailContent(templateWithItems, checklistItemsProgress, connectedItemsProgress || [], employee);
-          console.log('이메일 내용 생성 완료');
-          console.log('이메일 제목:', emailContent.subject);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('이메일 내용 생성 완료');
+            console.log('이메일 제목:', emailContent.subject);
+          }
           
           // 이메일 발송 (직원 등록 API와 동일한 방식)
-          console.log('이메일 발송 시작...');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('이메일 발송 시작...');
+          }
           const transporter = nodemailer.createTransport({
             host: process.env.BASAK_SMTP_HOST,
             port: Number(process.env.BASAK_SMTP_PORT),
@@ -482,7 +520,9 @@ export async function POST(request: NextRequest) {
             html: emailContent.html,
           });
           
-          console.log('이메일 발송 완료');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('이메일 발송 완료');
+          }
           
           // 이메일 발송 성공 후 제출 완료 상태로 업데이트
           await prisma.checklistInstance.update({
@@ -495,7 +535,9 @@ export async function POST(request: NextRequest) {
             }
           });
           
-          console.log('제출 완료 상태로 업데이트 완료');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('제출 완료 상태로 업데이트 완료');
+          }
         } else {
           console.error('템플릿을 찾을 수 없습니다. templateId:', templateId);
         }
@@ -507,9 +549,11 @@ export async function POST(request: NextRequest) {
         // 이메일 발송 실패해도 체크리스트 저장은 성공으로 처리
       }
     } else {
-      console.log('이메일 발송 조건 불충족:');
-      console.log('sendEmail:', sendEmail);
-      console.log('checklistItemsProgress 존재:', !!checklistItemsProgress);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('이메일 발송 조건 불충족:');
+        console.log('sendEmail:', sendEmail);
+        console.log('checklistItemsProgress 존재:', !!checklistItemsProgress);
+      }
     }
 
     return NextResponse.json(updatedInstance);

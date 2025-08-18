@@ -399,9 +399,9 @@ export default function AdminSubmissionsPage() {
               submissions.map((submission) => {
                 const statusInfo = getStatusIcon(submission.isCompleted, submission.isSubmitted);
                 const StatusIcon = statusInfo.icon;
-                const progressRate = submission.progress.totalMainItems > 0 
-                  ? Math.round((submission.progress.mainItems / submission.progress.totalMainItems) * 100)
-                  : 0;
+                const totalCount = (submission.progress.totalMainItems || 0) + (submission.progress.totalConnectedItems || 0);
+                const totalCompleted = (submission.progress.mainItems || 0) + (submission.progress.connectedItems || 0);
+                const progressRate = totalCount > 0 ? Math.round((totalCompleted / totalCount) * 100) : 0;
 
                 return (
                   <div key={submission.id} className={`p-4 sm:p-6 ${
@@ -420,8 +420,10 @@ export default function AdminSubmissionsPage() {
                             const today = new Date().toISOString().split('T')[0];
                             const isPast = submission.date < today;
                             const isNotSubmitted = !submission.isSubmitted;
-                            const progressRate = submission.progress.totalMainItems > 0 
-                              ? Math.round((submission.progress.mainItems / submission.progress.totalMainItems) * 100)
+                            const totalCount = (submission.progress.totalMainItems || 0) + (submission.progress.totalConnectedItems || 0);
+                            const totalCompleted = (submission.progress.mainItems || 0) + (submission.progress.connectedItems || 0);
+                            const progressRate = totalCount > 0 
+                              ? Math.round((totalCompleted / totalCount) * 100)
                               : 0;
                             
                             if (isPast && isNotSubmitted) {
@@ -533,7 +535,7 @@ export default function AdminSubmissionsPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs sm:text-sm font-medium text-gray-700">진행률:</span>
                             <span className="text-xs sm:text-sm text-gray-600">
-                              {submission.progress.mainItems}/{submission.progress.totalMainItems} 항목 완료
+                              {totalCompleted}/{totalCount} 항목 완료
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">

@@ -1065,28 +1065,30 @@ export default function ChecklistPage() {
     }
   };
 
-  // 진행상황 계산 함수
+  // 진행상황 계산 함수 (상위+하위 합산 기준)
   const calculateProgress = () => {
     if (!selectedChecklist?.items) return { completed: 0, total: 0 };
-    
+
     let completed = 0;
     let total = 0;
-    
-    selectedChecklist.items.forEach(item => {
-      if (item.connectedItems && item.connectedItems.length > 0) {
-        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
-        const allConnectedCompleted = item.connectedItems.every(connection => 
-          connectedItemsStatus[connection.id]?.isCompleted
-        );
-        if (allConnectedCompleted) completed++;
-        total++;
-      } else {
-        // 연결된 항목이 없는 경우, 메인 항목만 체크
-        if (checklistItems[item.id]?.isCompleted) completed++;
-        total++;
+
+    selectedChecklist.items.forEach((item) => {
+      // 상위 항목은 항상 분모에 포함
+      total += 1;
+      if (checklistItems[item.id]?.isCompleted) {
+        completed += 1;
       }
+
+      // 하위 항목 합산
+      const connections = item.connectedItems || [];
+      total += connections.length;
+      connections.forEach((connection) => {
+        if (connectedItemsStatus[connection.id]?.isCompleted) {
+          completed += 1;
+        }
+      });
     });
-    
+
     return { completed, total };
   };
 
@@ -1628,7 +1630,7 @@ export default function ChecklistPage() {
     return categoryLabels[value as keyof typeof categoryLabels] || value;
   };
 
-  // 체크리스트 상태 계산 함수
+  // 체크리스트 상태 계산 함수 (상위+하위 합산 기준)
   const calculateChecklistStatus = (checklist: ChecklistTemplate) => {
     const instance = checklist.groupInstances?.[0];
     if (!instance) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
@@ -1637,21 +1639,27 @@ export default function ChecklistPage() {
       return { status: '제출 완료', color: 'green', progress: null, connectedItems: null };
     }
     
-    // 진행상황 계산 - 실제 체크 상태 기반
-    const totalItems = checklist.items?.length || 0;
-    if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
+    // 진행상황 계산 - 상위+하위 합산 기준
+    let totalItems = 0;
+    let completedItems = 0;
     
-    const completedItems = checklist.items?.filter((item: any) => {
-      if (item.connectedItems && item.connectedItems.length > 0) {
-        // 연결된 항목이 있는 경우, 모든 연결된 항목이 완료되어야 함
-        return item.connectedItems.every((connection: any) => 
-          connectedItemsStatus[connection.id]?.isCompleted
-        );
-      } else {
-        // 연결된 항목이 없는 경우, 메인 항목만 체크
-        return checklistItems[item.id]?.isCompleted;
+    (checklist.items || []).forEach((item: any) => {
+      // 상위 항목
+      totalItems += 1;
+      if (checklistItems[item.id]?.isCompleted) {
+        completedItems += 1;
       }
-    }).length || 0;
+      // 하위 항목들
+      const connections = item.connectedItems || [];
+      totalItems += connections.length;
+      connections.forEach((connection: any) => {
+        if (connectedItemsStatus[connection.id]?.isCompleted) {
+          completedItems += 1;
+        }
+      });
+    });
+    
+    if (totalItems === 0) return { status: '미시작', color: 'gray', progress: null, connectedItems: null };
     
     // 연결된 항목 종류별 개수 계산
     const connectedItemsCount = {
@@ -1674,8 +1682,8 @@ export default function ChecklistPage() {
       }
     });
     
-    // 퍼센트 계산
-    const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    // 퍼센트 계산 (합산 기준)
+    const progressPercent = Math.round((completedItems / totalItems) * 100);
     
     if (completedItems === 0) {
       return { 

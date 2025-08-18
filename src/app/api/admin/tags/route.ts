@@ -1,9 +1,7 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 // 태그 목록 조회
 export async function GET(req: NextRequest) {
@@ -12,7 +10,8 @@ export async function GET(req: NextRequest) {
     const q = (searchParams.get('q') || '').trim().toLowerCase();
     const tags = await prisma.tag.findMany({
       where: q ? { name: { contains: q, mode: 'insensitive' } } : undefined,
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, color: true }
     });
     
     return NextResponse.json(tags);

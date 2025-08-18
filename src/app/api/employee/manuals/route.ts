@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 export const runtime = "nodejs";
 
@@ -51,9 +49,10 @@ export async function GET(req: NextRequest) {
     if (manualId) {
       const m = await prisma.manual.findUnique({
         where: { id: manualId },
-        include: {
-          tagRelations: { include: { tag: true } },
-          precautionRelations: { include: { precaution: { include: { tagRelations: { include: { tag: true } } } } } }
+        select: {
+          id: true, title: true, content: true, workplace: true, timeSlot: true, category: true, version: true,
+          tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } },
+          precautionRelations: { select: { precaution: { select: { id: true, title: true, content: true, workplace: true, timeSlot: true, priority: true, tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } } } } } }
         }
       });
       if (!m) return NextResponse.json({ error: '메뉴얼을 찾을 수 없습니다.' }, { status: 404 });
@@ -75,29 +74,12 @@ export async function GET(req: NextRequest) {
 
     const manuals = await prisma.manual.findMany({
       where,
-      include: {
-        tagRelations: {
-          include: {
-            tag: true
-          }
-        },
-        precautionRelations: {
-          include: {
-            precaution: {
-              include: {
-                tagRelations: {
-                  include: {
-                    tag: true
-                  }
-                }
-              }
-            }
-          }
-        }
+      select: {
+        id: true, title: true, content: true, workplace: true, timeSlot: true, category: true, version: true, createdAt: true,
+        tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } },
+        precautionRelations: { select: { precaution: { select: { id: true, title: true, content: true, workplace: true, timeSlot: true, priority: true, tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } } } } } }
       },
-      orderBy: [
-        { createdAt: 'desc' }
-      ]
+      orderBy: [ { createdAt: 'desc' } ]
     });
 
     // 태그와 주의사항 데이터 구조 변환

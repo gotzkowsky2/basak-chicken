@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'
 
 export const runtime = "nodejs";
 
@@ -135,17 +133,17 @@ export async function GET(req: NextRequest) {
     // 주의사항 목록 조회
     const precautions = await prisma.precaution.findMany({
       where,
-      include: {
-        tagRelations: {
-          include: {
-            tag: true
-          }
-        }
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        workplace: true,
+        timeSlot: true,
+        priority: true,
+        createdAt: true,
+        tagRelations: { select: { tag: { select: { id: true, name: true, color: true } } } }
       },
-      orderBy: [
-        { priority: 'asc' },
-        { createdAt: 'desc' }
-      ],
+      orderBy: [ { priority: 'asc' }, { createdAt: 'desc' } ],
     });
 
     // 태그 정보 변환

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 async function verifyAdmin(request: NextRequest) {
   const cookieOrder = ['__Host-admin_auth', '__Host-employee_auth', 'admin_auth', 'employee_auth'];

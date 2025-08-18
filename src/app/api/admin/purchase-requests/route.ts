@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 // 관리자 인증 확인 함수
 async function verifyAdminAuth(request: NextRequest) {
@@ -50,21 +48,24 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { requestedAt: 'desc' }
       ],
-      include: {
-        employee: {
-          select: {
-            name: true,
-            department: true
-          }
-        },
+      select: {
+        id: true,
+        requestedBy: true,
+        requestedAt: true,
+        status: true,
+        priority: true,
+        estimatedCost: true,
+        notes: true,
+        approvedBy: true,
+        approvedAt: true,
+        employee: { select: { name: true, department: true } },
         items: {
-          include: {
-            item: {
-              select: {
-                name: true,
-                unit: true
-              }
-            }
+          select: {
+            id: true,
+            quantity: true,
+            unitPrice: true,
+            notes: true,
+            item: { select: { id: true, name: true, unit: true } },
           }
         }
       }

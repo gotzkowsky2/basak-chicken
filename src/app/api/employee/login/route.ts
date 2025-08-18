@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { rateLimit, getClientKeyFromRequestHeaders } from "@/lib/rateLimit";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
+    const key = `login:${getClientKeyFromRequestHeaders(request.headers)}`;
+    const rl = rateLimit(key, 20, 60_000); // 1분 20회
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "요청이 너무 많습니다. 잠시 후 다시 시도하세요." }, { status: 429 });
+    }
     const { employeeId, password } = await request.json();
     if (!employeeId || !password) {
       return NextResponse.json({ error: "아이디와 비밀번호를 입력하세요." }, { status: 400 });

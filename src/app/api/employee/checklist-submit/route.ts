@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
 import nodemailer from 'nodemailer';
 
-const prisma = new PrismaClient();
-
 export async function POST(request: NextRequest) {
-  console.log('=== 체크리스트 제출 API 호출됨 ===');
-  
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('=== 체크리스트 제출 API 호출됨 ===');
+  }
   try {
     const body = await request.json();
-    console.log('받은 데이터:', JSON.stringify(body, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('받은 데이터:', JSON.stringify(body, null, 2));
+    }
     
     const { templateId, checklistItemsProgress, connectedItemsProgress } = body;
 
-    console.log('템플릿 ID:', templateId);
-    console.log('체크리스트 항목 진행 상태:', checklistItemsProgress);
-    console.log('연결된 항목 진행 상태:', connectedItemsProgress);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('템플릿 ID:', templateId);
+      console.log('체크리스트 항목 진행 상태:', checklistItemsProgress);
+      console.log('연결된 항목 진행 상태:', connectedItemsProgress);
+    }
 
     // 체크리스트 템플릿 정보 가져오기
     const template = await prisma.checklistTemplate.findUnique({
@@ -29,7 +32,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('템플릿 정보:', template ? '찾음' : '없음');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('템플릿 정보:', template ? '찾음' : '없음');
+    }
 
     if (!template) {
       console.log('템플릿을 찾을 수 없습니다.');
@@ -37,7 +42,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 현재 직원 정보 가져오기
-    console.log('직원 정보 가져오는 중...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('직원 정보 가져오는 중...');
+    }
     const employeeResponse = await fetch(`${request.nextUrl.origin}/api/employee/me`, {
       headers: {
         'Cookie': request.headers.get('cookie') || ''
@@ -45,17 +52,25 @@ export async function POST(request: NextRequest) {
     });
     
     const employee = await employeeResponse.json();
-    console.log('직원 정보:', employee);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('직원 정보:', employee);
+    }
 
     // 이메일 내용 생성
-    console.log('이메일 내용 생성 중...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('이메일 내용 생성 중...');
+    }
     const emailContent = generateEmailContent(template, checklistItemsProgress, connectedItemsProgress, employee);
 
     // 이메일 발송
-    console.log('이메일 발송 시작...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('이메일 발송 시작...');
+    }
     await sendEmail(emailContent);
 
-    console.log('체크리스트 제출 완료');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('체크리스트 제출 완료');
+    }
     return NextResponse.json({ success: true, message: '체크리스트가 제출되었습니다.' });
   } catch (error) {
     console.error('체크리스트 제출 오류:', error);

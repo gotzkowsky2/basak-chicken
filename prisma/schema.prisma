@@ -251,6 +251,9 @@ model InventoryItem {
   tagRelations  InventoryItemTagRelation[]
   purchaseItems PurchaseRequestItem[]
   tags          Tag[]                      @relation("InventoryItemTags")
+
+  @@index([isActive, lastUpdated])
+  @@index([isActive, createdAt])
 }
 
 model InventoryCheck {
@@ -264,6 +267,8 @@ model InventoryCheck {
   estimatedRestockDate DateTime?
   employee             Employee      @relation(fields: [checkedBy], references: [id])
   item                 InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, checkedAt])
 }
 
 model PurchaseRequest {
@@ -280,6 +285,8 @@ model PurchaseRequest {
   updatedAt     DateTime              @updatedAt
   employee      Employee              @relation(fields: [requestedBy], references: [id])
   items         PurchaseRequestItem[]
+
+  @@index([status, priority, requestedAt])
 }
 
 model PurchaseRequestItem {

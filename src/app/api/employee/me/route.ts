@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -10,9 +8,11 @@ export async function GET(request: NextRequest) {
     const employeeAuth = request.cookies.get('__Host-employee_auth')?.value || request.cookies.get('employee_auth')?.value;
     const adminAuth = request.cookies.get('__Host-admin_auth')?.value || request.cookies.get('admin_auth')?.value;
 
-    console.log('[employee/me] cookieHeader:', cookieHeader ? 'present' : 'empty');
-    console.log('[employee/me] employee_auth:', employeeAuth ? 'present' : 'missing');
-    console.log('[employee/me] admin_auth:', adminAuth ? 'present' : 'missing');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[employee/me] cookieHeader:', cookieHeader ? 'present' : 'empty');
+      console.log('[employee/me] employee_auth:', employeeAuth ? 'present' : 'missing');
+      console.log('[employee/me] admin_auth:', adminAuth ? 'present' : 'missing');
+    }
 
     if (!employeeAuth && !adminAuth) {
       return NextResponse.json(
