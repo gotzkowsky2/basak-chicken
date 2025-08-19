@@ -14,7 +14,6 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
-  const [unread, setUnread] = useState<number>(0);
   const pathname = usePathname();
   const isLoginPage = pathname?.startsWith("/employee/login");
 
@@ -39,23 +38,6 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
     fetchEmployee();
   }, []);
 
-  // 미읽음 메시지 배지Polling (30s) - 최고관리자는 직원 페이지에서 비활성
-  useEffect(() => {
-    let timer: any;
-    const poll = async () => {
-      try {
-        if (!employee || employee.isSuperAdmin) return; 
-        const r = await fetch('/api/messages?unreadOnly=true&limit=1', { credentials: 'include', cache: 'no-store' });
-        if (r.ok) {
-          const d = await r.json();
-          setUnread(d.unreadCount || 0);
-        }
-      } catch {}
-      timer = setTimeout(poll, 30000);
-    };
-    poll();
-    return () => timer && clearTimeout(timer);
-  }, [employee]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -142,18 +124,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                     </svg>
                     내 제출 내역
                   </Link>
-                  {!employee?.isSuperAdmin && (
-                    <Link 
-                      href="/employee/messages" 
-                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 active:bg-indigo-100 focus:outline-none focus:bg-indigo-50 transition-all duration-150 cursor-pointer min-h-[44px]"
-                      onClick={() => setShowMenu(false)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.5a2.25 2.25 0 01-2.36 0l-7.5-4.5a2.25 2.25 0 01-1.07-1.916V6.75" />
-                      </svg>
-                      받은 메시지
-                    </Link>
-                  )}
+                  {/* 메시지 기능 제거됨 */}
                   <Link 
                     href="/employee/notices" 
                     className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 active:bg-yellow-100 focus:outline-none focus:bg-yellow-50 transition-all duration-150 cursor-pointer min-h-[44px]"
@@ -218,14 +189,9 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 <div className="text-xs text-gray-500">{employee.department} • {employee.position}</div>
               </div>
               
-              {/* 직원 아이콘 */}
+              {/* 직원 아이콘 복원 (메시지 기능 제거와 무관) */}
               {!employee?.isSuperAdmin && (
-                <Link href="/employee/messages" prefetch={false} className="relative inline-flex items-center justify-center text-2xl">
-                  <span>🧑‍🍳</span>
-                  {unread > 0 && (
-                    <span className="absolute -top-1 -right-2 text-[10px] px-1.5 py-0.5 bg-red-600 text-white rounded-full leading-none">{unread > 99 ? '99+' : unread}</span>
-                  )}
-                </Link>
+                <span className="text-2xl">🧑‍🍳</span>
               )}
             </div>
           )}

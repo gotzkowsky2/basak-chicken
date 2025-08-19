@@ -219,30 +219,4 @@ function PrecautionDetail({ id, fallback }: { id: string, fallback: any }) {
   );
 }
 
-function EmployeeStaleInventory({ onSelect }: { onSelect?: (item:any)=>void }) {
-  const [data, setData] = React.useState<any>(null);
-  React.useEffect(()=>{ (async()=>{ try{ const r=await fetch('/api/admin/inventory/stale?days=2',{credentials:'include',cache:'no-store'}); if(r.ok){ setData(await r.json()); } }catch(e){ console.log('stale feed err', e)} })() },[]);
-  if(!data || !data.items?.length) return null;
-  return (
-    <div className="bg-white rounded border p-3">
-      <div className="font-semibold text-gray-900 mb-2">경고 항목(상위 5개)</div>
-      <div className="space-y-1">
-        {data.items.slice(0,5).map((i:any)=>(
-          <button key={i.id} onClick={()=>onSelect?.(i)} className="w-full text-left hover:bg-teal-50 rounded p-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-900 font-semibold">{i.name}</span>
-                {i.isLowStock && <span className="px-1.5 py-0.5 text-xs bg-red-600 text-white rounded">부족</span>}
-              </div>
-              <span className="text-gray-900 text-sm font-semibold">{i.daysSinceUpdate}일</span>
-            </div>
-            <div className="mt-0.5 text-xs text-gray-800 flex items-center gap-3">
-              <span>현재/기준: <b className="text-gray-900">{i.currentStock}</b> / <b className="text-gray-900">{i.minStock}</b> {i.unit}</span>
-              <span>최근: {new Date(i.lastUpdated || i.createdAt).toLocaleDateString('ko-KR')} {i.lastCheckedBy ? `• ${i.lastCheckedBy}` : ''}</span>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
+// 직원 메인 하단 경고 요약은 ./EmployeeStaleInventory 컴포넌트를 사용합니다.

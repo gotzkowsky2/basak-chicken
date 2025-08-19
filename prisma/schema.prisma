@@ -115,9 +115,7 @@ model Employee {
   favorites          Favorite[]
   notices            Notice[]
   // 수신 메시지(관리자→직원)
-  messagesReceived   Message[]                 @relation("EmployeeMessagesReceived")
-  // 발신 메시지
-  messagesSent       Message[]                 @relation("EmployeeMessagesSent")
+  // 메시징 기능 제거됨
 }
 
 model ChecklistTemplate {
@@ -393,26 +391,7 @@ model Notice {
 }
 
 // 관리자 → 직원 메시지
-model Message {
-  id          String   @id @default(cuid())
-  threadId    String?
-  senderId    String
-  recipientId String
-  subject     String
-  content     String
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  readAt      DateTime?
-
-  // 관계 (sender: Admin 또는 Employee를 모두 허용하기 위해 FK는 걸지 않음)
-  // 수신자만 Employee로 보장
-  recipient Employee @relation("EmployeeMessagesReceived", fields: [recipientId], references: [id], onDelete: Cascade)
-  sender    Employee @relation("EmployeeMessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([recipientId, isRead])
-  @@index([createdAt])
-  @@index([threadId])
-}
+// Message 모델 제거됨
 
 enum Workplace {
   HALL
