@@ -1110,11 +1110,13 @@ export default function ChecklistPage() {
   };
 
   const handleNotesChange = (id: string, notes: string) => {
-    // 메인 항목인지 연결 항목인지 확인
-    const isConnectedItem = connectedItemsStatus[id];
-    
-    if (isConnectedItem) {
-      // 연결 항목의 메모 업데이트
+    // 연결 항목 ID인지 체크(connectedItemsStatus에 아직 없더라도 체크리스트 정의에서 판별)
+    const isConnectionId = !!selectedChecklist?.items?.some((item:any)=>
+      Array.isArray(item.connectedItems) && item.connectedItems.some((c:any)=>c.id === id)
+    );
+
+    if (isConnectionId) {
+      // 연결 항목의 메모 업데이트 (엔트리가 없으면 생성)
       setConnectedItemsStatus((prev) => ({
         ...prev,
         [id]: {
@@ -1135,6 +1137,16 @@ export default function ChecklistPage() {
   };
 
   const toggleMemoInput = (id: string) => {
+    // 연결 항목이면 메모 엔트리 초기화 보장
+    const isConnectionId = !!selectedChecklist?.items?.some((item:any)=>
+      Array.isArray(item.connectedItems) && item.connectedItems.some((c:any)=>c.id === id)
+    );
+    if (isConnectionId && !connectedItemsStatus[id]) {
+      setConnectedItemsStatus(prev => ({
+        ...prev,
+        [id]: { ...(prev[id]||{}), notes: '' }
+      }));
+    }
     setShowMemoInputs((prev: {[key: string]: boolean}) => ({
       ...prev,
       [id]: !prev[id]
@@ -1142,37 +1154,33 @@ export default function ChecklistPage() {
   };
 
   // 메모 저장 함수
-  const saveMemo = async (id: string) => {
+  const saveMemo = async (id: string, notesOverride?: string) => {
     try {
-      // 메인 항목인지 연결 항목인지 확인
-      const isConnectedItem = connectedItemsStatus[id];
-      
-      if (isConnectedItem) {
-        // 연결 항목의 메모 저장
-        await saveProgressWithState(
-          selectedChecklist?.id || '',
-          checklistItems,
-          {
-            ...connectedItemsStatus,
-            [id]: {
-              ...connectedItemsStatus[id],
-              notes: connectedItemsStatus[id].notes
-            }
+      // 연결 항목 ID인지 체크(connectedItemsStatus에 아직 없더라도 체크리스트 정의에서 판별)
+      const isConnectionId = !!selectedChecklist?.items?.some((item:any)=>
+        Array.isArray(item.connectedItems) && item.connectedItems.some((c:any)=>c.id === id)
+      );
+
+      if (isConnectionId) {
+        // 연결 항목의 메모 저장 (엔트리가 없으면 생성)
+        const nextConnected = {
+          ...connectedItemsStatus,
+          [id]: {
+            ...connectedItemsStatus[id],
+            notes: (notesOverride ?? connectedItemsStatus[id]?.notes ?? '')
           }
-        );
+        };
+        await saveProgressWithState(selectedChecklist?.id || '', checklistItems, nextConnected);
       } else {
         // 메인 항목의 메모 저장
-        await saveProgressWithState(
-          selectedChecklist?.id || '',
-          {
-            ...checklistItems,
-            [id]: {
-              ...checklistItems[id],
-              notes: checklistItems[id]?.notes || ''
-            }
-          },
-          connectedItemsStatus
-        );
+        const nextChecklistItems = {
+          ...checklistItems,
+          [id]: {
+            ...checklistItems[id],
+            notes: (notesOverride ?? checklistItems[id]?.notes ?? '')
+          }
+        } as any;
+        await saveProgressWithState(selectedChecklist?.id || '', nextChecklistItems, connectedItemsStatus);
       }
       
       // 성공 메시지 표시
@@ -1300,7 +1308,13 @@ export default function ChecklistPage() {
       console.log('연결된 항목 상태:', currentConnectedItemsStatus);
 
       // 선택된 체크리스트 그룹 찾기
-      const selectedGroup = checklists.find(checklist => checklist.id === templateId);
+      let selectedGroup = checklists.find(checklist => checklist.id === templateId) as any;
+      if (!selectedGroup) {
+        // 상세 화면에서 fallback: 현재 선택된 체크리스트 사용
+        if (selectedChecklist && selectedChecklist.id === templateId) {
+          selectedGroup = selectedChecklist as any;
+        }
+      }
       if (!selectedGroup) {
         console.error('선택된 그룹을 찾을 수 없습니다:', templateId);
         return;
@@ -1365,17 +1379,17 @@ export default function ChecklistPage() {
         console.log('=== connectedItemsProgress 생성 중 ===');
         console.log('currentConnectedItemsStatus:', currentConnectedItemsStatus);
         
-        const connectedItemsProgress = selectedGroup.items
+        const connectedItemsProgress = (selectedGroup.items || [])
           ?.flatMap((item: any) => item.connectedItems || [])
           .map((connection: any) => {
             const status = currentConnectedItemsStatus[connection.id];
             const result = {
               connectionId: connection.id,
               itemId: status?.itemId || connection.itemId,
-              currentStock: status?.previousStock, // 이전 재고
-              updatedStock: status?.updatedStock, // 업데이트된 재고
+              currentStock: status?.previousStock ?? null, // 이전 재고
+              updatedStock: status?.updatedStock ?? null, // 업데이트된 재고
               isCompleted: status ? status.isCompleted : false, // status가 있으면 그 값을, 없으면 false
-              notes: status?.notes || "",
+              notes: (status?.notes ?? ''),
               completedBy: status?.completedBy,
               completedAt: status?.completedAt
             };

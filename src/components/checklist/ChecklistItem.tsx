@@ -860,7 +860,15 @@ function ChecklistItem({
                    <div className="mt-3 ml-2 sm:ml-5 space-y-2 mb-4">
                     {/* 메모 입력창 */}
                     {showMemoInputs?.[connection.id] && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div
+                        className="bg-yellow-100 border-2 border-yellow-600 rounded-lg p-3"
+                        onClick={(e)=>e.stopPropagation()}
+                        onMouseDown={(e)=>e.stopPropagation()}
+                        onPointerDown={(e)=>e.stopPropagation()}
+                        style={{ position: 'relative', zIndex: 1 }}
+                        role="region"
+                        aria-label="연결된 항목 메모 입력"
+                      >
                         <div className="flex items-center gap-1 mb-2">
                           <span className="text-blue-600">📝</span>
                           <span className="text-xs font-medium text-blue-700">메모 입력</span>
@@ -868,9 +876,16 @@ function ChecklistItem({
                         <textarea
                           value={connectedItemsStatus[connection.id]?.notes || ''}
                           onChange={(e) => onNotesChange?.(connection.id, e.target.value)}
+                          onKeyDown={(e)=>{ e.stopPropagation(); }}
+                          onClick={(e)=>{ e.stopPropagation(); }}
                           placeholder="메모를 입력하세요..."
-                          className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-medium"
+                          className="w-full text-sm border-2 border-yellow-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-600 focus:border-transparent text-gray-900 font-semibold bg-white"
                           rows={3}
+                          readOnly={false}
+                          disabled={false}
+                          autoFocus
+                          tabIndex={0}
+                          style={{ pointerEvents: 'auto', cursor: 'text', position: 'relative', zIndex: 2 }}
                         />
                         <div className="flex gap-2 mt-2">
                           {saveMemo && (

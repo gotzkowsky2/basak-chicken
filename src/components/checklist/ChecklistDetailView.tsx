@@ -22,7 +22,7 @@ interface ChecklistDetailViewProps {
   toggleItemExpansion: (itemId: string) => void;
   handleNotesChange: (id: string, notes: string) => void;
   toggleMemoInput: (id: string) => void;
-  saveMemo: (id: string) => Promise<void>;
+  saveMemo: (id: string, notesOverride?: string) => Promise<void>;
   saveProgress: (templateId: string) => Promise<void>;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   onInventoryUpdate?: (itemId: string, currentStock: number, notes?: string) => Promise<void>;

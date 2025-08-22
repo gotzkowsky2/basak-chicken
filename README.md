@@ -46,6 +46,11 @@
 # PM2 상태 확인: pm2 status
 # PM2 로그 확인: pm2 logs basak-chicken-app
 
+## 🌐 환경 분리 안내 (운영/개발)
+- 운영: `https://crew.basak-chicken.com` (`/root/basak-chicken-app`, PM2: basak-chicken-app, 포트 3001, NODE_ENV=production)
+- 개발: `https://dev.crew.basak-chicken.com` (`/root/basak-chicken-app-dev`, PM2: basak-chicken-app-dev, 포트 3002, NODE_ENV=production)
+- 상세 가이드는 `docs/ENVIRONMENTS.md` 참조
+
 ## 🚀 배포/운영 절차 요약
 
 1) 클린 빌드 (청크 누락/캐시 이슈 예방)
